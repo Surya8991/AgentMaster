@@ -1,0 +1,788 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tool Stack Reference - Surya L</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#0a0a10;--card:#12121a;--border:#1e1e2e;--text:#e0e0e0;--muted:#888;--blue:#5b8def;--purple:#8b7aff;--green:#22c55e;--yellow:#f59e0b;--red:#ef4444;--orange:#ff813f}
+body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:var(--bg);color:var(--text);line-height:1.6}
+.container{max-width:1200px;margin:0 auto;padding:20px}
+h1{text-align:center;font-size:2rem;margin:30px 0 10px;background:linear-gradient(90deg,var(--blue),var(--purple));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.subtitle{text-align:center;color:var(--muted);margin-bottom:30px;font-size:0.95rem}
+.tabs{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-bottom:30px;position:sticky;top:0;background:var(--bg);padding:15px 0;z-index:10;border-bottom:1px solid var(--border)}
+.tab{padding:8px 16px;border:1px solid var(--border);border-radius:8px;background:var(--card);color:var(--muted);cursor:pointer;font-size:0.85rem;transition:all 0.2s}
+.tab:hover,.tab.active{border-color:var(--blue);color:var(--blue);background:#1a1a2e}
+.section{display:none}
+.section.active{display:block}
+.section h2{color:var(--blue);font-size:1.4rem;margin:20px 0 15px;padding-bottom:8px;border-bottom:1px solid var(--border)}
+.section h3{color:var(--purple);font-size:1.1rem;margin:18px 0 10px}
+table{width:100%;border-collapse:collapse;margin:10px 0 25px;font-size:0.85rem}
+th{background:var(--card);color:var(--blue);text-align:left;padding:10px 12px;border:1px solid var(--border);position:sticky;top:60px}
+td{padding:8px 12px;border:1px solid var(--border);vertical-align:top}
+tr:hover td{background:#1a1a2e}
+td:nth-child(1){color:var(--muted);width:30px;text-align:center}
+td:nth-child(2){font-weight:600;color:#fff}
+.free{color:var(--green);font-weight:500}
+.paid{color:var(--yellow);font-weight:500}
+.freemium{color:var(--orange);font-weight:500}
+.rec-table td:nth-child(1){color:var(--purple);font-weight:600;width:180px}
+.rec-table td:nth-child(2){color:var(--text)}
+.search-box{display:block;width:100%;max-width:500px;margin:0 auto 20px;padding:10px 16px;background:var(--card);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:0.95rem;outline:none}
+.search-box:focus{border-color:var(--blue)}
+.search-box::placeholder{color:var(--muted)}
+.highlight{background:var(--purple);color:#fff;padding:1px 3px;border-radius:3px}
+footer{text-align:center;color:var(--muted);margin-top:40px;padding:20px;border-top:1px solid var(--border);font-size:0.8rem}
+@media(max-width:768px){.tabs{gap:5px}.tab{padding:6px 10px;font-size:0.75rem}table{font-size:0.75rem}td,th{padding:6px 8px}}
+</style>
+</head>
+<body>
+<div class="container">
+<h1>Tool Stack Reference</h1>
+<p class="subtitle">Top 20 tools for every task & industry - Free & Paid | By Surya L</p>
+<input type="text" class="search-box" id="search" placeholder="Search any tool, tech, or use case...">
+<div class="tabs" id="tabs">
+<div class="tab active" data-tab="frontend">Frontend</div>
+<div class="tab" data-tab="backend">Backend</div>
+<div class="tab" data-tab="ai">AI / ML</div>
+<div class="tab" data-tab="marketing">Marketing</div>
+<div class="tab" data-tab="devops">DevOps</div>
+<div class="tab" data-tab="design">Design</div>
+<div class="tab" data-tab="business">Business</div>
+<div class="tab" data-tab="mobile">Mobile</div>
+<div class="tab" data-tab="testing">Testing</div>
+<div class="tab" data-tab="scraping">Scraping</div>
+<div class="tab" data-tab="datascience">Data Science</div>
+<div class="tab" data-tab="security">Security</div>
+<div class="tab" data-tab="ecommerce">E-commerce</div>
+<div class="tab" data-tab="video">Video/Audio</div>
+<div class="tab" data-tab="freelance">Freelancing</div>
+<div class="tab" data-tab="nocode">No-Code</div>
+<div class="tab" data-tab="dbadmin">Database</div>
+<div class="tab" data-tab="chromeext">Chrome Ext</div>
+<div class="tab" data-tab="seotech">SEO Tech</div>
+<div class="tab" data-tab="productivity">Productivity</div>
+<div class="tab" data-tab="realtime">Real-time</div>
+<div class="tab" data-tab="cms">CMS</div>
+<div class="tab" data-tab="auth">Auth</div>
+<div class="tab" data-tab="indianstartup">India Startup</div>
+</div>
+
+<!-- FRONTEND -->
+<div class="section active" id="frontend">
+<h2>Frontend Development</h2>
+<h3>Frameworks & Libraries</h3>
+<table><tr><th>#</th><th>Tool</th><th>Type</th><th>Price</th><th>Best For</th></tr>
+<tr><td>1</td><td>Next.js</td><td>React Framework</td><td class="free">Free</td><td>Full-stack apps, SSR, SEO</td></tr>
+<tr><td>2</td><td>React</td><td>UI Library</td><td class="free">Free</td><td>SPAs, component-based UI</td></tr>
+<tr><td>3</td><td>Vue.js</td><td>Framework</td><td class="free">Free</td><td>Progressive apps, easy learning</td></tr>
+<tr><td>4</td><td>Svelte/SvelteKit</td><td>Compiler</td><td class="free">Free</td><td>Fast apps, less boilerplate</td></tr>
+<tr><td>5</td><td>Angular</td><td>Enterprise Framework</td><td class="free">Free</td><td>Large enterprise apps</td></tr>
+<tr><td>6</td><td>Astro</td><td>Static Builder</td><td class="free">Free</td><td>Content sites, blogs</td></tr>
+<tr><td>7</td><td>Remix</td><td>React Framework</td><td class="free">Free</td><td>Web standards, nested routing</td></tr>
+</table>
+<h3>Styling & UI</h3>
+<table><tr><th>#</th><th>Tool</th><th>Type</th><th>Price</th><th>Best For</th></tr>
+<tr><td>8</td><td>Tailwind CSS</td><td>Utility CSS</td><td class="free">Free</td><td>Rapid UI development</td></tr>
+<tr><td>9</td><td>shadcn/ui</td><td>Components</td><td class="free">Free</td><td>React + Tailwind components</td></tr>
+<tr><td>10</td><td>Framer Motion</td><td>Animation</td><td class="free">Free</td><td>React animations</td></tr>
+<tr><td>11</td><td>GSAP</td><td>Animation</td><td class="freemium">Freemium</td><td>Complex animations, scroll</td></tr>
+<tr><td>12</td><td>Radix UI</td><td>Headless</td><td class="free">Free</td><td>Accessible primitives</td></tr>
+</table>
+<h3>State & Build</h3>
+<table><tr><th>#</th><th>Tool</th><th>Type</th><th>Price</th><th>Best For</th></tr>
+<tr><td>13</td><td>Zustand</td><td>State Manager</td><td class="free">Free</td><td>Simple global state</td></tr>
+<tr><td>14</td><td>TanStack Query</td><td>Data Fetching</td><td class="free">Free</td><td>Server state, caching</td></tr>
+<tr><td>15</td><td>Redux Toolkit</td><td>State Manager</td><td class="free">Free</td><td>Complex state, enterprise</td></tr>
+<tr><td>16</td><td>Jotai</td><td>Atomic State</td><td class="free">Free</td><td>Minimal atom-based state</td></tr>
+<tr><td>17</td><td>Vite</td><td>Build Tool</td><td class="free">Free</td><td>Fast dev server, HMR</td></tr>
+<tr><td>18</td><td>TypeScript</td><td>Language</td><td class="free">Free</td><td>Type safety</td></tr>
+<tr><td>19</td><td>ESLint + Prettier</td><td>Linter</td><td class="free">Free</td><td>Code quality</td></tr>
+<tr><td>20</td><td>Storybook</td><td>Component Dev</td><td class="free">Free</td><td>Isolated UI dev</td></tr>
+</table>
+<h3>When to Use What</h3>
+<table class="rec-table"><tr><th>Project Type</th><th>Recommended Stack</th></tr>
+<tr><td>SaaS App</td><td>Next.js + TypeScript + Tailwind + shadcn/ui + Zustand</td></tr>
+<tr><td>Portfolio/Blog</td><td>Astro or Next.js + Tailwind + MDX</td></tr>
+<tr><td>E-commerce</td><td>Next.js + Tailwind + Zustand + Stripe/Razorpay</td></tr>
+<tr><td>Chrome Extension</td><td>Vanilla JS or React + Vite + Tailwind</td></tr>
+<tr><td>Landing Page</td><td>Astro or Next.js + Tailwind + Framer Motion</td></tr>
+<tr><td>Dashboard</td><td>Next.js + shadcn/ui + TanStack Query + Recharts</td></tr>
+</table>
+</div>
+
+<!-- BACKEND -->
+<div class="section" id="backend">
+<h2>Backend Development</h2>
+<h3>Runtime & Frameworks</h3>
+<table><tr><th>#</th><th>Tool</th><th>Type</th><th>Price</th><th>Best For</th></tr>
+<tr><td>1</td><td>Node.js</td><td>Runtime</td><td class="free">Free</td><td>JS backend, APIs</td></tr>
+<tr><td>2</td><td>Express.js</td><td>Framework</td><td class="free">Free</td><td>REST APIs</td></tr>
+<tr><td>3</td><td>Fastify</td><td>Framework</td><td class="free">Free</td><td>High-perf APIs</td></tr>
+<tr><td>4</td><td>Hono</td><td>Framework</td><td class="free">Free</td><td>Edge-first APIs</td></tr>
+<tr><td>5</td><td>Django</td><td>Python</td><td class="free">Free</td><td>Full-featured web apps</td></tr>
+<tr><td>6</td><td>FastAPI</td><td>Python</td><td class="free">Free</td><td>High-perf async APIs</td></tr>
+<tr><td>7</td><td>Flask</td><td>Python</td><td class="free">Free</td><td>Lightweight APIs</td></tr>
+<tr><td>8</td><td>Spring Boot</td><td>Java</td><td class="free">Free</td><td>Enterprise Java</td></tr>
+</table>
+<h3>Databases</h3>
+<table><tr><th>#</th><th>Tool</th><th>Type</th><th>Price</th><th>Best For</th></tr>
+<tr><td>9</td><td>PostgreSQL</td><td>Relational</td><td class="free">Free</td><td>Complex queries, ACID</td></tr>
+<tr><td>10</td><td>MongoDB</td><td>NoSQL</td><td class="freemium">Freemium</td><td>Flexible schema</td></tr>
+<tr><td>11</td><td>Supabase</td><td>BaaS</td><td class="freemium">Freemium</td><td>Firebase alt, real-time</td></tr>
+<tr><td>12</td><td>Firebase</td><td>BaaS</td><td class="freemium">Freemium</td><td>Real-time, auth, MVPs</td></tr>
+<tr><td>13</td><td>Redis</td><td>Cache</td><td class="free">Free</td><td>Caching, sessions</td></tr>
+<tr><td>14</td><td>SQLite</td><td>Embedded</td><td class="free">Free</td><td>Local apps, dev</td></tr>
+<tr><td>15</td><td>Turso</td><td>Edge DB</td><td class="freemium">Freemium</td><td>Edge SQLite</td></tr>
+</table>
+<h3>ORM & Auth</h3>
+<table><tr><th>#</th><th>Tool</th><th>Type</th><th>Price</th><th>Best For</th></tr>
+<tr><td>16</td><td>Prisma</td><td>ORM</td><td class="free">Free</td><td>Type-safe queries</td></tr>
+<tr><td>17</td><td>Drizzle ORM</td><td>ORM</td><td class="free">Free</td><td>Lightweight, edge-ready</td></tr>
+<tr><td>18</td><td>Auth.js (NextAuth)</td><td>Auth</td><td class="free">Free</td><td>OAuth, sessions</td></tr>
+<tr><td>19</td><td>Clerk</td><td>Auth Service</td><td class="freemium">Freemium</td><td>Drop-in auth UI</td></tr>
+<tr><td>20</td><td>Lucia</td><td>Auth</td><td class="free">Free</td><td>Lightweight auth</td></tr>
+</table>
+<h3>When to Use What</h3>
+<table class="rec-table"><tr><th>Project Type</th><th>Recommended Stack</th></tr>
+<tr><td>REST API</td><td>Node.js + Express/Fastify + PostgreSQL + Prisma</td></tr>
+<tr><td>Real-time App</td><td>Node.js + Socket.io + Redis + MongoDB</td></tr>
+<tr><td>Full-stack SaaS</td><td>Next.js API routes + Supabase + Prisma</td></tr>
+<tr><td>AI/ML Backend</td><td>Python + FastAPI + PostgreSQL</td></tr>
+<tr><td>MVP/Prototype</td><td>Supabase + Next.js (zero backend)</td></tr>
+</table>
+</div>
+
+<!-- AI/ML -->
+<div class="section" id="ai">
+<h2>AI / ML / LLM Tools</h2>
+<h3>LLM APIs</h3>
+<table><tr><th>#</th><th>Tool</th><th>Type</th><th>Price</th><th>Best For</th></tr>
+<tr><td>1</td><td>Claude (Anthropic)</td><td>LLM API</td><td class="paid">Paid</td><td>Coding, analysis, long context</td></tr>
+<tr><td>2</td><td>OpenAI GPT-4</td><td>LLM API</td><td class="paid">Paid</td><td>General AI, plugins</td></tr>
+<tr><td>3</td><td>Google Gemini</td><td>LLM API</td><td class="freemium">Freemium</td><td>Multimodal, Google integration</td></tr>
+<tr><td>4</td><td>Groq</td><td>Inference</td><td class="freemium">Freemium</td><td>Ultra-fast inference</td></tr>
+<tr><td>5</td><td>Ollama</td><td>Local LLM</td><td class="free">Free</td><td>Run LLMs locally</td></tr>
+<tr><td>6</td><td>Together AI</td><td>Hosting</td><td class="freemium">Freemium</td><td>Open-source models</td></tr>
+<tr><td>7</td><td>Hugging Face</td><td>Model Hub</td><td class="freemium">Freemium</td><td>Models, datasets</td></tr>
+</table>
+<h3>AI Coding Assistants</h3>
+<table><tr><th>#</th><th>Tool</th><th>Type</th><th>Price</th><th>Best For</th></tr>
+<tr><td>8</td><td>Claude Code</td><td>CLI Agent</td><td class="paid">Paid</td><td>Full codebase editing</td></tr>
+<tr><td>9</td><td>GitHub Copilot</td><td>IDE Extension</td><td class="paid">$10/mo</td><td>Autocomplete</td></tr>
+<tr><td>10</td><td>Cursor</td><td>AI IDE</td><td class="freemium">Freemium</td><td>AI-native editor</td></tr>
+<tr><td>11</td><td>Windsurf</td><td>AI IDE</td><td class="freemium">Freemium</td><td>Cascade agent</td></tr>
+<tr><td>12</td><td>Codex CLI</td><td>CLI Agent</td><td class="free">Free</td><td>Terminal coding</td></tr>
+</table>
+<h3>AI Frameworks</h3>
+<table><tr><th>#</th><th>Tool</th><th>Type</th><th>Price</th><th>Best For</th></tr>
+<tr><td>13</td><td>LangChain</td><td>Framework</td><td class="free">Free</td><td>Chains, agents, RAG</td></tr>
+<tr><td>14</td><td>Vercel AI SDK</td><td>Streaming</td><td class="free">Free</td><td>AI chat UIs</td></tr>
+<tr><td>15</td><td>LlamaIndex</td><td>Data Framework</td><td class="free">Free</td><td>RAG, document Q&A</td></tr>
+<tr><td>16</td><td>CrewAI</td><td>Multi-agent</td><td class="free">Free</td><td>Agent orchestration</td></tr>
+</table>
+<h3>AI Content</h3>
+<table><tr><th>#</th><th>Tool</th><th>Type</th><th>Price</th><th>Best For</th></tr>
+<tr><td>17</td><td>Jasper</td><td>AI Writer</td><td class="paid">$49/mo</td><td>Marketing copy</td></tr>
+<tr><td>18</td><td>Copy.ai</td><td>AI Writer</td><td class="freemium">Freemium</td><td>Sales copy</td></tr>
+<tr><td>19</td><td>Midjourney</td><td>Image Gen</td><td class="paid">$10/mo</td><td>AI images</td></tr>
+<tr><td>20</td><td>ElevenLabs</td><td>Voice AI</td><td class="freemium">Freemium</td><td>Text-to-speech</td></tr>
+</table>
+</div>
+
+<!-- MARKETING -->
+<div class="section" id="marketing">
+<h2>Digital Marketing</h2>
+<h3>SEO</h3>
+<table><tr><th>#</th><th>Tool</th><th>Type</th><th>Price</th><th>Best For</th></tr>
+<tr><td>1</td><td>Ahrefs</td><td>SEO Suite</td><td class="paid">$99/mo</td><td>Backlinks, keywords</td></tr>
+<tr><td>2</td><td>SEMrush</td><td>SEO + Marketing</td><td class="paid">$130/mo</td><td>All-in-one SEO, PPC</td></tr>
+<tr><td>3</td><td>Screaming Frog</td><td>Technical SEO</td><td class="freemium">Free/Paid</td><td>Site crawling, audits</td></tr>
+<tr><td>4</td><td>Surfer SEO</td><td>Content SEO</td><td class="paid">$89/mo</td><td>Content optimization</td></tr>
+<tr><td>5</td><td>Google Search Console</td><td>Webmaster</td><td class="free">Free</td><td>Search performance</td></tr>
+<tr><td>6</td><td>Ubersuggest</td><td>SEO</td><td class="freemium">Freemium</td><td>Budget keyword research</td></tr>
+</table>
+<h3>Analytics</h3>
+<table><tr><th>#</th><th>Tool</th><th>Type</th><th>Price</th><th>Best For</th></tr>
+<tr><td>7</td><td>Google Analytics 4</td><td>Analytics</td><td class="free">Free</td><td>Traffic, conversions</td></tr>
+<tr><td>8</td><td>Google Tag Manager</td><td>Tags</td><td class="free">Free</td><td>Event tracking</td></tr>
+<tr><td>9</td><td>Looker Studio</td><td>Dashboards</td><td class="free">Free</td><td>Marketing reports</td></tr>
+<tr><td>10</td><td>Hotjar</td><td>Heatmaps</td><td class="freemium">Freemium</td><td>User behavior</td></tr>
+<tr><td>11</td><td>Microsoft Clarity</td><td>Heatmaps</td><td class="free">Free</td><td>Session recordings</td></tr>
+</table>
+<h3>Ads & Email</h3>
+<table><tr><th>#</th><th>Tool</th><th>Type</th><th>Price</th><th>Best For</th></tr>
+<tr><td>12</td><td>Google Ads</td><td>PPC</td><td class="paid">Pay per click</td><td>Search, display ads</td></tr>
+<tr><td>13</td><td>Meta Ads</td><td>Social Ads</td><td class="paid">Pay per click</td><td>Facebook, Instagram</td></tr>
+<tr><td>14</td><td>LinkedIn Ads</td><td>B2B Ads</td><td class="paid">Pay per click</td><td>B2B lead gen</td></tr>
+<tr><td>15</td><td>HubSpot</td><td>CRM</td><td class="freemium">Freemium</td><td>CRM, email, automation</td></tr>
+<tr><td>16</td><td>Mailchimp</td><td>Email</td><td class="freemium">Freemium</td><td>Newsletters</td></tr>
+<tr><td>17</td><td>Resend</td><td>Transactional</td><td class="freemium">Freemium</td><td>Dev-friendly email API</td></tr>
+<tr><td>18</td><td>Brevo</td><td>Email + SMS</td><td class="freemium">Freemium</td><td>Email + SMS campaigns</td></tr>
+<tr><td>19</td><td>Buffer</td><td>Social</td><td class="freemium">Freemium</td><td>Schedule posts</td></tr>
+<tr><td>20</td><td>Canva</td><td>Design</td><td class="freemium">Freemium</td><td>Social graphics</td></tr>
+</table>
+</div>
+
+<!-- DEVOPS -->
+<div class="section" id="devops">
+<h2>DevOps & Hosting</h2>
+<table><tr><th>#</th><th>Tool</th><th>Type</th><th>Price</th><th>Best For</th></tr>
+<tr><td>1</td><td>Vercel</td><td>Hosting</td><td class="freemium">Freemium</td><td>Next.js, React</td></tr>
+<tr><td>2</td><td>Netlify</td><td>Hosting</td><td class="freemium">Freemium</td><td>Static sites</td></tr>
+<tr><td>3</td><td>Railway</td><td>App Hosting</td><td class="paid">$5/mo</td><td>Full-stack + DB</td></tr>
+<tr><td>4</td><td>Render</td><td>Cloud</td><td class="freemium">Freemium</td><td>APIs, databases</td></tr>
+<tr><td>5</td><td>Fly.io</td><td>Edge</td><td class="freemium">Freemium</td><td>Global edge deploy</td></tr>
+<tr><td>6</td><td>AWS</td><td>Cloud</td><td class="paid">Pay-as-you-go</td><td>Enterprise, scalable</td></tr>
+<tr><td>7</td><td>DigitalOcean</td><td>VPS</td><td class="paid">$4/mo+</td><td>Simple servers</td></tr>
+<tr><td>8</td><td>Cloudflare Pages</td><td>Static</td><td class="free">Free</td><td>Static sites, edge</td></tr>
+<tr><td>9</td><td>GitHub Actions</td><td>CI/CD</td><td class="freemium">Freemium</td><td>Automated testing</td></tr>
+<tr><td>10</td><td>Docker</td><td>Containers</td><td class="free">Free</td><td>Consistent environments</td></tr>
+<tr><td>11</td><td>Coolify</td><td>Self-host PaaS</td><td class="free">Free</td><td>Self-hosted Vercel alt</td></tr>
+<tr><td>12</td><td>Cloudflare</td><td>CDN + DNS</td><td class="freemium">Freemium</td><td>DNS, SSL, CDN</td></tr>
+<tr><td>13</td><td>Namecheap</td><td>Domains</td><td class="paid">~$9/yr</td><td>Affordable domains</td></tr>
+<tr><td>14</td><td>Squarespace Domains</td><td>Domains</td><td class="paid">~$12/yr</td><td>Google integration</td></tr>
+<tr><td>15</td><td>Sentry</td><td>Error Tracking</td><td class="freemium">Freemium</td><td>Error monitoring</td></tr>
+<tr><td>16</td><td>Uptime Robot</td><td>Monitoring</td><td class="freemium">Freemium</td><td>Uptime alerts</td></tr>
+<tr><td>17</td><td>Better Stack</td><td>Logging</td><td class="freemium">Freemium</td><td>Log management</td></tr>
+<tr><td>18</td><td>Git</td><td>VCS</td><td class="free">Free</td><td>Source control</td></tr>
+<tr><td>19</td><td>GitHub</td><td>Platform</td><td class="freemium">Freemium</td><td>Repos, CI/CD</td></tr>
+<tr><td>20</td><td>VS Code</td><td>Editor</td><td class="free">Free</td><td>Development</td></tr>
+</table>
+</div>
+
+<!-- DESIGN -->
+<div class="section" id="design">
+<h2>Design & UI</h2>
+<table><tr><th>#</th><th>Tool</th><th>Type</th><th>Price</th><th>Best For</th></tr>
+<tr><td>1</td><td>Figma</td><td>UI Design</td><td class="freemium">Freemium</td><td>UI/UX, prototyping</td></tr>
+<tr><td>2</td><td>Canva</td><td>Graphics</td><td class="freemium">Freemium</td><td>Social media, presentations</td></tr>
+<tr><td>3</td><td>Framer</td><td>Website Builder</td><td class="freemium">Freemium</td><td>No-code animated websites</td></tr>
+<tr><td>4</td><td>Excalidraw</td><td>Whiteboard</td><td class="free">Free</td><td>Wireframes, diagrams</td></tr>
+<tr><td>5</td><td>Lucide Icons</td><td>Icons</td><td class="free">Free</td><td>React icon library</td></tr>
+<tr><td>6</td><td>Heroicons</td><td>Icons</td><td class="free">Free</td><td>Tailwind SVG icons</td></tr>
+<tr><td>7</td><td>unDraw</td><td>Illustrations</td><td class="free">Free</td><td>SVG illustrations</td></tr>
+<tr><td>8</td><td>Phosphor Icons</td><td>Icons</td><td class="free">Free</td><td>Consistent icon family</td></tr>
+<tr><td>9</td><td>Coolors</td><td>Colors</td><td class="free">Free</td><td>Color palettes</td></tr>
+<tr><td>10</td><td>Realtime Colors</td><td>Colors</td><td class="free">Free</td><td>Preview colors on UI</td></tr>
+<tr><td>11</td><td>Google Fonts</td><td>Typography</td><td class="free">Free</td><td>Web fonts</td></tr>
+<tr><td>12</td><td>Fontjoy</td><td>Font Pairing</td><td class="free">Free</td><td>AI font pairing</td></tr>
+<tr><td>13</td><td>shadcn/ui</td><td>Components</td><td class="free">Free</td><td>Tailwind + Radix</td></tr>
+<tr><td>14</td><td>DaisyUI</td><td>Tailwind Plugin</td><td class="free">Free</td><td>Pre-built components</td></tr>
+<tr><td>15</td><td>Aceternity UI</td><td>Animated</td><td class="free">Free</td><td>Trendy animations</td></tr>
+<tr><td>16</td><td>Magic UI</td><td>Animated</td><td class="free">Free</td><td>Landing page effects</td></tr>
+<tr><td>17</td><td>Unsplash</td><td>Photos</td><td class="free">Free</td><td>Stock photos</td></tr>
+<tr><td>18</td><td>Pexels</td><td>Photos/Video</td><td class="free">Free</td><td>Free media</td></tr>
+<tr><td>19</td><td>Remove.bg</td><td>Image Edit</td><td class="freemium">Freemium</td><td>Background removal</td></tr>
+<tr><td>20</td><td>Squoosh</td><td>Compression</td><td class="free">Free</td><td>Image optimization</td></tr>
+</table>
+</div>
+
+<!-- BUSINESS -->
+<div class="section" id="business">
+<h2>Business & Monetization</h2>
+<table><tr><th>#</th><th>Tool</th><th>Type</th><th>Price</th><th>Best For</th></tr>
+<tr><td>1</td><td>Razorpay</td><td>Payments</td><td class="paid">2%/txn</td><td>India (UPI, cards)</td></tr>
+<tr><td>2</td><td>Stripe</td><td>Payments</td><td class="paid">2.9%+30c</td><td>International</td></tr>
+<tr><td>3</td><td>Lemon Squeezy</td><td>MoR</td><td class="paid">5%+50c</td><td>Digital products, tax handled</td></tr>
+<tr><td>4</td><td>Gumroad</td><td>Digital Sales</td><td class="paid">10%</td><td>Selling digital products</td></tr>
+<tr><td>5</td><td>Paddle</td><td>MoR</td><td class="paid">5%+50c</td><td>SaaS billing</td></tr>
+<tr><td>6</td><td>GitHub Sponsors</td><td>Donations</td><td class="free">0% fee</td><td>Open-source sponsorship</td></tr>
+<tr><td>7</td><td>Ko-fi</td><td>Tips</td><td class="free">0% on tips</td><td>One-time donations</td></tr>
+<tr><td>8</td><td>Patreon</td><td>Membership</td><td class="paid">5-12%</td><td>Recurring tiers</td></tr>
+<tr><td>9</td><td>Buy Me a Coffee</td><td>Tips</td><td class="paid">5%</td><td>Quick tips</td></tr>
+<tr><td>10</td><td>Razorpay Button</td><td>Donations</td><td class="paid">2%</td><td>India donation button</td></tr>
+<tr><td>11</td><td>Plausible</td><td>Analytics</td><td class="paid">$9/mo</td><td>Privacy-friendly</td></tr>
+<tr><td>12</td><td>PostHog</td><td>Product Analytics</td><td class="freemium">Freemium</td><td>Feature flags, funnels</td></tr>
+<tr><td>13</td><td>Mixpanel</td><td>Analytics</td><td class="freemium">Freemium</td><td>Retention, funnels</td></tr>
+<tr><td>14</td><td>Notion</td><td>Workspace</td><td class="freemium">Freemium</td><td>Docs, project mgmt</td></tr>
+<tr><td>15</td><td>Linear</td><td>Issues</td><td class="freemium">Freemium</td><td>Dev issue tracking</td></tr>
+<tr><td>16</td><td>Trello</td><td>Kanban</td><td class="freemium">Freemium</td><td>Visual tasks</td></tr>
+<tr><td>17</td><td>Termly</td><td>Legal</td><td class="freemium">Freemium</td><td>Privacy policy gen</td></tr>
+<tr><td>18</td><td>Iubenda</td><td>Compliance</td><td class="freemium">Freemium</td><td>GDPR, cookies</td></tr>
+<tr><td>19</td><td>Discord</td><td>Community</td><td class="free">Free</td><td>Dev community</td></tr>
+<tr><td>20</td><td>Crisp</td><td>Live Chat</td><td class="freemium">Freemium</td><td>Website support</td></tr>
+</table>
+</div>
+
+<!-- MOBILE -->
+<div class="section" id="mobile">
+<h2>Mobile Development</h2>
+<table><tr><th>#</th><th>Tool</th><th>Type</th><th>Price</th><th>Best For</th></tr>
+<tr><td>1</td><td>React Native</td><td>Cross-platform</td><td class="free">Free</td><td>JS devs, mobile apps</td></tr>
+<tr><td>2</td><td>Expo</td><td>RN SDK</td><td class="freemium">Freemium</td><td>Simplified RN dev</td></tr>
+<tr><td>3</td><td>Flutter</td><td>Cross-platform</td><td class="free">Free</td><td>Beautiful UI</td></tr>
+<tr><td>4</td><td>Capacitor</td><td>Hybrid</td><td class="free">Free</td><td>Web to mobile</td></tr>
+<tr><td>5</td><td>Tauri Mobile</td><td>Cross-platform</td><td class="free">Free</td><td>Rust + web tech</td></tr>
+<tr><td>6</td><td>SwiftUI</td><td>iOS Native</td><td class="free">Free</td><td>iOS-only apps</td></tr>
+<tr><td>7</td><td>Kotlin</td><td>Android Native</td><td class="free">Free</td><td>Android-only</td></tr>
+<tr><td>8</td><td>Jetpack Compose</td><td>Android UI</td><td class="free">Free</td><td>Modern Android UI</td></tr>
+<tr><td>9</td><td>Firebase</td><td>BaaS</td><td class="freemium">Freemium</td><td>Auth, push, Firestore</td></tr>
+<tr><td>10</td><td>Supabase</td><td>BaaS</td><td class="freemium">Freemium</td><td>Open-source Firebase alt</td></tr>
+<tr><td>11</td><td>Appwrite</td><td>BaaS</td><td class="free">Free (self-host)</td><td>Self-hosted backend</td></tr>
+<tr><td>12</td><td>Convex</td><td>Reactive</td><td class="freemium">Freemium</td><td>Real-time sync</td></tr>
+<tr><td>13</td><td>Zustand</td><td>State</td><td class="free">Free</td><td>Simple state</td></tr>
+<tr><td>14</td><td>React Navigation</td><td>Navigation</td><td class="free">Free</td><td>Screen nav in RN</td></tr>
+<tr><td>15</td><td>Expo Router</td><td>Routing</td><td class="free">Free</td><td>File-based routing</td></tr>
+<tr><td>16</td><td>NativeWind</td><td>Styling</td><td class="free">Free</td><td>Tailwind for RN</td></tr>
+<tr><td>17</td><td>Tamagui</td><td>UI Kit</td><td class="free">Free</td><td>Universal components</td></tr>
+<tr><td>18</td><td>RN Paper</td><td>Material UI</td><td class="free">Free</td><td>Material Design</td></tr>
+<tr><td>19</td><td>EAS (Expo)</td><td>Build</td><td class="freemium">Freemium</td><td>OTA updates, builds</td></tr>
+<tr><td>20</td><td>Detox</td><td>E2E Testing</td><td class="free">Free</td><td>Mobile E2E tests</td></tr>
+</table>
+</div>
+
+<!-- TESTING -->
+<div class="section" id="testing">
+<h2>Testing & Quality</h2>
+<table><tr><th>#</th><th>Tool</th><th>Type</th><th>Price</th><th>Best For</th></tr>
+<tr><td>1</td><td>Vitest</td><td>Test Runner</td><td class="free">Free</td><td>Fast unit tests</td></tr>
+<tr><td>2</td><td>Jest</td><td>Test Runner</td><td class="free">Free</td><td>React testing</td></tr>
+<tr><td>3</td><td>Pytest</td><td>Python Testing</td><td class="free">Free</td><td>Python tests</td></tr>
+<tr><td>4</td><td>Testing Library</td><td>DOM Testing</td><td class="free">Free</td><td>Component testing</td></tr>
+<tr><td>5</td><td>Playwright</td><td>E2E</td><td class="free">Free</td><td>Cross-browser E2E</td></tr>
+<tr><td>6</td><td>Cypress</td><td>E2E</td><td class="freemium">Freemium</td><td>E2E with great DX</td></tr>
+<tr><td>7</td><td>Puppeteer</td><td>Automation</td><td class="free">Free</td><td>Chrome automation</td></tr>
+<tr><td>8</td><td>Bruno</td><td>API Client</td><td class="free">Free</td><td>Git-friendly API testing</td></tr>
+<tr><td>9</td><td>Postman</td><td>API Client</td><td class="freemium">Freemium</td><td>API collections</td></tr>
+<tr><td>10</td><td>Insomnia</td><td>API Client</td><td class="free">Free</td><td>REST + GraphQL</td></tr>
+<tr><td>11</td><td>Hoppscotch</td><td>API Client</td><td class="free">Free</td><td>Open-source Postman</td></tr>
+<tr><td>12</td><td>Lighthouse</td><td>Perf Audit</td><td class="free">Free</td><td>CWV, SEO, a11y</td></tr>
+<tr><td>13</td><td>WebPageTest</td><td>Perf</td><td class="free">Free</td><td>Waterfall analysis</td></tr>
+<tr><td>14</td><td>k6</td><td>Load Testing</td><td class="free">Free</td><td>API load testing</td></tr>
+<tr><td>15</td><td>ESLint</td><td>Linter</td><td class="free">Free</td><td>JS/TS linting</td></tr>
+<tr><td>16</td><td>Prettier</td><td>Formatter</td><td class="free">Free</td><td>Code formatting</td></tr>
+<tr><td>17</td><td>SonarQube</td><td>Analysis</td><td class="freemium">Freemium</td><td>Security, code smells</td></tr>
+<tr><td>18</td><td>Biome</td><td>Linter+Fmt</td><td class="free">Free</td><td>All-in-one fast</td></tr>
+<tr><td>19</td><td>axe DevTools</td><td>Accessibility</td><td class="freemium">Freemium</td><td>WCAG compliance</td></tr>
+<tr><td>20</td><td>Snyk</td><td>Security</td><td class="freemium">Freemium</td><td>Dependency scanning</td></tr>
+</table>
+</div>
+
+<!-- SCRAPING -->
+<div class="section" id="scraping">
+<h2>Web Scraping & Automation</h2>
+<table><tr><th>#</th><th>Tool</th><th>Type</th><th>Price</th><th>Best For</th></tr>
+<tr><td>1</td><td>Puppeteer</td><td>Browser</td><td class="free">Free</td><td>Chrome headless scraping</td></tr>
+<tr><td>2</td><td>Playwright</td><td>Browser</td><td class="free">Free</td><td>Multi-browser, stealth</td></tr>
+<tr><td>3</td><td>Cheerio</td><td>Parser</td><td class="free">Free</td><td>Fast HTML parsing (Node)</td></tr>
+<tr><td>4</td><td>Beautiful Soup</td><td>Parser</td><td class="free">Free</td><td>Python HTML parsing</td></tr>
+<tr><td>5</td><td>Scrapy</td><td>Framework</td><td class="free">Free</td><td>Large-scale crawling</td></tr>
+<tr><td>6</td><td>Crawlee</td><td>Framework</td><td class="free">Free</td><td>Modern Node crawling</td></tr>
+<tr><td>7</td><td>Apify</td><td>Platform</td><td class="freemium">Freemium</td><td>Pre-built scrapers</td></tr>
+<tr><td>8</td><td>ScrapingBee</td><td>API</td><td class="paid">Paid</td><td>Proxy, CAPTCHA handling</td></tr>
+<tr><td>9</td><td>Bright Data</td><td>Proxy</td><td class="paid">Paid</td><td>Enterprise scraping</td></tr>
+<tr><td>10</td><td>Firecrawl</td><td>Web-to-LLM</td><td class="freemium">Freemium</td><td>Scrape for AI/RAG</td></tr>
+<tr><td>11</td><td>Instant Data Scraper</td><td>Extension</td><td class="free">Free</td><td>Quick extraction</td></tr>
+<tr><td>12</td><td>Web Scraper</td><td>Extension</td><td class="free">Free</td><td>Point-and-click</td></tr>
+<tr><td>13</td><td>Octoparse</td><td>No-Code</td><td class="freemium">Freemium</td><td>Visual scraping</td></tr>
+<tr><td>14</td><td>n8n</td><td>Workflows</td><td class="free">Free (self-host)</td><td>Open-source Zapier</td></tr>
+<tr><td>15</td><td>Make</td><td>Workflows</td><td class="freemium">Freemium</td><td>Visual automation</td></tr>
+<tr><td>16</td><td>Zapier</td><td>Workflows</td><td class="freemium">Freemium</td><td>Connect apps</td></tr>
+<tr><td>17</td><td>Pandas</td><td>Data</td><td class="free">Free</td><td>Data manipulation</td></tr>
+<tr><td>18</td><td>DuckDB</td><td>Analytics DB</td><td class="free">Free</td><td>SQL on CSV/JSON</td></tr>
+<tr><td>19</td><td>Puppeteer Stealth</td><td>Anti-detect</td><td class="free">Free</td><td>Bypass bot detection</td></tr>
+<tr><td>20</td><td>Residential Proxies</td><td>Proxy</td><td class="paid">Paid</td><td>Avoid IP blocks</td></tr>
+</table>
+</div>
+
+<!-- DATA SCIENCE -->
+<div class="section" id="datascience">
+<h2>Data Science & Visualization</h2>
+<table><tr><th>#</th><th>Tool</th><th>Type</th><th>Price</th><th>Best For</th></tr>
+<tr><td>1</td><td>Pandas</td><td>Data Analysis</td><td class="free">Free</td><td>Python data manipulation</td></tr>
+<tr><td>2</td><td>NumPy</td><td>Numerical</td><td class="free">Free</td><td>Arrays, math operations</td></tr>
+<tr><td>3</td><td>Polars</td><td>Data Analysis</td><td class="free">Free</td><td>Fast Pandas alternative</td></tr>
+<tr><td>4</td><td>DuckDB</td><td>Analytical DB</td><td class="free">Free</td><td>SQL on CSV/JSON</td></tr>
+<tr><td>5</td><td>Jupyter</td><td>Notebook</td><td class="free">Free</td><td>Exploratory analysis</td></tr>
+<tr><td>6</td><td>Google Colab</td><td>Cloud Notebook</td><td class="freemium">Freemium</td><td>Free GPU notebooks</td></tr>
+<tr><td>7</td><td>Recharts</td><td>React Charts</td><td class="free">Free</td><td>Dashboard charts</td></tr>
+<tr><td>8</td><td>Chart.js</td><td>JS Charts</td><td class="free">Free</td><td>Simple charts</td></tr>
+<tr><td>9</td><td>D3.js</td><td>Viz Library</td><td class="free">Free</td><td>Custom visualizations</td></tr>
+<tr><td>10</td><td>Plotly</td><td>Interactive</td><td class="freemium">Freemium</td><td>Interactive plots</td></tr>
+<tr><td>11</td><td>Matplotlib</td><td>Python Charts</td><td class="free">Free</td><td>Static plots</td></tr>
+<tr><td>12</td><td>Seaborn</td><td>Statistical</td><td class="free">Free</td><td>Statistical plots</td></tr>
+<tr><td>13</td><td>ECharts</td><td>JS Charts</td><td class="free">Free</td><td>Large datasets</td></tr>
+<tr><td>14</td><td>Tremor</td><td>React Dashboard</td><td class="free">Free</td><td>Tailwind dashboards</td></tr>
+<tr><td>15</td><td>Looker Studio</td><td>BI</td><td class="free">Free</td><td>Google data reports</td></tr>
+<tr><td>16</td><td>Metabase</td><td>BI Tool</td><td class="freemium">Freemium</td><td>Self-hosted dashboards</td></tr>
+<tr><td>17</td><td>Tableau</td><td>BI</td><td class="paid">Paid</td><td>Enterprise viz</td></tr>
+<tr><td>18</td><td>Streamlit</td><td>Data Apps</td><td class="free">Free</td><td>Python data apps</td></tr>
+<tr><td>19</td><td>Apache Spark</td><td>Big Data</td><td class="free">Free</td><td>Large-scale processing</td></tr>
+<tr><td>20</td><td>dbt</td><td>Transform</td><td class="freemium">Freemium</td><td>SQL transformations</td></tr>
+</table>
+</div>
+
+<!-- SECURITY -->
+<div class="section" id="security">
+<h2>Cybersecurity</h2>
+<table><tr><th>#</th><th>Tool</th><th>Type</th><th>Price</th><th>Best For</th></tr>
+<tr><td>1</td><td>OWASP ZAP</td><td>Scanner</td><td class="free">Free</td><td>Web app scanning</td></tr>
+<tr><td>2</td><td>Burp Suite</td><td>Pen Testing</td><td class="freemium">Free/Paid</td><td>Security testing</td></tr>
+<tr><td>3</td><td>Snyk</td><td>Dependency Scan</td><td class="freemium">Freemium</td><td>Vulnerability scanning</td></tr>
+<tr><td>4</td><td>Socket.dev</td><td>Supply Chain</td><td class="freemium">Freemium</td><td>Malicious packages</td></tr>
+<tr><td>5</td><td>Helmet.js</td><td>HTTP Security</td><td class="free">Free</td><td>Express security headers</td></tr>
+<tr><td>6</td><td>Nmap</td><td>Network</td><td class="free">Free</td><td>Port scanning</td></tr>
+<tr><td>7</td><td>Wireshark</td><td>Packet Analyzer</td><td class="free">Free</td><td>Network traffic</td></tr>
+<tr><td>8</td><td>Cloudflare WAF</td><td>Firewall</td><td class="freemium">Freemium</td><td>DDoS protection</td></tr>
+<tr><td>9</td><td>1Password</td><td>Passwords</td><td class="paid">$3/mo</td><td>Team passwords</td></tr>
+<tr><td>10</td><td>Bitwarden</td><td>Passwords</td><td class="freemium">Freemium</td><td>Open-source passwords</td></tr>
+<tr><td>11</td><td>dotenv-vault</td><td>Secrets</td><td class="free">Free</td><td>Encrypted .env</td></tr>
+<tr><td>12</td><td>GitHub Secret Scanning</td><td>Leak Detection</td><td class="free">Free</td><td>Detect leaked secrets</td></tr>
+<tr><td>13</td><td>HashiCorp Vault</td><td>Secret Store</td><td class="freemium">Freemium</td><td>Enterprise secrets</td></tr>
+<tr><td>14</td><td>Let's Encrypt</td><td>SSL</td><td class="free">Free</td><td>Free HTTPS certs</td></tr>
+<tr><td>15</td><td>Cloudflare SSL</td><td>SSL</td><td class="free">Free</td><td>One-click SSL</td></tr>
+<tr><td>16</td><td>SonarQube</td><td>Code Analysis</td><td class="freemium">Freemium</td><td>Security bugs</td></tr>
+<tr><td>17</td><td>npm audit</td><td>Audit</td><td class="free">Free</td><td>Node vulnerability check</td></tr>
+<tr><td>18</td><td>Trivy</td><td>Container</td><td class="free">Free</td><td>Docker image scanning</td></tr>
+<tr><td>19</td><td>CORS Tester</td><td>Testing</td><td class="free">Free</td><td>CORS configuration</td></tr>
+<tr><td>20</td><td>CSP Evaluator</td><td>Testing</td><td class="free">Free</td><td>Content Security Policy</td></tr>
+</table>
+</div>
+
+<!-- E-COMMERCE -->
+<div class="section" id="ecommerce">
+<h2>E-commerce Platforms</h2>
+<table><tr><th>#</th><th>Tool</th><th>Type</th><th>Price</th><th>Best For</th></tr>
+<tr><td>1</td><td>Shopify</td><td>Platform</td><td class="paid">$39/mo</td><td>Quick store setup</td></tr>
+<tr><td>2</td><td>WooCommerce</td><td>WordPress</td><td class="free">Free</td><td>WordPress stores</td></tr>
+<tr><td>3</td><td>Medusa</td><td>Headless</td><td class="free">Free</td><td>Developer-first</td></tr>
+<tr><td>4</td><td>Saleor</td><td>Headless</td><td class="free">Free</td><td>GraphQL commerce</td></tr>
+<tr><td>5</td><td>Vendure</td><td>Headless</td><td class="free">Free</td><td>TypeScript commerce</td></tr>
+<tr><td>6</td><td>Razorpay</td><td>Payments (IN)</td><td class="paid">2%/txn</td><td>UPI, cards (India)</td></tr>
+<tr><td>7</td><td>Cashfree</td><td>Payments (IN)</td><td class="paid">1.9%/txn</td><td>India payments</td></tr>
+<tr><td>8</td><td>Stripe</td><td>Payments</td><td class="paid">2.9%+30c</td><td>International</td></tr>
+<tr><td>9</td><td>Lemon Squeezy</td><td>MoR</td><td class="paid">5%+50c</td><td>Digital products</td></tr>
+<tr><td>10</td><td>Shiprocket</td><td>Shipping (IN)</td><td class="paid">Per shipment</td><td>Multi-courier India</td></tr>
+<tr><td>11</td><td>Delhivery</td><td>Logistics (IN)</td><td class="paid">Per shipment</td><td>D2C fulfillment</td></tr>
+<tr><td>12</td><td>Algolia</td><td>Search</td><td class="freemium">Freemium</td><td>Product search</td></tr>
+<tr><td>13</td><td>Meilisearch</td><td>Search</td><td class="free">Free</td><td>Open-source search</td></tr>
+<tr><td>14</td><td>Cloudinary</td><td>Image CDN</td><td class="freemium">Freemium</td><td>Product images</td></tr>
+<tr><td>15</td><td>Sanity</td><td>Product CMS</td><td class="freemium">Freemium</td><td>Product content</td></tr>
+<tr><td>16</td><td>Zoho Inventory</td><td>Inventory (IN)</td><td class="freemium">Freemium</td><td>Stock management</td></tr>
+<tr><td>17</td><td>Next.js Commerce</td><td>Template</td><td class="free">Free</td><td>Headless storefront</td></tr>
+<tr><td>18</td><td>Hydrogen</td><td>Shopify FW</td><td class="free">Free</td><td>Custom Shopify</td></tr>
+<tr><td>19</td><td>PhonePe PG</td><td>Payments (IN)</td><td class="paid">Varies</td><td>UPI-heavy India</td></tr>
+<tr><td>20</td><td>PayPal</td><td>Payments</td><td class="paid">2.9%+30c</td><td>Global buyer protection</td></tr>
+</table>
+</div>
+
+<!-- VIDEO -->
+<div class="section" id="video">
+<h2>Video & Audio Production</h2>
+<table><tr><th>#</th><th>Tool</th><th>Type</th><th>Price</th><th>Best For</th></tr>
+<tr><td>1</td><td>DaVinci Resolve</td><td>Editor</td><td class="free">Free</td><td>Professional editing</td></tr>
+<tr><td>2</td><td>CapCut</td><td>Editor</td><td class="free">Free</td><td>Social media videos</td></tr>
+<tr><td>3</td><td>Premiere Pro</td><td>Editor</td><td class="paid">$23/mo</td><td>Industry standard</td></tr>
+<tr><td>4</td><td>OBS Studio</td><td>Recording</td><td class="free">Free</td><td>Streaming, recording</td></tr>
+<tr><td>5</td><td>Loom</td><td>Screen Record</td><td class="freemium">Freemium</td><td>Async video messages</td></tr>
+<tr><td>6</td><td>Screen Studio</td><td>Screen Record</td><td class="paid">$89 (Mac)</td><td>Dev demo recordings</td></tr>
+<tr><td>7</td><td>Audacity</td><td>Audio Editor</td><td class="free">Free</td><td>Podcast editing</td></tr>
+<tr><td>8</td><td>Descript</td><td>Audio/Video</td><td class="freemium">Freemium</td><td>Text-based editing</td></tr>
+<tr><td>9</td><td>ElevenLabs</td><td>Voice AI</td><td class="freemium">Freemium</td><td>Text-to-speech</td></tr>
+<tr><td>10</td><td>FFmpeg</td><td>Processing</td><td class="free">Free</td><td>CLI video/audio</td></tr>
+<tr><td>11</td><td>Remotion</td><td>React Video</td><td class="freemium">Freemium</td><td>Programmatic video</td></tr>
+<tr><td>12</td><td>Whisper</td><td>Speech-to-Text</td><td class="free">Free</td><td>Transcription</td></tr>
+<tr><td>13</td><td>Canva</td><td>Thumbnails</td><td class="freemium">Freemium</td><td>Quick graphics</td></tr>
+<tr><td>14</td><td>Photopea</td><td>Photo Editor</td><td class="free">Free</td><td>Browser Photoshop alt</td></tr>
+<tr><td>15</td><td>Riverside</td><td>Podcast</td><td class="freemium">Freemium</td><td>Remote HD recording</td></tr>
+<tr><td>16</td><td>ShareX</td><td>Capture</td><td class="free">Free (Win)</td><td>Screenshots, GIFs</td></tr>
+<tr><td>17</td><td>Kdenlive</td><td>Editor</td><td class="free">Free</td><td>Open-source editor</td></tr>
+<tr><td>18</td><td>Shotcut</td><td>Editor</td><td class="free">Free</td><td>Simple editor</td></tr>
+<tr><td>19</td><td>Remove.bg</td><td>Background</td><td class="freemium">Freemium</td><td>Background removal</td></tr>
+<tr><td>20</td><td>Figma</td><td>Thumbnails</td><td class="freemium">Freemium</td><td>Custom overlays</td></tr>
+</table>
+</div>
+
+<!-- FREELANCE -->
+<div class="section" id="freelance">
+<h2>Freelancing & Client Work</h2>
+<table><tr><th>#</th><th>Tool</th><th>Type</th><th>Price</th><th>Best For</th></tr>
+<tr><td>1</td><td>Upwork</td><td>Marketplace</td><td class="paid">10% fee</td><td>Long-term clients</td></tr>
+<tr><td>2</td><td>Fiverr</td><td>Marketplace</td><td class="paid">20% fee</td><td>Quick gigs</td></tr>
+<tr><td>3</td><td>Toptal</td><td>Elite</td><td class="free">0% fee</td><td>Top 3% devs</td></tr>
+<tr><td>4</td><td>Contra</td><td>Marketplace</td><td class="free">0% fee</td><td>Portfolio-first</td></tr>
+<tr><td>5</td><td>Razorpay Links</td><td>Invoicing (IN)</td><td class="paid">2%/txn</td><td>India invoicing</td></tr>
+<tr><td>6</td><td>Zoho Invoice</td><td>Invoicing (IN)</td><td class="freemium">Freemium</td><td>GST invoices</td></tr>
+<tr><td>7</td><td>Wise</td><td>Transfer</td><td class="paid">Low FX</td><td>Receive USD in India</td></tr>
+<tr><td>8</td><td>Bonsai</td><td>Freelance Suite</td><td class="paid">$21/mo</td><td>Contracts, invoices</td></tr>
+<tr><td>9</td><td>Toggl Track</td><td>Time Tracking</td><td class="freemium">Freemium</td><td>Billable hours</td></tr>
+<tr><td>10</td><td>Clockify</td><td>Time Tracking</td><td class="free">Free</td><td>Unlimited tracking</td></tr>
+<tr><td>11</td><td>Calendly</td><td>Scheduling</td><td class="freemium">Freemium</td><td>Client meetings</td></tr>
+<tr><td>12</td><td>Notion</td><td>Project Mgmt</td><td class="freemium">Freemium</td><td>Client wikis</td></tr>
+<tr><td>13</td><td>LinkedIn</td><td>Network</td><td class="freemium">Freemium</td><td>B2B leads</td></tr>
+<tr><td>14</td><td>PandaDoc</td><td>Documents</td><td class="freemium">Freemium</td><td>Proposals, e-sign</td></tr>
+<tr><td>15</td><td>PayPal</td><td>Payments</td><td class="paid">2.9%+fee</td><td>International clients</td></tr>
+<tr><td>16</td><td>Internshala</td><td>Platform (IN)</td><td class="free">Free</td><td>India freelance gigs</td></tr>
+<tr><td>17</td><td>Truelancer</td><td>Platform (IN)</td><td class="paid">8-10%</td><td>India freelancing</td></tr>
+<tr><td>18</td><td>AND.CO</td><td>Tools</td><td class="free">Free</td><td>Invoicing, tracking</td></tr>
+<tr><td>19</td><td>GitHub Profile</td><td>Portfolio</td><td class="free">Free</td><td>Code portfolio</td></tr>
+<tr><td>20</td><td>Loom</td><td>Communication</td><td class="freemium">Freemium</td><td>Async client updates</td></tr>
+</table>
+</div>
+
+<!-- NO-CODE -->
+<div class="section" id="nocode">
+<h2>No-Code / Low-Code</h2>
+<table><tr><th>#</th><th>Tool</th><th>Type</th><th>Price</th><th>Best For</th></tr>
+<tr><td>1</td><td>Webflow</td><td>Website</td><td class="freemium">Freemium</td><td>Visual web design</td></tr>
+<tr><td>2</td><td>Framer</td><td>Website</td><td class="freemium">Freemium</td><td>Animated websites</td></tr>
+<tr><td>3</td><td>Carrd</td><td>Landing Page</td><td class="freemium">Free/$19yr</td><td>One-page sites</td></tr>
+<tr><td>4</td><td>Bubble</td><td>App Builder</td><td class="freemium">Freemium</td><td>Complex web apps</td></tr>
+<tr><td>5</td><td>FlutterFlow</td><td>Mobile Builder</td><td class="freemium">Freemium</td><td>Flutter apps visually</td></tr>
+<tr><td>6</td><td>Glide</td><td>App Builder</td><td class="freemium">Freemium</td><td>Apps from sheets</td></tr>
+<tr><td>7</td><td>Retool</td><td>Internal Tools</td><td class="freemium">Freemium</td><td>Admin panels</td></tr>
+<tr><td>8</td><td>Appsmith</td><td>Internal Tools</td><td class="free">Free</td><td>Open-source Retool</td></tr>
+<tr><td>9</td><td>Airtable</td><td>Spreadsheet DB</td><td class="freemium">Freemium</td><td>Relational spreadsheets</td></tr>
+<tr><td>10</td><td>NocoDB</td><td>Spreadsheet DB</td><td class="free">Free</td><td>Open-source Airtable</td></tr>
+<tr><td>11</td><td>Supabase</td><td>Backend</td><td class="freemium">Freemium</td><td>No-code backend</td></tr>
+<tr><td>12</td><td>Xano</td><td>Backend</td><td class="freemium">Freemium</td><td>Visual API builder</td></tr>
+<tr><td>13</td><td>Zapier</td><td>Automation</td><td class="freemium">Freemium</td><td>Connect 5000+ apps</td></tr>
+<tr><td>14</td><td>Make</td><td>Automation</td><td class="freemium">Freemium</td><td>Complex workflows</td></tr>
+<tr><td>15</td><td>n8n</td><td>Automation</td><td class="free">Free</td><td>Self-hosted Zapier</td></tr>
+<tr><td>16</td><td>Tally</td><td>Forms</td><td class="freemium">Freemium</td><td>Beautiful free forms</td></tr>
+<tr><td>17</td><td>Typeform</td><td>Forms</td><td class="freemium">Freemium</td><td>Conversational forms</td></tr>
+<tr><td>18</td><td>Google Forms</td><td>Forms</td><td class="free">Free</td><td>Quick surveys</td></tr>
+<tr><td>19</td><td>WordPress</td><td>CMS</td><td class="free">Free</td><td>Blogs, sites</td></tr>
+<tr><td>20</td><td>Softr</td><td>App Builder</td><td class="freemium">Freemium</td><td>Apps from Airtable</td></tr>
+</table>
+</div>
+
+<!-- DB ADMIN -->
+<div class="section" id="dbadmin">
+<h2>Database Admin & Tools</h2>
+<table><tr><th>#</th><th>Tool</th><th>Type</th><th>Price</th><th>Best For</th></tr>
+<tr><td>1</td><td>TablePlus</td><td>DB Client</td><td class="freemium">Free/$89</td><td>Clean multi-DB GUI</td></tr>
+<tr><td>2</td><td>DBeaver</td><td>DB Client</td><td class="freemium">Freemium</td><td>Universal DB tool</td></tr>
+<tr><td>3</td><td>pgAdmin</td><td>Postgres GUI</td><td class="free">Free</td><td>PostgreSQL management</td></tr>
+<tr><td>4</td><td>MongoDB Compass</td><td>Mongo GUI</td><td class="free">Free</td><td>Visual MongoDB</td></tr>
+<tr><td>5</td><td>Prisma Studio</td><td>ORM GUI</td><td class="free">Free</td><td>Prisma data browser</td></tr>
+<tr><td>6</td><td>Drizzle Studio</td><td>ORM GUI</td><td class="free">Free</td><td>Drizzle data browser</td></tr>
+<tr><td>7</td><td>Redis Insight</td><td>Redis GUI</td><td class="free">Free</td><td>Redis visualization</td></tr>
+<tr><td>8</td><td>Supabase</td><td>Hosted Postgres</td><td class="freemium">Freemium</td><td>Managed Postgres</td></tr>
+<tr><td>9</td><td>Neon</td><td>Serverless PG</td><td class="freemium">Freemium</td><td>Branching Postgres</td></tr>
+<tr><td>10</td><td>PlanetScale</td><td>MySQL</td><td class="freemium">Freemium</td><td>Branching MySQL</td></tr>
+<tr><td>11</td><td>MongoDB Atlas</td><td>Hosted Mongo</td><td class="freemium">Freemium</td><td>Managed MongoDB</td></tr>
+<tr><td>12</td><td>Turso</td><td>Edge SQLite</td><td class="freemium">Freemium</td><td>Edge-first DB</td></tr>
+<tr><td>13</td><td>Upstash</td><td>Serverless Redis</td><td class="freemium">Freemium</td><td>Serverless Redis+Kafka</td></tr>
+<tr><td>14</td><td>Prisma Migrate</td><td>Migration</td><td class="free">Free</td><td>TS-based migrations</td></tr>
+<tr><td>15</td><td>Drizzle Kit</td><td>Migration</td><td class="free">Free</td><td>SQL migrations</td></tr>
+<tr><td>16</td><td>Flyway</td><td>Migration</td><td class="freemium">Freemium</td><td>Java/enterprise</td></tr>
+<tr><td>17</td><td>Alembic</td><td>Migration</td><td class="free">Free</td><td>Python migrations</td></tr>
+<tr><td>18</td><td>pg_dump</td><td>Backup</td><td class="free">Free</td><td>Postgres backup</td></tr>
+<tr><td>19</td><td>Bytebase</td><td>Schema Mgmt</td><td class="freemium">Freemium</td><td>Database CI/CD</td></tr>
+<tr><td>20</td><td>Arctype</td><td>SQL Client</td><td class="free">Free</td><td>Collaborative SQL</td></tr>
+</table>
+</div>
+
+<!-- CHROME EXT -->
+<div class="section" id="chromeext">
+<h2>Chrome Extension Dev</h2>
+<table><tr><th>#</th><th>Tool</th><th>Type</th><th>Price</th><th>Best For</th></tr>
+<tr><td>1</td><td>WXT</td><td>Framework</td><td class="free">Free</td><td>Vite-based, HMR</td></tr>
+<tr><td>2</td><td>Plasmo</td><td>Framework</td><td class="free">Free</td><td>React/Vue extensions</td></tr>
+<tr><td>3</td><td>CRXJS</td><td>Vite Plugin</td><td class="free">Free</td><td>Vite + Chrome ext</td></tr>
+<tr><td>4</td><td>Vanilla JS</td><td>No Framework</td><td class="free">Free</td><td>Lightweight, zero deps</td></tr>
+<tr><td>5</td><td>Manifest V3</td><td>API Standard</td><td class="free">Free</td><td>Required for new exts</td></tr>
+<tr><td>6</td><td>chrome.storage</td><td>Storage API</td><td class="free">Free</td><td>Persist settings</td></tr>
+<tr><td>7</td><td>chrome.tabs</td><td>Tabs API</td><td class="free">Free</td><td>Tab manipulation</td></tr>
+<tr><td>8</td><td>chrome.scripting</td><td>Content Scripts</td><td class="free">Free</td><td>DOM manipulation</td></tr>
+<tr><td>9</td><td>Tailwind CSS</td><td>Styling</td><td class="free">Free</td><td>Popup/options UI</td></tr>
+<tr><td>10</td><td>shadcn/ui</td><td>Components</td><td class="free">Free</td><td>React ext popups</td></tr>
+<tr><td>11</td><td>Chrome DevTools</td><td>Debugging</td><td class="free">Free</td><td>Extension debugging</td></tr>
+<tr><td>12</td><td>Chrome Web Store</td><td>Distribution</td><td class="paid">$5 one-time</td><td>Publish extensions</td></tr>
+<tr><td>13</td><td>ExtensionPay</td><td>Payments</td><td class="paid">5% fee</td><td>Extension payments</td></tr>
+<tr><td>14</td><td>Gumroad</td><td>License Keys</td><td class="paid">10%</td><td>Sell license keys</td></tr>
+<tr><td>15</td><td>Ko-fi</td><td>Tips</td><td class="free">0%</td><td>Free ext support</td></tr>
+</table>
+</div>
+
+<!-- SEO TECH -->
+<div class="section" id="seotech">
+<h2>SEO Technical Stack</h2>
+<table><tr><th>#</th><th>Tool</th><th>Type</th><th>Price</th><th>Best For</th></tr>
+<tr><td>1</td><td>Schema.org</td><td>Markup</td><td class="free">Free</td><td>JSON-LD reference</td></tr>
+<tr><td>2</td><td>Rich Results Test</td><td>Validator</td><td class="free">Free</td><td>Test structured data</td></tr>
+<tr><td>3</td><td>next-seo</td><td>Next.js SEO</td><td class="free">Free</td><td>Meta tags for Next.js</td></tr>
+<tr><td>4</td><td>PageSpeed Insights</td><td>CWV Testing</td><td class="free">Free</td><td>LCP, FID, CLS</td></tr>
+<tr><td>5</td><td>WebPageTest</td><td>Performance</td><td class="free">Free</td><td>Waterfall analysis</td></tr>
+<tr><td>6</td><td>Lighthouse</td><td>Audit</td><td class="free">Free</td><td>CWV, SEO scores</td></tr>
+<tr><td>7</td><td>Google Search Console</td><td>Webmaster</td><td class="free">Free</td><td>Index coverage</td></tr>
+<tr><td>8</td><td>Screaming Frog</td><td>Crawler</td><td class="freemium">Free/Paid</td><td>Technical audits</td></tr>
+<tr><td>9</td><td>next-sitemap</td><td>Sitemap</td><td class="free">Free</td><td>Auto sitemap Next.js</td></tr>
+<tr><td>10</td><td>Metatags.io</td><td>Preview</td><td class="free">Free</td><td>OG tag preview</td></tr>
+<tr><td>11</td><td>Ahrefs</td><td>Backlinks</td><td class="paid">$99/mo</td><td>Backlink analysis</td></tr>
+<tr><td>12</td><td>Rank Math</td><td>WordPress SEO</td><td class="freemium">Freemium</td><td>On-page SEO</td></tr>
+<tr><td>13</td><td>Web Vitals Ext</td><td>Chrome Ext</td><td class="free">Free</td><td>Real-time CWV</td></tr>
+<tr><td>14</td><td>Sitebulb</td><td>Crawler</td><td class="paid">$13.75/mo</td><td>Visual crawl reports</td></tr>
+<tr><td>15</td><td>Google Alerts</td><td>Monitoring</td><td class="free">Free</td><td>Brand mentions</td></tr>
+</table>
+</div>
+
+<!-- PRODUCTIVITY -->
+<div class="section" id="productivity">
+<h2>Productivity & Workflow</h2>
+<table><tr><th>#</th><th>Tool</th><th>Type</th><th>Price</th><th>Best For</th></tr>
+<tr><td>1</td><td>Notion</td><td>All-in-one</td><td class="freemium">Freemium</td><td>Docs, wikis, projects</td></tr>
+<tr><td>2</td><td>Obsidian</td><td>Notes</td><td class="freemium">Free/Paid</td><td>Local knowledge base</td></tr>
+<tr><td>3</td><td>Todoist</td><td>Tasks</td><td class="freemium">Freemium</td><td>Personal tasks</td></tr>
+<tr><td>4</td><td>Linear</td><td>Issues</td><td class="freemium">Freemium</td><td>Dev team sprints</td></tr>
+<tr><td>5</td><td>Slack</td><td>Chat</td><td class="freemium">Freemium</td><td>Team communication</td></tr>
+<tr><td>6</td><td>Discord</td><td>Community</td><td class="free">Free</td><td>Developer communities</td></tr>
+<tr><td>7</td><td>Loom</td><td>Video</td><td class="freemium">Freemium</td><td>Async updates</td></tr>
+<tr><td>8</td><td>Arc Browser</td><td>Browser</td><td class="free">Free</td><td>Tab management</td></tr>
+<tr><td>9</td><td>PowerToys</td><td>Windows</td><td class="free">Free</td><td>Window management</td></tr>
+<tr><td>10</td><td>Warp</td><td>Terminal</td><td class="free">Free</td><td>AI terminal</td></tr>
+<tr><td>11</td><td>Toggl Track</td><td>Time</td><td class="freemium">Freemium</td><td>Billable hours</td></tr>
+<tr><td>12</td><td>Cal.com</td><td>Scheduling</td><td class="freemium">Freemium</td><td>Open-source Calendly</td></tr>
+<tr><td>13</td><td>Google Drive</td><td>Storage</td><td class="freemium">Free 15GB</td><td>File storage</td></tr>
+<tr><td>14</td><td>GitHub Issues</td><td>Tracking</td><td class="free">Free</td><td>Code-linked issues</td></tr>
+<tr><td>15</td><td>Google Docs</td><td>Documents</td><td class="free">Free</td><td>Collaborative editing</td></tr>
+</table>
+</div>
+
+<!-- REALTIME -->
+<div class="section" id="realtime">
+<h2>Real-time & WebSocket</h2>
+<table><tr><th>#</th><th>Tool</th><th>Type</th><th>Price</th><th>Best For</th></tr>
+<tr><td>1</td><td>Socket.io</td><td>WebSocket</td><td class="free">Free</td><td>Real-time events</td></tr>
+<tr><td>2</td><td>ws</td><td>WebSocket</td><td class="free">Free</td><td>Raw WebSocket server</td></tr>
+<tr><td>3</td><td>Supabase Realtime</td><td>BaaS</td><td class="freemium">Freemium</td><td>Postgres changes</td></tr>
+<tr><td>4</td><td>Pusher</td><td>Service</td><td class="freemium">Freemium</td><td>Channels, pub/sub</td></tr>
+<tr><td>5</td><td>Ably</td><td>Service</td><td class="freemium">Freemium</td><td>Enterprise messaging</td></tr>
+<tr><td>6</td><td>Firebase Realtime</td><td>BaaS</td><td class="freemium">Freemium</td><td>Auto-sync, offline</td></tr>
+<tr><td>7</td><td>Convex</td><td>Reactive</td><td class="freemium">Freemium</td><td>Auto data sync</td></tr>
+<tr><td>8</td><td>PartyKit</td><td>Edge</td><td class="freemium">Freemium</td><td>Multiplayer apps</td></tr>
+<tr><td>9</td><td>LiveKit</td><td>WebRTC</td><td class="freemium">Freemium</td><td>Video calls</td></tr>
+<tr><td>10</td><td>100ms</td><td>Video SDK (IN)</td><td class="freemium">Freemium</td><td>India-based video</td></tr>
+<tr><td>11</td><td>Vercel AI SDK</td><td>SSE</td><td class="free">Free</td><td>AI streaming</td></tr>
+<tr><td>12</td><td>Redis Pub/Sub</td><td>Messaging</td><td class="free">Free</td><td>Simple pub/sub</td></tr>
+<tr><td>13</td><td>BullMQ</td><td>Job Queue</td><td class="free">Free</td><td>Background jobs</td></tr>
+<tr><td>14</td><td>Yjs</td><td>CRDT</td><td class="free">Free</td><td>Collaborative editing</td></tr>
+<tr><td>15</td><td>Liveblocks</td><td>Collaboration</td><td class="freemium">Freemium</td><td>Comments, cursors</td></tr>
+</table>
+</div>
+
+<!-- CMS -->
+<div class="section" id="cms">
+<h2>CMS & Content Platforms</h2>
+<table><tr><th>#</th><th>Tool</th><th>Type</th><th>Price</th><th>Best For</th></tr>
+<tr><td>1</td><td>Sanity</td><td>Headless CMS</td><td class="freemium">Freemium</td><td>Structured content</td></tr>
+<tr><td>2</td><td>Strapi</td><td>Headless CMS</td><td class="freemium">Freemium</td><td>Open-source Node CMS</td></tr>
+<tr><td>3</td><td>Contentful</td><td>Headless CMS</td><td class="freemium">Freemium</td><td>Enterprise content</td></tr>
+<tr><td>4</td><td>Payload</td><td>Headless CMS</td><td class="free">Free</td><td>TypeScript, Next.js</td></tr>
+<tr><td>5</td><td>WordPress</td><td>CMS</td><td class="free">Free</td><td>Blogs, business</td></tr>
+<tr><td>6</td><td>Ghost</td><td>Publishing</td><td class="freemium">Freemium</td><td>Newsletters, blogs</td></tr>
+<tr><td>7</td><td>Hashnode</td><td>Blog</td><td class="free">Free</td><td>Developer blogs</td></tr>
+<tr><td>8</td><td>Dev.to</td><td>Blog</td><td class="free">Free</td><td>Dev community</td></tr>
+<tr><td>9</td><td>Medium</td><td>Blog</td><td class="freemium">Freemium</td><td>Wider audience</td></tr>
+<tr><td>10</td><td>Substack</td><td>Newsletter</td><td class="freemium">Freemium</td><td>Paid newsletters</td></tr>
+<tr><td>11</td><td>MDX</td><td>Content</td><td class="free">Free</td><td>React in markdown</td></tr>
+<tr><td>12</td><td>Fumadocs</td><td>Docs</td><td class="free">Free</td><td>Next.js docs</td></tr>
+<tr><td>13</td><td>Docusaurus</td><td>Docs</td><td class="free">Free</td><td>React docs sites</td></tr>
+<tr><td>14</td><td>Mintlify</td><td>API Docs</td><td class="freemium">Freemium</td><td>Beautiful API docs</td></tr>
+<tr><td>15</td><td>GitBook</td><td>Docs</td><td class="freemium">Freemium</td><td>Team knowledge base</td></tr>
+</table>
+</div>
+
+<!-- AUTH -->
+<div class="section" id="auth">
+<h2>Authentication Deep Dive</h2>
+<table><tr><th>#</th><th>Tool</th><th>Type</th><th>Price</th><th>Best For</th></tr>
+<tr><td>1</td><td>Auth.js (NextAuth)</td><td>Library</td><td class="free">Free</td><td>Next.js OAuth</td></tr>
+<tr><td>2</td><td>Lucia</td><td>Library</td><td class="free">Free</td><td>Lightweight sessions</td></tr>
+<tr><td>3</td><td>Passport.js</td><td>Middleware</td><td class="free">Free</td><td>Express, 500+ strategies</td></tr>
+<tr><td>4</td><td>Clerk</td><td>Service</td><td class="freemium">Freemium</td><td>Drop-in auth UI</td></tr>
+<tr><td>5</td><td>Auth0</td><td>Platform</td><td class="freemium">Freemium</td><td>Enterprise SSO</td></tr>
+<tr><td>6</td><td>Supabase Auth</td><td>BaaS</td><td class="freemium">Freemium</td><td>Postgres-backed auth</td></tr>
+<tr><td>7</td><td>Firebase Auth</td><td>BaaS</td><td class="freemium">Freemium</td><td>Google/social login</td></tr>
+<tr><td>8</td><td>Kinde</td><td>Service</td><td class="freemium">Freemium</td><td>Auth + feature flags</td></tr>
+<tr><td>9</td><td>WorkOS</td><td>Enterprise</td><td class="freemium">Freemium</td><td>SSO, SCIM</td></tr>
+<tr><td>10</td><td>Keycloak</td><td>Self-hosted</td><td class="free">Free</td><td>Enterprise IAM</td></tr>
+<tr><td>11</td><td>Logto</td><td>Self-hosted</td><td class="freemium">Freemium</td><td>Modern CIAM</td></tr>
+<tr><td>12</td><td>JWT (jose)</td><td>Token</td><td class="free">Free</td><td>Edge-compatible JWT</td></tr>
+<tr><td>13</td><td>iron-session</td><td>Sessions</td><td class="free">Free</td><td>Encrypted cookies</td></tr>
+<tr><td>14</td><td>SimpleWebAuthn</td><td>Passkeys</td><td class="free">Free</td><td>Biometric login</td></tr>
+<tr><td>15</td><td>Twilio Verify</td><td>OTP</td><td class="paid">Pay per use</td><td>Phone/email verify</td></tr>
+</table>
+</div>
+
+<!-- INDIAN STARTUP -->
+<div class="section" id="indianstartup">
+<h2>Indian Startup Stack</h2>
+<table><tr><th>#</th><th>Tool</th><th>Type</th><th>Price</th><th>Best For</th></tr>
+<tr><td>1</td><td>Razorpay</td><td>Payments</td><td class="paid">2%/txn</td><td>UPI, cards, netbanking</td></tr>
+<tr><td>2</td><td>Cashfree</td><td>Payments</td><td class="paid">1.9%/txn</td><td>Payouts, auto-collect</td></tr>
+<tr><td>3</td><td>PhonePe PG</td><td>Payments</td><td class="paid">Varies</td><td>UPI-heavy businesses</td></tr>
+<tr><td>4</td><td>Razorpay Payroll</td><td>Payroll</td><td class="paid">Paid</td><td>Employee salary</td></tr>
+<tr><td>5</td><td>Instamojo</td><td>Payments</td><td class="paid">2-5%</td><td>Small businesses</td></tr>
+<tr><td>6</td><td>Zoho Books</td><td>Accounting</td><td class="freemium">Free(&lt;50L)</td><td>GST, invoicing</td></tr>
+<tr><td>7</td><td>Tally</td><td>Accounting</td><td class="paid">Rs 18K/yr</td><td>Traditional accounting</td></tr>
+<tr><td>8</td><td>ClearTax</td><td>Tax Filing</td><td class="freemium">Freemium</td><td>GST returns, ITR</td></tr>
+<tr><td>9</td><td>Zoho CRM</td><td>CRM</td><td class="freemium">Free(3 users)</td><td>India-priced CRM</td></tr>
+<tr><td>10</td><td>Freshdesk</td><td>Support</td><td class="freemium">Freemium</td><td>Customer support</td></tr>
+<tr><td>11</td><td>WhatsApp Business</td><td>Messaging</td><td class="paid">Per msg</td><td>Customer comms</td></tr>
+<tr><td>12</td><td>MSG91</td><td>OTP/SMS</td><td class="paid">Per SMS</td><td>OTP, transactional</td></tr>
+<tr><td>13</td><td>Vakilsearch</td><td>Legal</td><td class="paid">Paid</td><td>Company registration</td></tr>
+<tr><td>14</td><td>Vercel</td><td>Hosting</td><td class="freemium">Freemium</td><td>Mumbai edge</td></tr>
+<tr><td>15</td><td>AWS Mumbai</td><td>Cloud</td><td class="paid">Pay-as-you-go</td><td>Low-latency India</td></tr>
+<tr><td>16</td><td>DigitalOcean BLR</td><td>VPS</td><td class="paid">$4/mo+</td><td>Bangalore DC</td></tr>
+<tr><td>17</td><td>Startup India</td><td>Gov</td><td class="free">Free</td><td>DPIIT, tax benefits</td></tr>
+<tr><td>18</td><td>Razorpay Route</td><td>Split Pay</td><td class="paid">2%+/txn</td><td>Marketplace splits</td></tr>
+<tr><td>19</td><td>Razorpay Billing</td><td>Invoicing</td><td class="free">Included</td><td>Auto GST invoices</td></tr>
+<tr><td>20</td><td>LegalKart</td><td>Legal</td><td class="paid">Paid</td><td>Legal consultations</td></tr>
+</table>
+<h3>Indian Startup Monthly Cost (Early Stage)</h3>
+<table class="rec-table"><tr><th>Item</th><th>Cost</th></tr>
+<tr><td>Hosting (Vercel + Supabase free)</td><td>Rs 0</td></tr>
+<tr><td>Payments (Razorpay)</td><td>2% per txn</td></tr>
+<tr><td>Accounting (Zoho Books)</td><td>Rs 0 (&lt;50L rev)</td></tr>
+<tr><td>CRM (Zoho)</td><td>Rs 0 (3 users)</td></tr>
+<tr><td>Email (Gmail Workspace)</td><td>Rs 136/mo</td></tr>
+<tr><td>Domain (Namecheap)</td><td>~Rs 750/yr</td></tr>
+<tr><td>SSL (Cloudflare)</td><td>Rs 0</td></tr>
+<tr><td><strong>Total</strong></td><td><strong>~Rs 200/mo + 2%/txn</strong></td></tr>
+</table>
+</div>
+
+</div>
+
+<footer>Tool Stack Reference by Surya L | 200+ tools across 10 categories | Last updated: April 2026</footer>
+
+<script>
+// Tab switching
+document.querySelectorAll('.tab').forEach(tab=>{
+tab.addEventListener('click',()=>{
+document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+tab.classList.add('active');
+document.getElementById(tab.dataset.tab).classList.add('active');
+});
+});
+
+// Search
+document.getElementById('search').addEventListener('input',function(){
+const q=this.value.toLowerCase().trim();
+if(!q){
+document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+document.querySelector('.section').classList.add('active');
+document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+document.querySelector('.tab').classList.add('active');
+document.querySelectorAll('tr').forEach(r=>r.style.display='');
+return;
+}
+document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+document.querySelectorAll('.section').forEach(s=>{
+let found=false;
+s.querySelectorAll('tr').forEach((r,i)=>{
+if(i===0){r.style.display='';return;}
+if(r.textContent.toLowerCase().includes(q)){r.style.display='';found=true;}
+else{r.style.display='none';}
+});
+s.classList.toggle('active',found);
+});
+});
+</script>
+</body>
+</html>
