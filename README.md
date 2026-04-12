@@ -8,7 +8,7 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/Skills-41+-10B981?style=for-the-badge" alt="40+ Skills">
+  <img src="https://img.shields.io/badge/Skills-41+-10B981?style=for-the-badge" alt="41+ Skills">
   <img src="https://img.shields.io/badge/Categories-21-F59E0B?style=for-the-badge" alt="21 Categories">
   <img src="https://img.shields.io/badge/Platforms-11-6366F1?style=for-the-badge" alt="11 Platforms">
   <img src="https://img.shields.io/badge/Token_Savings-~75%25-EF4444?style=for-the-badge" alt="75% Token Savings">
