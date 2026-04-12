@@ -70,21 +70,21 @@ bash scripts/install-platform.sh
 
 **Windows (PowerShell):**
 ```powershell
-git clone https://github.com/YOUR_USERNAME/AgentMaster.git
+git clone https://github.com/Suryaraj8147/AgentMaster.git
 cd AgentMaster
 .\install.ps1
 ```
 
 **macOS / Linux / WSL:**
 ```bash
-git clone https://github.com/YOUR_USERNAME/AgentMaster.git
+git clone https://github.com/Suryaraj8147/AgentMaster.git
 cd AgentMaster
 bash install.sh
 ```
 
 ### Any Other Platform
 ```bash
-git clone https://github.com/YOUR_USERNAME/AgentMaster.git
+git clone https://github.com/Suryaraj8147/AgentMaster.git
 cd AgentMaster
 bash scripts/install-platform.sh --platform codex    # or cursor, windsurf, etc.
 ```
@@ -324,5 +324,5 @@ MIT
 ---
 
 <p align="center">
-  Built by <a href="https://github.com/YOUR_USERNAME">Surya L</a> with Claude Code
+  Built by <a href="https://github.com/Suryaraj8147">Surya L</a> with Claude Code
 </p>
