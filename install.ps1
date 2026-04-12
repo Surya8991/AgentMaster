@@ -76,6 +76,21 @@ if (-not (Test-Path "$SkillsDir\mem-search")) {
     Write-Host "  ~ claude-mem skills already installed, skipping" -ForegroundColor DarkGray
 }
 
+# 6. Set up auto-update cache
+Write-Host ""
+Write-Host "[6/6] Setting up auto-update cache..." -ForegroundColor Yellow
+$CacheDir = "$env:USERPROFILE\.claude\.agentmaster-cache"
+New-Item -ItemType Directory -Path $CacheDir -Force | Out-Null
+if (-not (Test-Path "$CacheDir\agent-master\.git")) {
+    Copy-Item -Path $ScriptDir -Destination "$CacheDir\agent-master" -Recurse -Force -ErrorAction SilentlyContinue
+    if (-not (Test-Path "$CacheDir\agent-master\skills")) {
+        git clone --depth 1 --quiet "https://github.com/Surya8991/AgentMaster.git" "$CacheDir\agent-master" 2>$null
+    }
+    Write-Host "  + auto-update cache initialized" -ForegroundColor Green
+} else {
+    Write-Host "  ~ cache already exists" -ForegroundColor DarkGray
+}
+
 # Done
 $count = (Get-ChildItem $SkillsDir -Directory).Count
 Write-Host ""
@@ -89,6 +104,8 @@ Write-Host "Usage:"
 Write-Host "  /agent-master              - invoke orchestrator"
 Write-Host "  /agent-master route <task> - dry-run routing"
 Write-Host "  /agent-master status       - show current state"
+Write-Host "  /agent-master update       - force update all repos"
 Write-Host "  /caveman                   - enable token compression"
 Write-Host ""
+Write-Host "Auto-update: skills sync from repos every 6 hours on first invoke."
 Write-Host "Start a new Claude Code session to load all skills."
