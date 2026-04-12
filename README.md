@@ -128,7 +128,12 @@ No manual skill selection. No guessing. No loading 5 skills when you need 1.
 | `/agent-master` | Invoke on current task — auto-classifies and routes |
 | `/agent-master route <task>` | **Dry-run** — shows routing plan without executing |
 | `/agent-master status` | Shows current state (caveman on/off, last skill used, active workflow) |
+| `/agent-master update` | Force-update all dependency repos and sync skills |
 | `/caveman` | Enable token compression (~75% savings on all output) |
+
+### Auto-Update
+
+AgentMaster automatically pulls latest versions from all 4 dependency repos on first invoke each session (background, non-blocking). Has a 6-hour cooldown to avoid spamming GitHub. Use `/agent-master update` to force an immediate sync.
 
 ### Dry-Run Example
 

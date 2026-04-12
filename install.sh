@@ -81,6 +81,19 @@ else
   echo "  ~ claude-mem skills already installed, skipping"
 fi
 
+# 6. Set up auto-update cache
+echo ""
+echo "[6/6] Setting up auto-update cache..."
+CACHE_DIR="$HOME/.claude/.agentmaster-cache"
+mkdir -p "$CACHE_DIR"
+if [ ! -d "$CACHE_DIR/agent-master/.git" ]; then
+  cp -r "$SCRIPT_DIR" "$CACHE_DIR/agent-master" 2>/dev/null || \
+    git clone --depth 1 https://github.com/Surya8991/AgentMaster.git "$CACHE_DIR/agent-master" 2>/dev/null
+  echo "  + auto-update cache initialized"
+else
+  echo "  ~ cache already exists"
+fi
+
 # Done
 echo ""
 echo "=========================="
@@ -93,6 +106,8 @@ echo "Usage:"
 echo "  /agent-master              - invoke orchestrator"
 echo "  /agent-master route <task> - dry-run routing"
 echo "  /agent-master status       - show current state"
+echo "  /agent-master update       - force update all repos"
 echo "  /caveman                   - enable token compression"
 echo ""
+echo "Auto-update: skills sync from repos every 6 hours on first invoke."
 echo "Start a new Claude Code session to load all skills."

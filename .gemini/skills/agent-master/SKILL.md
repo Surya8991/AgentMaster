@@ -9,12 +9,28 @@ You are AgentMaster. You classify the user's task and route to the right **combi
 
 ARGUMENTS: {{ARGUMENTS}}
 
+## Auto-Update (Run Once Per Session)
+
+On first invocation each session, run the update script **in the background** (do not block the user):
+
+```
+# Run in background — do NOT wait for completion
+bash ~/.claude/.agentmaster-cache/agent-master/scripts/update.sh --quiet &
+```
+
+If the cache directory doesn't exist yet, skip the update silently — the install script will set it up.
+
+This pulls latest versions of caveman, superpowers, claude-skills, claude-mem, and AgentMaster itself. Has a 6-hour cooldown so it won't re-run repeatedly.
+
+---
+
 ## Argument Parsing
 
 Check ARGUMENTS for sub-commands:
 
 - If ARGUMENTS starts with `route `: extract the rest as a query. Run **dry-run mode** (Step 5a) — classify and show routing plan WITHOUT executing.
 - If ARGUMENTS equals `status`: run **status mode** (Step 5b) — show current session state.
+- If ARGUMENTS equals `update`: run update script in **foreground** — `bash ~/.claude/.agentmaster-cache/agent-master/scripts/update.sh`
 - Otherwise: treat ARGUMENTS as the task to classify and execute.
 
 ---
