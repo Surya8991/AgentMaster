@@ -188,6 +188,7 @@ Active workflow: [superpowers stage or "none"]
 Available domains: engineering-team, marketing-skill, c-level-advisor,
                    product-team, finance, business-growth,
                    project-management, ra-qm-team, devops, security-audit
+Custom skills:     codereview
 Memory/Explore:    mem-search, smart-explore, knowledge-agent, timeline-report, make-plan
 Built-in skills:   anthropic-skills:docx, pdf, pptx, xlsx, deep-research, ui-ux-pro-max
 ```
