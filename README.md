@@ -300,6 +300,7 @@ AgentMaster/
 │   ├── convert.sh                   # Generate platform files from skills/
 │   └── install-platform.sh          # Install to any platform's skill directory
 │
+├── RULES.example.md                 # Custom rules template (copy to ~/.claude/RULES.md)
 ├── install.sh                       # Claude Code full installer (+ dependencies)
 ├── install.ps1                      # Claude Code full installer (Windows)
 └── uninstall.sh                     # Remove custom skills only
@@ -316,6 +317,19 @@ bash uninstall.sh
 # Nuclear option: remove everything
 rm -rf ~/.claude/skills/*
 ```
+
+## Custom Rules
+
+AgentMaster includes a rules file that Claude reads every session — enforcing your commit workflow, code review style, and project conventions.
+
+```bash
+# Copy the example to your Claude config
+cp RULES.example.md ~/.claude/RULES.md
+
+# Edit with your GitHub username, paths, and preferences
+```
+
+See [`RULES.example.md`](RULES.example.md) for the full template.
 
 ## Contributing
 
