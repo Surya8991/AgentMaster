@@ -248,6 +248,7 @@ When words match multiple categories, AgentMaster resolves automatically:
 | [superpowers](https://github.com/obra/superpowers) | Dev workflow | `brainstorming`, `writing-plans`, `test-driven-development`, `systematic-debugging`, +10 more |
 | [claude-skills](https://github.com/alirezarezvani/claude-skills) | Domain expertise | `engineering-team`, `marketing-skill`, `product-team`, `c-level-advisor`, `finance`, +5 more |
 | [claude-mem](https://github.com/thedotmack/claude-mem) | Session memory | `mem-search`, `smart-explore`, `knowledge-agent`, `make-plan`, `do`, `timeline-report`, `version-bump` |
+| [AgentMaster](https://github.com/Surya8991/AgentMaster) *(self-update)* | Keeps orchestrator current | auto-synced via `~/.claude/.agentmaster-cache/agent-master` |
 | **Total** | | **42 skills** |
 
 ### Whole-Codebase Snapshots (Repomix)
@@ -348,7 +349,8 @@ AgentMaster/
 ## Uninstall
 
 ```bash
-# Remove only AgentMaster custom skills (keeps third-party skills intact)
+# Remove only AgentMaster custom skills (agent-master, codereview, devops, security-audit, repomix-pack)
+# Keeps third-party skills (caveman, superpowers, claude-skills, claude-mem) intact
 bash uninstall.sh
 
 # Nuclear option: remove everything
