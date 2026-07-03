@@ -1,0 +1,12 @@
+# AgentMaster dependency repos
+# Format: name|clone-url|skill_source
+#   name         — cache directory name; also the key used in repos.pins
+#   clone-url    — git clone URL
+#   skill_source — path inside the repo containing skill directories ("." for repo root)
+#
+# Personal additions go in ~/.claude/.agentmaster-cache/repos.local (same format);
+# they are merged after this file and survive AgentMaster self-updates.
+caveman|https://github.com/JuliusBrussee/caveman.git|skills
+superpowers|https://github.com/obra/superpowers.git|skills
+claude-skills|https://github.com/alirezarezvani/claude-skills.git|.
+claude-mem|https://github.com/thedotmack/claude-mem.git|plugin/skills

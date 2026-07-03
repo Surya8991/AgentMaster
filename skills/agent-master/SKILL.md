@@ -66,8 +66,12 @@ Check ARGUMENTS for sub-commands:
 - If ARGUMENTS starts with `route `: extract the rest as a query. Run **dry-run mode** (Step 5a) — classify and show routing plan WITHOUT executing.
 - If ARGUMENTS equals `status`: run **status mode** (Step 5b) — show current session state.
 - If ARGUMENTS equals `update`: run update script in **foreground** — `bash ~/.claude/.agentmaster-cache/agent-master/scripts/update.sh`
+- If ARGUMENTS equals `doctor`: run `bash ~/.claude/.agentmaster-cache/agent-master/scripts/doctor.sh` and relay its output verbatim. Do NOT re-derive or summarize the checks yourself — the script is the source of truth.
+- If ARGUMENTS equals `list`: run `bash ~/.claude/.agentmaster-cache/agent-master/scripts/list.sh` and relay its output verbatim.
 - If ARGUMENTS starts with `repomix`: forward the remaining args to the `repomix-pack` skill directly (e.g. `repomix refresh`, `repomix include src/**`).
 - Otherwise: treat ARGUMENTS as the task to classify and execute.
+
+(On Windows without bash, use the `.ps1` counterparts in the same directory.)
 
 ---
 
@@ -242,7 +246,12 @@ Available domains: engineering-team, marketing-skill, c-level-advisor,
 Custom skills:     codereview, repomix-pack
 Memory/Explore:    mem-search, smart-explore, knowledge-agent, timeline-report, make-plan
 Built-in skills:   anthropic-skills:docx, pdf, pptx, xlsx, deep-research, ui-ux-pro-max
+
+Last sync:
+[contents of ~/.claude/.agentmaster-cache/last-sync-report.txt, or "no sync report yet"]
 ```
+
+For the "Last sync" section, read `~/.claude/.agentmaster-cache/last-sync-report.txt` and include it verbatim. If the file doesn't exist, show "no sync report yet — run /agent-master update".
 
 ---
 

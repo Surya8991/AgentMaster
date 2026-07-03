@@ -1,5 +1,6 @@
 # AgentMaster Auto-Updater for Windows
-# Pulls latest from all 5 dependency repos and syncs skills
+# Pulls latest from all dependency repos (repos.manifest) and syncs skills.
+# Writes a sync report to ~/.claude/.agentmaster-cache/last-sync-report.txt
 #
 # Usage:
 #   .\scripts\update.ps1              # foreground
@@ -13,10 +14,18 @@ $CacheDir = "$env:USERPROFILE\.claude\.agentmaster-cache"
 $LockFile = "$CacheDir\.update-lock"
 $LastUpdateFile = "$CacheDir\.last-update"
 $PinsFile = "$CacheDir\agent-master\repos.pins"
+$Manifest = "$CacheDir\agent-master\repos.manifest"
+$OwnersFile = "$CacheDir\.skill-owners"
+$ReportFile = "$CacheDir\last-sync-report.txt"
+
+$script:Report = @()
+$script:Collisions = @()
 
 function Log($msg) { if (-not $Quiet) { Write-Host $msg } }
+function Add-Report($line) { Log "  $line"; $script:Report += $line }
 
 New-Item -ItemType Directory -Path $CacheDir -Force | Out-Null
+if (-not (Test-Path $OwnersFile)) { New-Item -ItemType File -Path $OwnersFile | Out-Null }
 
 # Clear stale locks (crashed runs), then take the lock atomically:
 # New-Item without -Force fails if the file already exists.
@@ -52,79 +61,157 @@ try {
         return $null
     }
 
+    # Track which repo installed each skill; collect collisions for the report
+    function Record-Owner($Skill, $Repo) {
+        $lines = @(Get-Content $OwnersFile -ErrorAction SilentlyContinue)
+        $existing = $lines | Where-Object { $_ -match "^$([regex]::Escape($Skill))=" } | Select-Object -First 1
+        if (-not $existing) {
+            Add-Content -Path $OwnersFile -Value "$Skill=$Repo"
+        } else {
+            $prev = ($existing -split '=', 2)[1]
+            if ($prev -ne $Repo) {
+                $script:Collisions += "  ${Skill}: $prev -> $Repo"
+                $lines = $lines | ForEach-Object { if ($_ -eq $existing) { "$Skill=$Repo" } else { $_ } }
+                Set-Content -Path $OwnersFile -Value $lines
+            }
+        }
+    }
+
+    # Emit name|url|source entries from the manifest plus personal repos.local
+    function Read-Manifest {
+        $entries = @()
+        foreach ($f in @($Manifest, "$CacheDir\repos.local")) {
+            if (Test-Path $f) {
+                $entries += Get-Content $f | Where-Object { $_ -notmatch '^\s*(#|$)' }
+            }
+        }
+        return $entries
+    }
+
+    function Sync-Skills($Name, $Src, $SkillSource) {
+        $count = 0
+        if (Test-Path $Src) {
+            Get-ChildItem $Src -Directory | ForEach-Object {
+                if ((Test-Path "$($_.FullName)\SKILL.md") -or ($SkillSource -eq "skills")) {
+                    Copy-Item -Path $_.FullName -Destination "$SkillsDir\$($_.Name)" -Recurse -Force
+                    Record-Owner $_.Name $Name
+                    $count++
+                }
+            }
+        }
+        return $count
+    }
+
     function Update-Repo {
         param($Name, $RepoUrl, $SkillSource)
         $cachePath = "$CacheDir\$Name"
+        $pin = Get-Pin $Name
 
         if (Test-Path "$cachePath\.git") {
-            $pin = Get-Pin $Name
             if ($pin) {
                 # Pinned: fetch and check out the exact commit, never track HEAD
                 git -C $cachePath fetch --depth 1 --quiet origin $pin 2>&1 | Out-Null
                 git -C $cachePath checkout --quiet $pin 2>&1 | Out-Null
-                if ($LASTEXITCODE -ne 0) { Log "  ${Name}: pin $pin not found, keeping current"; }
-                else { Log "  ${Name}: pinned to $($pin.Substring(0,7))" }
-            } else {
-                $before = git -C $cachePath rev-parse HEAD 2>$null
-                git -C $cachePath pull --ff-only --quiet 2>&1 | Out-Null
-                if ($LASTEXITCODE -ne 0) { Log "  ${Name}: pull failed, keeping current"; return }
-                $after = git -C $cachePath rev-parse HEAD 2>$null
-                if ($before -eq $after) { Log "  ${Name}: up to date"; return }
-                Log "  ${Name}: updated"
+                if ($LASTEXITCODE -ne 0) {
+                    Add-Report "${Name}: pin $pin not found, keeping current"
+                } else {
+                    $n = Sync-Skills $Name "$cachePath\$SkillSource" $SkillSource
+                    Add-Report "${Name}: pinned to $($pin.Substring(0,7)) ($n skills)"
+                }
+                return
             }
-        } else {
-            Log "  ${Name}: cloning..."
-            if (Test-Path $cachePath) { Remove-Item $cachePath -Recurse -Force }
-            git clone --depth 1 --quiet $RepoUrl $cachePath 2>&1 | Out-Null
-            if ($LASTEXITCODE -ne 0) { Log "  ${Name}: clone failed, skipping"; return }
-            $pin = Get-Pin $Name
-            if ($pin) {
-                git -C $cachePath fetch --depth 1 --quiet origin $pin 2>&1 | Out-Null
-                git -C $cachePath checkout --quiet $pin 2>&1 | Out-Null
-            }
+            $before = git -C $cachePath rev-parse --short HEAD 2>$null
+            # Caches are machine-managed mirrors — discard any local edits that
+            # would block the pull (e.g. left behind by older installers).
+            git -C $cachePath reset --hard --quiet 2>&1 | Out-Null
+            git -C $cachePath clean -fdq 2>&1 | Out-Null
+            git -C $cachePath pull --ff-only --quiet 2>&1 | Out-Null
+            if ($LASTEXITCODE -ne 0) { Add-Report "${Name}: pull failed, keeping current ($before)"; return }
+            $after = git -C $cachePath rev-parse --short HEAD 2>$null
+            if ($before -eq $after) { Add-Report "${Name}: up to date ($after)"; return }
+            $n = Sync-Skills $Name "$cachePath\$SkillSource" $SkillSource
+            Add-Report "${Name}: updated $before -> $after ($n skills)"
+            return
         }
 
-        # Sync skills
-        $src = "$cachePath\$SkillSource"
-        if (Test-Path $src) {
-            Get-ChildItem $src -Directory | ForEach-Object {
-                if ((Test-Path "$($_.FullName)\SKILL.md") -or ($SkillSource -eq "skills")) {
-                    Copy-Item -Path $_.FullName -Destination "$SkillsDir\$($_.Name)" -Recurse -Force
-                }
-            }
+        # Fresh clone (git refuses to clone into a non-empty dir, so reset first)
+        Log "  ${Name}: cloning..."
+        if (Test-Path $cachePath) { Remove-Item $cachePath -Recurse -Force }
+        git clone --depth 1 --quiet $RepoUrl $cachePath 2>&1 | Out-Null
+        if ($LASTEXITCODE -ne 0) { Add-Report "${Name}: clone failed, skipping"; return }
+        if ($pin) {
+            git -C $cachePath fetch --depth 1 --quiet origin $pin 2>&1 | Out-Null
+            git -C $cachePath checkout --quiet $pin 2>&1 | Out-Null
+        }
+        $n = Sync-Skills $Name "$cachePath\$SkillSource" $SkillSource
+        if ($pin) {
+            Add-Report "${Name}: cloned, pinned to $($pin.Substring(0,7)) ($n skills)"
+        } else {
+            Add-Report "${Name}: cloned ($n skills)"
         }
     }
 
     New-Item -ItemType Directory -Path $SkillsDir -Force | Out-Null
 
-    # Self-update first so a freshly pushed repos.pins takes effect this run
+    # Self-update first so a freshly pushed repos.manifest/repos.pins takes effect this run
     $amCache = "$CacheDir\agent-master"
     if (-not (Test-Path "$amCache\.git")) {
         # A cache dir without .git (e.g. from an old zip-based install) can't be
         # pulled — and git refuses to clone into a non-empty dir — so reset it.
         if (Test-Path $amCache) { Remove-Item $amCache -Recurse -Force }
         git clone --depth 1 --quiet "https://github.com/Surya8991/AgentMaster.git" $amCache 2>&1 | Out-Null
-        if ($LASTEXITCODE -ne 0) { Log "  agent-master: clone failed, skipping self-update" }
+        if ($LASTEXITCODE -ne 0) { Add-Report "agent-master: clone failed, skipping self-update" }
+        else { Add-Report "agent-master: installed from remote" }
     } else {
+        $amBefore = git -C $amCache rev-parse --short HEAD 2>$null
+        # Caches are machine-managed mirrors — discard any local edits that
+        # would block the pull (e.g. left behind by older installers).
+        git -C $amCache reset --hard --quiet 2>&1 | Out-Null
+        git -C $amCache clean -fdq 2>&1 | Out-Null
         git -C $amCache pull --ff-only --quiet 2>&1 | Out-Null
-        if ($LASTEXITCODE -ne 0) { Log "  agent-master: pull failed, keeping current" }
+        if ($LASTEXITCODE -ne 0) {
+            Add-Report "agent-master: pull failed, keeping current ($amBefore)"
+        } else {
+            $amAfter = git -C $amCache rev-parse --short HEAD 2>$null
+            if ($amBefore -eq $amAfter) { Add-Report "agent-master: up to date ($amAfter)" }
+            else { Add-Report "agent-master: updated $amBefore -> $amAfter" }
+        }
     }
     if (Test-Path "$amCache\skills") {
-        Copy-Item -Path "$amCache\skills\*" -Destination $SkillsDir -Recurse -Force
-        Log "  agent-master: synced"
+        Get-ChildItem "$amCache\skills" -Directory | ForEach-Object {
+            Copy-Item -Path $_.FullName -Destination "$SkillsDir\$($_.Name)" -Recurse -Force
+            Record-Owner $_.Name "agent-master"
+        }
     }
 
-    Update-Repo -Name "caveman" -RepoUrl "https://github.com/JuliusBrussee/caveman.git" -SkillSource "skills"
-    Update-Repo -Name "superpowers" -RepoUrl "https://github.com/obra/superpowers.git" -SkillSource "skills"
-    Update-Repo -Name "claude-skills" -RepoUrl "https://github.com/alirezarezvani/claude-skills.git" -SkillSource "."
-    Update-Repo -Name "claude-mem" -RepoUrl "https://github.com/thedotmack/claude-mem.git" -SkillSource "plugin\skills"
+    # Update each dependency repo from the manifest
+    if (-not (Test-Path $Manifest)) {
+        Add-Report "manifest missing: $Manifest - no dependency repos synced"
+    }
+    foreach ($entry in Read-Manifest) {
+        $parts = $entry -split '\|'
+        if ($parts.Count -lt 3) { continue }
+        Update-Repo -Name $parts[0].Trim() -RepoUrl $parts[1].Trim() -SkillSource $parts[2].Trim()
+    }
 
     # Record timestamp
     [int](Get-Date -UFormat %s) | Out-File $LastUpdateFile -Force
 
+    # Write sync report
+    $reportLines = @("AgentMaster sync report - $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')")
+    $reportLines += $script:Report
+    if ($script:Collisions.Count -gt 0) {
+        $reportLines += "Collisions (last writer wins):"
+        $reportLines += $script:Collisions
+    } else {
+        $reportLines += "Collisions: none"
+    }
+    Set-Content -Path $ReportFile -Value $reportLines
+
     $count = (Get-ChildItem $SkillsDir -Directory).Count
     Log ""
     Log "All skills synced. Total: $count skills"
+    Log "Report: $ReportFile"
 } finally {
     Remove-Item $LockFile -Force -ErrorAction SilentlyContinue
 }

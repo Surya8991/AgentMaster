@@ -1,6 +1,7 @@
 #!/bin/bash
 # AgentMaster Auto-Updater
-# Pulls latest from all dependency repos and syncs skills
+# Pulls latest from all dependency repos (repos.manifest) and syncs skills.
+# Writes a sync report to ~/.claude/.agentmaster-cache/last-sync-report.txt
 # Designed to run in background on session start
 #
 # Usage:
@@ -21,11 +22,20 @@ CACHE_DIR="$HOME/.claude/.agentmaster-cache"
 LOCK_FILE="$CACHE_DIR/.update-lock"
 LAST_UPDATE_FILE="$CACHE_DIR/.last-update"
 PINS_FILE="$CACHE_DIR/agent-master/repos.pins"
+MANIFEST="$CACHE_DIR/agent-master/repos.manifest"
+OWNERS_FILE="$CACHE_DIR/.skill-owners"
+REPORT_FILE="$CACHE_DIR/last-sync-report.txt"
 QUIET="${1:-}"
 
+REPORT=""
+COLLISIONS=""
+
 log() { [ "$QUIET" != "--quiet" ] && echo "$@" || true; }
+report() { log "  $1"; REPORT="$REPORT$1
+"; }
 
 mkdir -p "$CACHE_DIR"
+touch "$OWNERS_FILE"
 
 # Clear stale locks (crashed runs), then take the lock atomically:
 # noclobber makes the redirect fail if the file already exists.
@@ -58,6 +68,47 @@ get_pin() {
   grep -E "^$1=" "$PINS_FILE" 2>/dev/null | head -1 | cut -d= -f2 || true
 }
 
+record_owner() {
+  # record_owner <skill> <repo> — track ownership, collect collisions for the report
+  local prev
+  prev=$(grep -E "^$1=" "$OWNERS_FILE" 2>/dev/null | head -1 | cut -d= -f2 || true)
+  if [ -z "$prev" ]; then
+    echo "$1=$2" >> "$OWNERS_FILE"
+  elif [ "$prev" != "$2" ]; then
+    COLLISIONS="$COLLISIONS  $1: $prev -> $2
+"
+    sed -i.bak "s|^$1=.*|$1=$2|" "$OWNERS_FILE" && rm -f "$OWNERS_FILE.bak"
+  fi
+}
+
+read_manifest() {
+  # Emit "name|url|source" lines from the manifest plus personal repos.local
+  local f
+  for f in "$MANIFEST" "$CACHE_DIR/repos.local"; do
+    [ -f "$f" ] && grep -Ev '^[[:space:]]*(#|$)' "$f" || true
+  done
+}
+
+sync_skills() {
+  # sync_skills <repo_name> <src_dir> <skill_source_label>
+  # Sets SYNCED_COUNT (no command substitution — a subshell would lose
+  # the COLLISIONS accumulated by record_owner).
+  local name="$1" src="$2" skill_source="$3" count=0
+  SYNCED_COUNT=0
+  [ -d "$src" ] || return 0
+  for skill_dir in "$src"/*/; do
+    [ ! -d "$skill_dir" ] && continue
+    local skill_name
+    skill_name=$(basename "$skill_dir")
+    if [ -f "$skill_dir/SKILL.md" ] || [ "$skill_source" = "skills" ]; then
+      cp -r "$skill_dir" "$SKILLS_DIR/$skill_name" 2>/dev/null || true
+      record_owner "$skill_name" "$name"
+      count=$((count + 1))
+    fi
+  done
+  SYNCED_COUNT=$count
+}
+
 update_repo() {
   local name="$1" repo_url="$2" skill_source="$3"
   local cache_path="$CACHE_DIR/$name"
@@ -69,31 +120,39 @@ update_repo() {
       # Pinned: fetch and check out the exact commit, never track HEAD
       git -C "$cache_path" fetch --depth 1 --quiet origin "$pin" 2>/dev/null || true
       if git -C "$cache_path" checkout --quiet "$pin" 2>/dev/null; then
-        log "  $name: pinned to ${pin:0:7}"
+        sync_skills "$name" "$cache_path/$skill_source" "$skill_source"
+        report "$name: pinned to ${pin:0:7} ($SYNCED_COUNT skills)"
       else
-        log "  $name: pin $pin not found, keeping current"
+        report "$name: pin $pin not found, keeping current"
       fi
+      return 0
     else
       local before
-      before=$(git -C "$cache_path" rev-parse HEAD 2>/dev/null || echo "none")
+      before=$(git -C "$cache_path" rev-parse --short HEAD 2>/dev/null || echo "none")
+      # Caches are machine-managed mirrors — discard any local edits that
+      # would block the pull (e.g. left behind by older installers).
+      git -C "$cache_path" reset --hard --quiet 2>/dev/null || true
+      git -C "$cache_path" clean -fdq 2>/dev/null || true
       if ! git -C "$cache_path" pull --ff-only --quiet 2>/dev/null; then
-        log "  $name: pull failed, keeping current"
+        report "$name: pull failed, keeping current ($before)"
         return 0
       fi
       local after
-      after=$(git -C "$cache_path" rev-parse HEAD 2>/dev/null || echo "none")
+      after=$(git -C "$cache_path" rev-parse --short HEAD 2>/dev/null || echo "none")
       if [ "$before" = "$after" ]; then
-        log "  $name: up to date"
+        report "$name: up to date ($after)"
         return 0
       fi
-      log "  $name: updated ($before -> $after)"
+      sync_skills "$name" "$cache_path/$skill_source" "$skill_source"
+      report "$name: updated $before -> $after ($SYNCED_COUNT skills)"
+      return 0
     fi
   else
     # Fresh clone (git refuses to clone into a non-empty dir, so reset first)
     log "  $name: cloning..."
     rm -rf "$cache_path"
     if ! git clone --depth 1 --quiet "$repo_url" "$cache_path" 2>/dev/null; then
-      log "  $name: clone failed, skipping"
+      report "$name: clone failed, skipping"
       return 0
     fi
     if [ -n "$pin" ]; then
@@ -102,66 +161,79 @@ update_repo() {
     fi
   fi
 
-  # Sync skills
-  local src="$cache_path/$skill_source"
-  if [ -d "$src" ]; then
-    for skill_dir in "$src"/*/; do
-      [ ! -d "$skill_dir" ] && continue
-      local skill_name
-      skill_name=$(basename "$skill_dir")
-      # Only copy if SKILL.md exists (for claude-skills repo) or always (for others)
-      if [ -f "$skill_dir/SKILL.md" ] || [ "$skill_source" = "skills" ]; then
-        cp -r "$skill_dir" "$SKILLS_DIR/$skill_name" 2>/dev/null || true
-      fi
-    done
+  # Freshly cloned: sync whatever is checked out
+  sync_skills "$name" "$cache_path/$skill_source" "$skill_source"
+  if [ -n "$pin" ]; then
+    report "$name: cloned, pinned to ${pin:0:7} ($SYNCED_COUNT skills)"
+  else
+    report "$name: cloned ($SYNCED_COUNT skills)"
   fi
-
-  return 0
 }
 
 mkdir -p "$SKILLS_DIR"
 
-# Update AgentMaster itself first so a freshly pushed repos.pins takes effect this run
+# Update AgentMaster itself first so a freshly pushed repos.manifest/repos.pins
+# takes effect in the same run
 AM_CACHE="$CACHE_DIR/agent-master"
 if [ -d "$AM_CACHE/.git" ]; then
+  am_before=$(git -C "$AM_CACHE" rev-parse --short HEAD 2>/dev/null || echo "none")
+  # Caches are machine-managed mirrors — discard any local edits that
+  # would block the pull (e.g. left behind by older installers).
+  git -C "$AM_CACHE" reset --hard --quiet 2>/dev/null || true
+  git -C "$AM_CACHE" clean -fdq 2>/dev/null || true
   if git -C "$AM_CACHE" pull --ff-only --quiet 2>/dev/null; then
-    log "  agent-master: synced"
+    am_after=$(git -C "$AM_CACHE" rev-parse --short HEAD 2>/dev/null || echo "none")
+    if [ "$am_before" = "$am_after" ]; then
+      report "agent-master: up to date ($am_after)"
+    else
+      report "agent-master: updated $am_before -> $am_after"
+    fi
   else
-    log "  agent-master: pull failed, keeping current"
+    report "agent-master: pull failed, keeping current ($am_before)"
   fi
 else
   # A cache dir without .git (e.g. from an old zip-based install) can't be
   # pulled — and git refuses to clone into a non-empty dir — so reset it.
   rm -rf "$AM_CACHE"
   if git clone --depth 1 --quiet "https://github.com/Surya8991/AgentMaster.git" "$AM_CACHE" 2>/dev/null; then
-    log "  agent-master: installed from remote"
+    report "agent-master: installed from remote"
   else
-    log "  agent-master: clone failed, skipping self-update"
+    report "agent-master: clone failed, skipping self-update"
   fi
 fi
 if [ -d "$AM_CACHE/skills" ]; then
-  cp -r "$AM_CACHE/skills/"* "$SKILLS_DIR/" 2>/dev/null || true
+  for skill_dir in "$AM_CACHE/skills/"*/; do
+    [ ! -d "$skill_dir" ] && continue
+    skill_name=$(basename "$skill_dir")
+    cp -r "$skill_dir" "$SKILLS_DIR/$skill_name" 2>/dev/null || true
+    record_owner "$skill_name" "agent-master"
+  done
 fi
 
-# Update each dependency repo
-update_repo "caveman" \
-  "https://github.com/JuliusBrussee/caveman.git" \
-  "skills"
-
-update_repo "superpowers" \
-  "https://github.com/obra/superpowers.git" \
-  "skills"
-
-update_repo "claude-skills" \
-  "https://github.com/alirezarezvani/claude-skills.git" \
-  "."
-
-update_repo "claude-mem" \
-  "https://github.com/thedotmack/claude-mem.git" \
-  "plugin/skills"
+# Update each dependency repo from the manifest
+if [ ! -f "$MANIFEST" ]; then
+  report "manifest missing: $MANIFEST — no dependency repos synced"
+fi
+while IFS='|' read -r name url source; do
+  [ -z "$name" ] && continue
+  update_repo "$name" "$url" "$source"
+done < <(read_manifest)
 
 # Record update timestamp
 date +%s > "$LAST_UPDATE_FILE"
 
+# Write sync report
+{
+  echo "AgentMaster sync report — $(date '+%Y-%m-%d %H:%M:%S')"
+  echo "$REPORT"
+  if [ -n "$COLLISIONS" ]; then
+    echo "Collisions (last writer wins):"
+    printf '%s' "$COLLISIONS"
+  else
+    echo "Collisions: none"
+  fi
+} > "$REPORT_FILE"
+
 log ""
 log "All skills synced. Total: $(ls -d "$SKILLS_DIR/"*/ 2>/dev/null | wc -l) skills"
+log "Report: $REPORT_FILE"

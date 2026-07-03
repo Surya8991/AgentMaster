@@ -129,12 +129,16 @@ No manual skill selection. No guessing. No loading 5 skills when you need 1.
 | `/agent-master route <task>` | **Dry-run** — shows routing plan without executing |
 | `/agent-master status` | Shows current state (caveman on/off, last skill used, active workflow) |
 | `/agent-master update` | Force-update all dependency repos and sync skills |
+| `/agent-master doctor` | Health-check installed skills, caches, and pins (PASS/WARN/FAIL) |
+| `/agent-master list` | List installed skills grouped by source repo |
 | `/caveman` | Enable token compression (~75% savings on all output) |
 | `/codereview` | Blunt, factual code review — finds bugs, security issues, doc mismatches |
 
 ### Auto-Update
 
-AgentMaster automatically pulls latest versions from all 5 dependency repos on first invoke each session (background, non-blocking). Has a 6-hour cooldown to avoid spamming GitHub. Use `/agent-master update` to force an immediate sync.
+AgentMaster automatically pulls latest versions from all dependency repos on first invoke each session (background, non-blocking). Has a 6-hour cooldown to avoid spamming GitHub. Use `/agent-master update` to force an immediate sync.
+
+Dependency repos are declared in `repos.manifest` (one line per repo: `name|url|skill_source`). Add personal repos in `~/.claude/.agentmaster-cache/repos.local` (same format) — they survive self-updates. Pin any repo to an exact commit via `repos.pins` (`name=sha`). Every sync writes a report to `~/.claude/.agentmaster-cache/last-sync-report.txt` including before→after commits and skill-name collisions between repos.
 
 ### Dry-Run Example
 
