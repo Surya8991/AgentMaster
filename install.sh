@@ -12,10 +12,39 @@ MANIFEST="$SCRIPT_DIR/repos.manifest"
 OWNERS_FILE="$CACHE_DIR/.skill-owners"
 
 if [ "$1" = "--help" ] || [ "$1" = "-h" ]; then
-  echo "Usage: bash install.sh"
+  echo "Usage: bash install.sh [--profile <name>]"
   echo "Installs AgentMaster skills + dependency repos (repos.manifest) to ~/.claude/skills/"
+  echo "  --profile <name>   Install a subset (see profiles.manifest: dev, business, minimal)."
+  echo "                     Default: full (everything)."
   exit 0
 fi
+
+PROFILES_MANIFEST="$SCRIPT_DIR/profiles.manifest"
+
+profile_lines() {
+  # "profile|repo|glob" lines for the active profile (manifest + profiles.local)
+  local f
+  for f in "$PROFILES_MANIFEST" "$CACHE_DIR/profiles.local"; do
+    [ -f "$f" ] && grep -Ev '^[[:space:]]*(#|$)' "$f" || true
+  done | awk -F'|' -v p="$ACTIVE_PROFILE" '$1==p'
+}
+
+repo_in_profile() {
+  [ "$ACTIVE_PROFILE" = "full" ] && return 0
+  profile_lines | awk -F'|' -v r="$1" '$2==r{found=1} END{exit !found}'
+}
+
+skill_in_profile() {
+  # skill_in_profile <repo> <skill>
+  [ "$ACTIVE_PROFILE" = "full" ] && return 0
+  [ "$2" = "agent-master" ] && return 0  # the orchestrator always installs
+  local prepo pattern
+  while IFS='|' read -r _ prepo pattern; do
+    [ "$prepo" = "$1" ] || continue
+    case "$2" in $pattern) return 0 ;; esac
+  done < <(profile_lines)
+  return 1
+}
 
 echo "AgentMaster Installer v1.3"
 echo "=========================="
@@ -23,6 +52,25 @@ echo ""
 
 mkdir -p "$SKILLS_DIR" "$CACHE_DIR"
 touch "$OWNERS_FILE"
+
+# Resolve the install profile: --profile flag wins, else any previously
+# persisted choice, else full. Explicit flag with an unknown name fails loudly.
+ACTIVE_PROFILE=$(cat "$CACHE_DIR/.profile" 2>/dev/null || echo full)
+[ -z "$ACTIVE_PROFILE" ] && ACTIVE_PROFILE=full
+if [ "$1" = "--profile" ]; then
+  if [ -z "$2" ]; then
+    echo "error: --profile requires a name (see profiles.manifest)"
+    exit 1
+  fi
+  ACTIVE_PROFILE="$2"
+  if [ "$ACTIVE_PROFILE" != "full" ] && ! profile_lines | grep -q .; then
+    echo "error: unknown profile '$ACTIVE_PROFILE'"
+    echo "Available: full $(grep -Ev '^[[:space:]]*(#|$)' "$PROFILES_MANIFEST" 2>/dev/null | cut -d'|' -f1 | sort -u | tr '\n' ' ')"
+    exit 1
+  fi
+  echo "$ACTIVE_PROFILE" > "$CACHE_DIR/.profile"
+fi
+[ "$ACTIVE_PROFILE" != "full" ] && echo "Profile: $ACTIVE_PROFILE"
 
 clone_repo() {
   # clone_repo <url> <dest> — depth-1 clone with an explicit failure message
@@ -75,6 +123,7 @@ install_from_cache() {
     local skill_name
     skill_name=$(basename "$skill_dir")
     if [ -f "$skill_dir/SKILL.md" ] || [ "$skill_source" = "skills" ]; then
+      skill_in_profile "$name" "$skill_name" || continue
       cp -r "$skill_dir" "$SKILLS_DIR/$skill_name"
       record_owner "$skill_name" "$name"
       count=$((count + 1))
@@ -88,6 +137,7 @@ echo "[1/4] Installing custom skills..."
 for skill_dir in "$SCRIPT_DIR/skills/"*/; do
   skill_name=$(basename "$skill_dir")
   if [ -f "$skill_dir/SKILL.md" ]; then
+    skill_in_profile "agent-master" "$skill_name" || continue
     cp -r "$skill_dir" "$SKILLS_DIR/$skill_name"
     record_owner "$skill_name" "agent-master"
     echo "  + $skill_name"
@@ -99,6 +149,10 @@ echo ""
 echo "[2/4] Installing dependency repos (repos.manifest)..."
 while IFS='|' read -r name url source; do
   [ -z "$name" ] && continue
+  if ! repo_in_profile "$name"; then
+    echo "  ~ $name: skipped (profile: $ACTIVE_PROFILE)"
+    continue
+  fi
   install_from_cache "$name" "$url" "$source"
 done < <(read_manifest)
 

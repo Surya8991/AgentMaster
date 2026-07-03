@@ -89,6 +89,35 @@ read_manifest() {
   done
 }
 
+# --- Profiles: filter which repos/skills sync (see profiles.manifest) ---
+ACTIVE_PROFILE=$(cat "$CACHE_DIR/.profile" 2>/dev/null || echo full)
+[ -z "$ACTIVE_PROFILE" ] && ACTIVE_PROFILE=full
+
+profile_lines() {
+  # "profile|repo|glob" lines for the active profile (manifest + profiles.local)
+  local f
+  for f in "$CACHE_DIR/agent-master/profiles.manifest" "$CACHE_DIR/profiles.local"; do
+    [ -f "$f" ] && grep -Ev '^[[:space:]]*(#|$)' "$f" || true
+  done | awk -F'|' -v p="$ACTIVE_PROFILE" '$1==p'
+}
+
+repo_in_profile() {
+  [ "$ACTIVE_PROFILE" = "full" ] && return 0
+  profile_lines | awk -F'|' -v r="$1" '$2==r{found=1} END{exit !found}'
+}
+
+skill_in_profile() {
+  # skill_in_profile <repo> <skill>
+  [ "$ACTIVE_PROFILE" = "full" ] && return 0
+  [ "$2" = "agent-master" ] && return 0  # the orchestrator always installs
+  local prepo pattern
+  while IFS='|' read -r _ prepo pattern; do
+    [ "$prepo" = "$1" ] || continue
+    case "$2" in $pattern) return 0 ;; esac
+  done < <(profile_lines)
+  return 1
+}
+
 sync_skills() {
   # sync_skills <repo_name> <src_dir> <skill_source_label>
   # Sets SYNCED_COUNT (no command substitution — a subshell would lose
@@ -101,6 +130,7 @@ sync_skills() {
     local skill_name
     skill_name=$(basename "$skill_dir")
     if [ -f "$skill_dir/SKILL.md" ] || [ "$skill_source" = "skills" ]; then
+      skill_in_profile "$name" "$skill_name" || continue
       cp -r "$skill_dir" "$SKILLS_DIR/$skill_name" 2>/dev/null || true
       record_owner "$skill_name" "$name"
       count=$((count + 1))
@@ -204,10 +234,19 @@ else
     report "agent-master: clone failed, skipping self-update"
   fi
 fi
+# Unknown-profile guard AFTER self-update so a freshly pushed profiles.manifest counts.
+# A typo in .profile must never mass-uninstall — fall back to full.
+if [ "$ACTIVE_PROFILE" != "full" ] && ! profile_lines | grep -q .; then
+  report "profile '$ACTIVE_PROFILE' not found — using full"
+  ACTIVE_PROFILE=full
+fi
+[ "$ACTIVE_PROFILE" != "full" ] && report "profile: $ACTIVE_PROFILE"
+
 if [ -d "$AM_CACHE/skills" ]; then
   for skill_dir in "$AM_CACHE/skills/"*/; do
     [ ! -d "$skill_dir" ] && continue
     skill_name=$(basename "$skill_dir")
+    skill_in_profile "agent-master" "$skill_name" || continue
     cp -r "$skill_dir" "$SKILLS_DIR/$skill_name" 2>/dev/null || true
     record_owner "$skill_name" "agent-master"
   done
@@ -219,6 +258,10 @@ if [ ! -f "$MANIFEST" ]; then
 fi
 while IFS='|' read -r name url source; do
   [ -z "$name" ] && continue
+  if ! repo_in_profile "$name"; then
+    report "$name: skipped (profile: $ACTIVE_PROFILE)"
+    continue
+  fi
   update_repo "$name" "$url" "$source"
 done < <(read_manifest)
 

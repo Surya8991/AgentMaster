@@ -1,6 +1,12 @@
 # AgentMaster Installer for Windows
 # Clones dependency repos (from repos.manifest) into the auto-update cache
 # and copies skills to ~/.claude/skills/
+#
+# Usage: .\install.ps1 [-Profile <name>]
+#   -Profile   Install a subset (see profiles.manifest: dev, business, minimal).
+#              Default: full (everything).
+
+param([string]$Profile)
 
 $ErrorActionPreference = "Stop"
 
@@ -8,7 +14,37 @@ $SkillsDir = "$env:USERPROFILE\.claude\skills"
 $CacheDir = "$env:USERPROFILE\.claude\.agentmaster-cache"
 $ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
 $Manifest = "$ScriptDir\repos.manifest"
+$ProfilesManifest = "$ScriptDir\profiles.manifest"
 $OwnersFile = "$CacheDir\.skill-owners"
+
+function Get-ProfileLines {
+    $lines = @()
+    foreach ($f in @($ProfilesManifest, "$CacheDir\profiles.local")) {
+        if (Test-Path $f) {
+            $lines += Get-Content $f | Where-Object { $_ -notmatch '^\s*(#|$)' }
+        }
+    }
+    return @($lines | Where-Object { ($_ -split '\|')[0].Trim() -eq $script:ActiveProfile })
+}
+
+function Test-RepoInProfile($Repo) {
+    if ($script:ActiveProfile -eq "full") { return $true }
+    foreach ($line in Get-ProfileLines) {
+        if (($line -split '\|')[1].Trim() -eq $Repo) { return $true }
+    }
+    return $false
+}
+
+function Test-SkillInProfile($Repo, $Skill) {
+    if ($script:ActiveProfile -eq "full") { return $true }
+    if ($Skill -eq "agent-master") { return $true }  # the orchestrator always installs
+    foreach ($line in Get-ProfileLines) {
+        $parts = $line -split '\|'
+        if ($parts.Count -lt 3) { continue }
+        if ($parts[1].Trim() -eq $Repo -and $Skill -like $parts[2].Trim()) { return $true }
+    }
+    return $false
+}
 
 Write-Host "AgentMaster Installer v1.3" -ForegroundColor Cyan
 Write-Host "==========================" -ForegroundColor Cyan
@@ -17,6 +53,29 @@ Write-Host ""
 New-Item -ItemType Directory -Path $SkillsDir -Force | Out-Null
 New-Item -ItemType Directory -Path $CacheDir -Force | Out-Null
 if (-not (Test-Path $OwnersFile)) { New-Item -ItemType File -Path $OwnersFile | Out-Null }
+
+# Resolve the install profile: -Profile flag wins, else any previously
+# persisted choice, else full. Explicit flag with an unknown name fails loudly.
+$script:ActiveProfile = "full"
+if (Test-Path "$CacheDir\.profile") {
+    $p = (Get-Content "$CacheDir\.profile" -ErrorAction SilentlyContinue | Select-Object -First 1)
+    if ($p) { $script:ActiveProfile = $p.Trim() }
+}
+if ($Profile) {
+    $script:ActiveProfile = $Profile
+    if ($Profile -ne "full" -and (Get-ProfileLines).Count -eq 0) {
+        $known = @()
+        if (Test-Path $ProfilesManifest) {
+            $known = Get-Content $ProfilesManifest | Where-Object { $_ -notmatch '^\s*(#|$)' } |
+                ForEach-Object { ($_ -split '\|')[0].Trim() } | Sort-Object -Unique
+        }
+        Write-Host "error: unknown profile '$Profile'" -ForegroundColor Red
+        Write-Host "Available: full $($known -join ' ')"
+        exit 1
+    }
+    Set-Content -Path "$CacheDir\.profile" -Value $script:ActiveProfile
+}
+if ($script:ActiveProfile -ne "full") { Write-Host "Profile: $($script:ActiveProfile)" -ForegroundColor Cyan }
 
 # git writes progress to stderr, which $ErrorActionPreference=Stop turns into a
 # terminating error on PS 5.1 — so pipe everything and check the exit code instead.
@@ -72,9 +131,11 @@ function Install-FromCache($Name, $Url, $SkillSource) {
     $count = 0
     Get-ChildItem $src -Directory | ForEach-Object {
         if ((Test-Path "$($_.FullName)\SKILL.md") -or ($SkillSource -eq "skills")) {
-            Copy-Item -Path $_.FullName -Destination "$SkillsDir\$($_.Name)" -Recurse -Force
-            Record-Owner $_.Name $Name
-            $count++
+            if (Test-SkillInProfile $Name $_.Name) {
+                Copy-Item -Path $_.FullName -Destination "$SkillsDir\$($_.Name)" -Recurse -Force
+                Record-Owner $_.Name $Name
+                $count++
+            }
         }
     }
     Write-Host "  + ${Name}: $count skills" -ForegroundColor Green
@@ -84,9 +145,11 @@ function Install-FromCache($Name, $Url, $SkillSource) {
 Write-Host "[1/4] Installing custom skills..." -ForegroundColor Yellow
 Get-ChildItem "$ScriptDir\skills" -Directory | ForEach-Object {
     if (Test-Path "$($_.FullName)\SKILL.md") {
-        Copy-Item -Path $_.FullName -Destination "$SkillsDir\$($_.Name)" -Recurse -Force
-        Record-Owner $_.Name "agent-master"
-        Write-Host "  + $($_.Name)" -ForegroundColor Green
+        if (Test-SkillInProfile "agent-master" $_.Name) {
+            Copy-Item -Path $_.FullName -Destination "$SkillsDir\$($_.Name)" -Recurse -Force
+            Record-Owner $_.Name "agent-master"
+            Write-Host "  + $($_.Name)" -ForegroundColor Green
+        }
     }
 }
 
@@ -96,7 +159,12 @@ Write-Host "[2/4] Installing dependency repos (repos.manifest)..." -ForegroundCo
 foreach ($entry in Read-Manifest) {
     $parts = $entry -split '\|'
     if ($parts.Count -lt 3) { continue }
-    Install-FromCache $parts[0].Trim() $parts[1].Trim() $parts[2].Trim()
+    $repoName = $parts[0].Trim()
+    if (-not (Test-RepoInProfile $repoName)) {
+        Write-Host "  ~ ${repoName}: skipped (profile: $($script:ActiveProfile))" -ForegroundColor DarkGray
+        continue
+    }
+    Install-FromCache $repoName $parts[1].Trim() $parts[2].Trim()
 }
 
 # 3. Repomix CLI (for repomix-pack skill)

@@ -166,6 +166,26 @@ if (Test-Path $overridesFile) {
 # --- Tooling & freshness ---
 Write-Host ""
 Write-Host "Tooling:"
+$activeProfile = "full"
+if (Test-Path "$CacheDir\.profile") {
+    $p = (Get-Content "$CacheDir\.profile" -ErrorAction SilentlyContinue | Select-Object -First 1)
+    if ($p) { $activeProfile = $p.Trim() }
+}
+if ($activeProfile -eq "full") {
+    Test-Pass "profile: full (everything syncs)"
+} else {
+    $knownProfiles = @()
+    foreach ($f in @("$CacheDir\agent-master\profiles.manifest", "$CacheDir\profiles.local")) {
+        if (Test-Path $f) {
+            $knownProfiles += Get-Content $f | Where-Object { $_ -notmatch '^\s*(#|$)' } | ForEach-Object { ($_ -split '\|')[0].Trim() }
+        }
+    }
+    if ($knownProfiles -contains $activeProfile) {
+        Test-Pass "profile: $activeProfile"
+    } else {
+        Test-Warn "profile '$activeProfile' unknown - updater will fall back to full"
+    }
+}
 $repomixOk = $false
 try { & repomix --version 2>$null | Out-Null; if ($LASTEXITCODE -eq 0) { $repomixOk = $true } } catch {}
 if ($repomixOk) {

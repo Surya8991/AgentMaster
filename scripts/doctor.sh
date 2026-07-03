@@ -147,6 +147,15 @@ fi
 # --- Tooling & freshness ---
 echo ""
 echo "Tooling:"
+active_profile=$(cat "$CACHE_DIR/.profile" 2>/dev/null || echo full)
+[ -z "$active_profile" ] && active_profile=full
+if [ "$active_profile" = "full" ]; then
+  pass "profile: full (everything syncs)"
+elif grep -hEv '^[[:space:]]*(#|$)' "$CACHE_DIR/agent-master/profiles.manifest" "$CACHE_DIR/profiles.local" 2>/dev/null | cut -d'|' -f1 | grep -qx "$active_profile"; then
+  pass "profile: $active_profile"
+else
+  warn "profile '$active_profile' unknown — updater will fall back to full"
+fi
 if command -v repomix >/dev/null 2>&1; then
   pass "repomix on PATH"
 else

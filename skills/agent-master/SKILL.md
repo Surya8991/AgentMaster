@@ -83,6 +83,7 @@ Check ARGUMENTS for sub-commands:
 - If ARGUMENTS equals `doctor`: run `bash ~/.claude/.agentmaster-cache/agent-master/scripts/doctor.sh` and relay its output verbatim. Do NOT re-derive or summarize the checks yourself — the script is the source of truth.
 - If ARGUMENTS equals `list`: run `bash ~/.claude/.agentmaster-cache/agent-master/scripts/list.sh` and relay its output verbatim.
 - If ARGUMENTS equals `routes`: run `bash ~/.claude/.agentmaster-cache/agent-master/scripts/routes.sh` and relay its output verbatim.
+- If ARGUMENTS starts with `profile`: run `bash ~/.claude/.agentmaster-cache/agent-master/scripts/profile.sh <name-if-given>` and relay its output verbatim. With no name it shows the active + available profiles; with a name it switches profile (prunes excluded skills and resyncs).
 - If ARGUMENTS starts with `repomix`: forward the remaining args to the `repomix-pack` skill directly (e.g. `repomix refresh`, `repomix include src/**`).
 - Otherwise: treat ARGUMENTS as the task to classify and execute.
 

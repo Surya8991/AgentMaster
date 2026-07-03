@@ -88,14 +88,53 @@ try {
         return $entries
     }
 
+    # --- Profiles: filter which repos/skills sync (see profiles.manifest) ---
+    $script:ActiveProfile = "full"
+    if (Test-Path "$CacheDir\.profile") {
+        $p = (Get-Content "$CacheDir\.profile" -ErrorAction SilentlyContinue | Select-Object -First 1)
+        if ($p) { $script:ActiveProfile = $p.Trim() }
+    }
+
+    function Get-ProfileLines {
+        # "profile|repo|glob" lines for the active profile (manifest + profiles.local)
+        $lines = @()
+        foreach ($f in @("$CacheDir\agent-master\profiles.manifest", "$CacheDir\profiles.local")) {
+            if (Test-Path $f) {
+                $lines += Get-Content $f | Where-Object { $_ -notmatch '^\s*(#|$)' }
+            }
+        }
+        return @($lines | Where-Object { ($_ -split '\|')[0].Trim() -eq $script:ActiveProfile })
+    }
+
+    function Test-RepoInProfile($Repo) {
+        if ($script:ActiveProfile -eq "full") { return $true }
+        foreach ($line in Get-ProfileLines) {
+            if (($line -split '\|')[1].Trim() -eq $Repo) { return $true }
+        }
+        return $false
+    }
+
+    function Test-SkillInProfile($Repo, $Skill) {
+        if ($script:ActiveProfile -eq "full") { return $true }
+        if ($Skill -eq "agent-master") { return $true }  # the orchestrator always installs
+        foreach ($line in Get-ProfileLines) {
+            $parts = $line -split '\|'
+            if ($parts.Count -lt 3) { continue }
+            if ($parts[1].Trim() -eq $Repo -and $Skill -like $parts[2].Trim()) { return $true }
+        }
+        return $false
+    }
+
     function Sync-Skills($Name, $Src, $SkillSource) {
         $count = 0
         if (Test-Path $Src) {
             Get-ChildItem $Src -Directory | ForEach-Object {
                 if ((Test-Path "$($_.FullName)\SKILL.md") -or ($SkillSource -eq "skills")) {
-                    Copy-Item -Path $_.FullName -Destination "$SkillsDir\$($_.Name)" -Recurse -Force
-                    Record-Owner $_.Name $Name
-                    $count++
+                    if (Test-SkillInProfile $Name $_.Name) {
+                        Copy-Item -Path $_.FullName -Destination "$SkillsDir\$($_.Name)" -Recurse -Force
+                        Record-Owner $_.Name $Name
+                        $count++
+                    }
                 }
             }
         }
@@ -183,10 +222,20 @@ try {
             else { Add-Report "agent-master: updated $amBefore -> $amAfter" }
         }
     }
+    # Unknown-profile guard AFTER self-update so a freshly pushed profiles.manifest counts.
+    # A typo in .profile must never mass-uninstall — fall back to full.
+    if ($script:ActiveProfile -ne "full" -and (Get-ProfileLines).Count -eq 0) {
+        Add-Report "profile '$($script:ActiveProfile)' not found - using full"
+        $script:ActiveProfile = "full"
+    }
+    if ($script:ActiveProfile -ne "full") { Add-Report "profile: $($script:ActiveProfile)" }
+
     if (Test-Path "$amCache\skills") {
         Get-ChildItem "$amCache\skills" -Directory | ForEach-Object {
-            Copy-Item -Path $_.FullName -Destination "$SkillsDir\$($_.Name)" -Recurse -Force
-            Record-Owner $_.Name "agent-master"
+            if (Test-SkillInProfile "agent-master" $_.Name) {
+                Copy-Item -Path $_.FullName -Destination "$SkillsDir\$($_.Name)" -Recurse -Force
+                Record-Owner $_.Name "agent-master"
+            }
         }
     }
 
@@ -197,7 +246,12 @@ try {
     foreach ($entry in Read-Manifest) {
         $parts = $entry -split '\|'
         if ($parts.Count -lt 3) { continue }
-        Update-Repo -Name $parts[0].Trim() -RepoUrl $parts[1].Trim() -SkillSource $parts[2].Trim()
+        $repoName = $parts[0].Trim()
+        if (-not (Test-RepoInProfile $repoName)) {
+            Add-Report "${repoName}: skipped (profile: $($script:ActiveProfile))"
+            continue
+        }
+        Update-Repo -Name $repoName -RepoUrl $parts[1].Trim() -SkillSource $parts[2].Trim()
     }
 
     # Regenerate unrouted-skills.txt: installed skills never mentioned in the routing table
