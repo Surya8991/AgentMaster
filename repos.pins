@@ -1,0 +1,13 @@
+# AgentMaster dependency pins (optional supply-chain guard)
+#
+# By default the auto-updater pulls the latest default branch of every
+# third-party skill repo every 6 hours — which means a compromised upstream
+# repo would flow straight into your ~/.claude/skills/. Pinning a repo locks
+# it to an exact, reviewed commit instead.
+#
+# Format: one line per repo, <name>=<full 40-char commit sha>
+# Valid names: caveman, superpowers, claude-skills, claude-mem
+# Unpinned repos keep tracking the latest default branch.
+#
+# To pin: look up the commit on GitHub, review the diff, then add e.g.
+# caveman=0123456789abcdef0123456789abcdef01234567
