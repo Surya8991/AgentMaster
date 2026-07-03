@@ -140,6 +140,9 @@ update_repo() {
       local after
       after=$(git -C "$cache_path" rev-parse --short HEAD 2>/dev/null || echo "none")
       if [ "$before" = "$after" ]; then
+        # Still sync: copies are idempotent and this keeps ownership
+        # records complete even when nothing changed upstream.
+        sync_skills "$name" "$cache_path/$skill_source" "$skill_source"
         report "$name: up to date ($after)"
         return 0
       fi

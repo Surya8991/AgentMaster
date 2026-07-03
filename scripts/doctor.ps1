@@ -129,10 +129,13 @@ if (-not (Test-Path $OwnersFile)) {
     foreach ($dir in Get-ChildItem $SkillsDir -Directory -ErrorAction SilentlyContinue) {
         $match = $owners | Where-Object { $_ -match "^$([regex]::Escape($dir.Name))=" } | Select-Object -First 1
         if (-not $match) {
-            Test-Note "orphan skill (no recorded owner, probably yours): $($dir.Name)"
             $orphans++
+            if ($orphans -le 10) {
+                Test-Note "orphan skill (no recorded owner, probably yours): $($dir.Name)"
+            }
         }
     }
+    if ($orphans -gt 10) { Test-Note "... and $($orphans - 10) more orphans (run /agent-master update to rebuild ownership)" }
     Test-Pass "$($owners.Count) skills have recorded owners ($orphans orphans)"
 }
 

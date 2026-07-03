@@ -23,6 +23,12 @@ get_desc() {
   # First line of the frontmatter description, truncated to 80 chars
   local d
   d=$(grep -m1 '^description:' "$1/SKILL.md" 2>/dev/null | sed 's/^description:[[:space:]]*//; s/^["'\'']//; s/["'\'']$//')
+  case "$d" in
+    ">"|"|"|">-"|"|-"|">+"|"|+")
+      # YAML block scalar — the text starts on the next indented line
+      d=$(awk '/^description:/{f=1; next} f && NF {print; exit}' "$1/SKILL.md" 2>/dev/null | sed 's/^[[:space:]]*//')
+      ;;
+  esac
   if [ ${#d} -gt 80 ]; then d="${d:0:77}..."; fi
   echo "$d"
 }

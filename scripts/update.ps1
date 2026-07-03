@@ -128,7 +128,13 @@ try {
             git -C $cachePath pull --ff-only --quiet 2>&1 | Out-Null
             if ($LASTEXITCODE -ne 0) { Add-Report "${Name}: pull failed, keeping current ($before)"; return }
             $after = git -C $cachePath rev-parse --short HEAD 2>$null
-            if ($before -eq $after) { Add-Report "${Name}: up to date ($after)"; return }
+            if ($before -eq $after) {
+                # Still sync: copies are idempotent and this keeps ownership
+                # records complete even when nothing changed upstream.
+                Sync-Skills $Name "$cachePath\$SkillSource" $SkillSource | Out-Null
+                Add-Report "${Name}: up to date ($after)"
+                return
+            }
             $n = Sync-Skills $Name "$cachePath\$SkillSource" $SkillSource
             Add-Report "${Name}: updated $before -> $after ($n skills)"
             return

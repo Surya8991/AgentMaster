@@ -26,10 +26,19 @@ $rows = foreach ($dir in Get-ChildItem $SkillsDir -Directory) {
     $desc = ""
     $md = "$($dir.FullName)\SKILL.md"
     if (Test-Path $md) {
-        $descLine = Get-Content $md -TotalCount 30 | Where-Object { $_ -match '^description:' } | Select-Object -First 1
-        if ($descLine) {
-            $desc = ($descLine -replace '^description:\s*', '').Trim('"', "'", ' ')
-            if ($desc.Length -gt 80) { $desc = $desc.Substring(0, 77) + "..." }
+        $content = Get-Content $md -TotalCount 30
+        for ($i = 0; $i -lt $content.Count; $i++) {
+            if ($content[$i] -match '^description:') {
+                $desc = ($content[$i] -replace '^description:\s*', '').Trim('"', "'", ' ')
+                if ($desc -match '^[>|][-+]?$') {
+                    # YAML block scalar — the text starts on the next indented line
+                    for ($j = $i + 1; $j -lt $content.Count; $j++) {
+                        if ($content[$j].Trim()) { $desc = $content[$j].Trim(); break }
+                    }
+                }
+                if ($desc.Length -gt 80) { $desc = $desc.Substring(0, 77) + "..." }
+                break
+            }
         }
     }
     [pscustomobject]@{ Owner = $owner; Skill = $dir.Name; Desc = $desc }

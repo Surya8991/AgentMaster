@@ -115,10 +115,13 @@ else
     [ ! -d "$skill_dir" ] && continue
     skill_name=$(basename "$skill_dir")
     if ! grep -q "^$skill_name=" "$OWNERS_FILE" 2>/dev/null; then
-      note "orphan skill (no recorded owner, probably yours): $skill_name"
       orphans=$((orphans+1))
+      if [ "$orphans" -le 10 ]; then
+        note "orphan skill (no recorded owner, probably yours): $skill_name"
+      fi
     fi
   done
+  [ "$orphans" -gt 10 ] && note "... and $((orphans-10)) more orphans (run /agent-master update to rebuild ownership)"
   pass "$(grep -c '=' "$OWNERS_FILE" 2>/dev/null || echo 0) skills have recorded owners ($orphans orphans)"
 fi
 
