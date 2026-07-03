@@ -53,12 +53,41 @@ try {
 
     Log "AgentMaster: Checking for skill updates..."
 
-    # Read an optional commit pin for a repo from repos.pins (name=sha lines).
+    # Read an optional commit pin for a repo (name=sha lines).
+    # pins.local (machine-local, written by rollback) wins over repos.pins.
     function Get-Pin($Name) {
-        if (-not (Test-Path $PinsFile)) { return $null }
-        $line = Select-String -Path $PinsFile -Pattern "^$Name=" | Select-Object -First 1
-        if ($line) { return ($line.Line -split '=', 2)[1].Trim() }
+        foreach ($f in @("$CacheDir\pins.local", $PinsFile)) {
+            if (-not (Test-Path $f)) { continue }
+            $line = Select-String -Path $f -Pattern "^$Name=" | Select-Object -First 1
+            if ($line) { return ($line.Line -split '=', 2)[1].Trim() }
+        }
         return $null
+    }
+
+    function Backup-RepoSkills($Repo, $PrevSha) {
+        # Back up the currently installed skills owned by $Repo before they
+        # are overwritten. One generation.
+        $bdir = "$CacheDir\backups\$Repo"
+        if (Test-Path $bdir) { Remove-Item $bdir -Recurse -Force }
+        New-Item -ItemType Directory -Path $bdir -Force | Out-Null
+        $found = 0
+        foreach ($line in @(Get-Content $OwnersFile -ErrorAction SilentlyContinue | Where-Object { $_ -match '=' })) {
+            $kv = $line -split '=', 2
+            if ($kv[1] -ne $Repo) { continue }
+            if (Test-Path "$SkillsDir\$($kv[0])") {
+                Copy-Item -Path "$SkillsDir\$($kv[0])" -Destination "$bdir\$($kv[0])" -Recurse -Force
+                $found++
+            }
+        }
+        if ($found -gt 0) {
+            Set-Content -Path "$bdir\.meta" -Value @(
+                "sha=$PrevSha",
+                "date=$(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')",
+                "skills=$found"
+            )
+        } else {
+            Remove-Item $bdir -Recurse -Force  # nothing previous to keep (first install)
+        }
     }
 
     # Track which repo installed each skill; collect collisions for the report
@@ -147,6 +176,7 @@ try {
         $pin = Get-Pin $Name
 
         if (Test-Path "$cachePath\.git") {
+            $beforeFull = git -C $cachePath rev-parse HEAD 2>$null
             if ($pin) {
                 # Pinned: fetch and check out the exact commit, never track HEAD
                 git -C $cachePath fetch --depth 1 --quiet origin $pin 2>&1 | Out-Null
@@ -154,6 +184,10 @@ try {
                 if ($LASTEXITCODE -ne 0) {
                     Add-Report "${Name}: pin $pin not found, keeping current"
                 } else {
+                    $afterFull = git -C $cachePath rev-parse HEAD 2>$null
+                    if ($beforeFull -and $afterFull -and $beforeFull -ne $afterFull) {
+                        Backup-RepoSkills $Name $beforeFull
+                    }
                     $n = Sync-Skills $Name "$cachePath\$SkillSource" $SkillSource
                     Add-Report "${Name}: pinned to $($pin.Substring(0,7)) ($n skills)"
                 }
@@ -174,6 +208,8 @@ try {
                 Add-Report "${Name}: up to date ($after)"
                 return
             }
+            # Back up the outgoing versions before overwriting (enables rollback)
+            if ($beforeFull) { Backup-RepoSkills $Name $beforeFull }
             $n = Sync-Skills $Name "$cachePath\$SkillSource" $SkillSource
             Add-Report "${Name}: updated $before -> $after ($n skills)"
             return
@@ -209,17 +245,38 @@ try {
         else { Add-Report "agent-master: installed from remote" }
     } else {
         $amBefore = git -C $amCache rev-parse --short HEAD 2>$null
+        $amBeforeFull = git -C $amCache rev-parse HEAD 2>$null
         # Caches are machine-managed mirrors — discard any local edits that
         # would block the pull (e.g. left behind by older installers).
         git -C $amCache reset --hard --quiet 2>&1 | Out-Null
         git -C $amCache clean -fdq 2>&1 | Out-Null
-        git -C $amCache pull --ff-only --quiet 2>&1 | Out-Null
-        if ($LASTEXITCODE -ne 0) {
-            Add-Report "agent-master: pull failed, keeping current ($amBefore)"
+        $amPin = Get-Pin "agent-master"
+        if ($amPin) {
+            # Self-rollback support: honor an agent-master pin instead of pulling
+            git -C $amCache fetch --depth 1 --quiet origin $amPin 2>&1 | Out-Null
+            git -C $amCache checkout --quiet $amPin 2>&1 | Out-Null
+            if ($LASTEXITCODE -ne 0) {
+                Add-Report "agent-master: pin $amPin not found, keeping current ($amBefore)"
+            } else {
+                $amAfterFull = git -C $amCache rev-parse HEAD 2>$null
+                if ($amBeforeFull -and $amAfterFull -and $amBeforeFull -ne $amAfterFull) {
+                    Backup-RepoSkills "agent-master" $amBeforeFull
+                }
+                Add-Report "agent-master: pinned to $($amPin.Substring(0,7))"
+            }
         } else {
-            $amAfter = git -C $amCache rev-parse --short HEAD 2>$null
-            if ($amBefore -eq $amAfter) { Add-Report "agent-master: up to date ($amAfter)" }
-            else { Add-Report "agent-master: updated $amBefore -> $amAfter" }
+            git -C $amCache pull --ff-only --quiet 2>&1 | Out-Null
+            if ($LASTEXITCODE -ne 0) {
+                Add-Report "agent-master: pull failed, keeping current ($amBefore)"
+            } else {
+                $amAfter = git -C $amCache rev-parse --short HEAD 2>$null
+                if ($amBefore -eq $amAfter) { Add-Report "agent-master: up to date ($amAfter)" }
+                else {
+                    # Back up the outgoing custom skills before overwriting (enables rollback)
+                    if ($amBeforeFull) { Backup-RepoSkills "agent-master" $amBeforeFull }
+                    Add-Report "agent-master: updated $amBefore -> $amAfter"
+                }
+            }
         }
     }
     # Unknown-profile guard AFTER self-update so a freshly pushed profiles.manifest counts.

@@ -84,6 +84,7 @@ Check ARGUMENTS for sub-commands:
 - If ARGUMENTS equals `list`: run `bash ~/.claude/.agentmaster-cache/agent-master/scripts/list.sh` and relay its output verbatim.
 - If ARGUMENTS equals `routes`: run `bash ~/.claude/.agentmaster-cache/agent-master/scripts/routes.sh` and relay its output verbatim.
 - If ARGUMENTS starts with `profile`: run `bash ~/.claude/.agentmaster-cache/agent-master/scripts/profile.sh <name-if-given>` and relay its output verbatim. With no name it shows the active + available profiles; with a name it switches profile (prunes excluded skills and resyncs).
+- If ARGUMENTS starts with `rollback`: run `bash ~/.claude/.agentmaster-cache/agent-master/scripts/rollback.sh <repo-if-given>` and relay its output verbatim. With no repo it lists available backups; with a repo it restores the pre-sync version and pins it locally so auto-updates hold the rollback.
 - If ARGUMENTS starts with `repomix`: forward the remaining args to the `repomix-pack` skill directly (e.g. `repomix refresh`, `repomix include src/**`).
 - Otherwise: treat ARGUMENTS as the task to classify and execute.
 

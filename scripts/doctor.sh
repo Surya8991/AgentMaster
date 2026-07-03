@@ -80,11 +80,11 @@ fi
 # --- Pins ---
 echo ""
 echo "Pins:"
+manifest_names=$( [ -f "$MANIFEST" ] && grep -Ev '^[[:space:]]*(#|$)' "$MANIFEST" | cut -d'|' -f1 || true)
 if [ ! -f "$PINS_FILE" ]; then
   note "no repos.pins — all repos track upstream HEAD"
 else
   pin_count=0; pin_bad=0
-  manifest_names=$( [ -f "$MANIFEST" ] && grep -Ev '^[[:space:]]*(#|$)' "$MANIFEST" | cut -d'|' -f1 || true)
   while IFS='=' read -r pname psha; do
     case "$pname" in \#*|"") continue ;; esac
     pin_count=$((pin_count+1))
@@ -102,6 +102,19 @@ else
   elif [ "$pin_bad" -eq 0 ]; then
     pass "$pin_count pins valid"
   fi
+fi
+PINS_LOCAL="$CACHE_DIR/pins.local"
+if [ -s "$PINS_LOCAL" ]; then
+  while IFS='=' read -r pname psha; do
+    case "$pname" in \#*|"") continue ;; esac
+    if ! echo "$psha" | grep -qE '^[0-9a-f]{40}$'; then
+      warn "local pin '$pname' sha is not 40-char hex: $psha"
+    elif [ "$pname" != "agent-master" ] && ! echo "$manifest_names" | grep -qx "$pname"; then
+      warn "local pin '$pname' not in repos.manifest"
+    else
+      note "local pin (rollback/manual): $pname=${psha:0:7} — remove from pins.local to track upstream"
+    fi
+  done < "$PINS_LOCAL"
 fi
 
 # --- Ownership ---

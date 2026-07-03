@@ -62,10 +62,37 @@ fi
 
 log "AgentMaster: Checking for skill updates..."
 
-# Read an optional commit pin for a repo from repos.pins (name=sha lines)
+# Read an optional commit pin for a repo (name=sha lines).
+# pins.local (machine-local, written by rollback) wins over repos.pins.
 get_pin() {
-  [ -f "$PINS_FILE" ] || return 0
-  grep -E "^$1=" "$PINS_FILE" 2>/dev/null | head -1 | cut -d= -f2 || true
+  local f v
+  for f in "$CACHE_DIR/pins.local" "$PINS_FILE"; do
+    [ -f "$f" ] || continue
+    v=$(grep -E "^$1=" "$f" 2>/dev/null | head -1 | cut -d= -f2)
+    if [ -n "$v" ]; then echo "$v"; return 0; fi
+  done
+}
+
+snapshot_repo() {
+  # snapshot_repo <repo> <prev_full_sha> — back up the currently installed
+  # skills owned by <repo> before they are overwritten. One generation.
+  local repo="$1" sha="$2"
+  local bdir="$CACHE_DIR/backups/$repo"
+  rm -rf "$bdir"
+  mkdir -p "$bdir"
+  local found=0 skill owner
+  while IFS='=' read -r skill owner; do
+    [ "$owner" = "$repo" ] || continue
+    if [ -d "$SKILLS_DIR/$skill" ]; then
+      cp -r "$SKILLS_DIR/$skill" "$bdir/$skill" 2>/dev/null || continue
+      found=$((found+1))
+    fi
+  done < <(grep '=' "$OWNERS_FILE" 2>/dev/null)
+  if [ "$found" -gt 0 ]; then
+    printf 'sha=%s\ndate=%s\nskills=%s\n' "$sha" "$(date '+%Y-%m-%d %H:%M:%S')" "$found" > "$bdir/.meta"
+  else
+    rm -rf "$bdir"  # nothing previous to keep (first install)
+  fi
 }
 
 record_owner() {
@@ -146,10 +173,17 @@ update_repo() {
   pin=$(get_pin "$name")
 
   if [ -d "$cache_path/.git" ]; then
+    local before_full
+    before_full=$(git -C "$cache_path" rev-parse HEAD 2>/dev/null || echo "none")
     if [ -n "$pin" ]; then
       # Pinned: fetch and check out the exact commit, never track HEAD
       git -C "$cache_path" fetch --depth 1 --quiet origin "$pin" 2>/dev/null || true
       if git -C "$cache_path" checkout --quiet "$pin" 2>/dev/null; then
+        local after_full
+        after_full=$(git -C "$cache_path" rev-parse HEAD 2>/dev/null || echo "none")
+        if [ "$before_full" != "$after_full" ] && [ "$before_full" != "none" ]; then
+          snapshot_repo "$name" "$before_full"
+        fi
         sync_skills "$name" "$cache_path/$skill_source" "$skill_source"
         report "$name: pinned to ${pin:0:7} ($SYNCED_COUNT skills)"
       else
@@ -176,6 +210,8 @@ update_repo() {
         report "$name: up to date ($after)"
         return 0
       fi
+      # Back up the outgoing versions before overwriting (enables rollback)
+      [ "$before_full" != "none" ] && snapshot_repo "$name" "$before_full"
       sync_skills "$name" "$cache_path/$skill_source" "$skill_source"
       report "$name: updated $before -> $after ($SYNCED_COUNT skills)"
       return 0
@@ -210,15 +246,31 @@ mkdir -p "$SKILLS_DIR"
 AM_CACHE="$CACHE_DIR/agent-master"
 if [ -d "$AM_CACHE/.git" ]; then
   am_before=$(git -C "$AM_CACHE" rev-parse --short HEAD 2>/dev/null || echo "none")
+  am_before_full=$(git -C "$AM_CACHE" rev-parse HEAD 2>/dev/null || echo "none")
   # Caches are machine-managed mirrors — discard any local edits that
   # would block the pull (e.g. left behind by older installers).
   git -C "$AM_CACHE" reset --hard --quiet 2>/dev/null || true
   git -C "$AM_CACHE" clean -fdq 2>/dev/null || true
-  if git -C "$AM_CACHE" pull --ff-only --quiet 2>/dev/null; then
+  am_pin=$(get_pin agent-master)
+  if [ -n "$am_pin" ]; then
+    # Self-rollback support: honor an agent-master pin instead of pulling
+    git -C "$AM_CACHE" fetch --depth 1 --quiet origin "$am_pin" 2>/dev/null || true
+    if git -C "$AM_CACHE" checkout --quiet "$am_pin" 2>/dev/null; then
+      am_after_full=$(git -C "$AM_CACHE" rev-parse HEAD 2>/dev/null || echo "none")
+      if [ "$am_before_full" != "$am_after_full" ] && [ "$am_before_full" != "none" ]; then
+        snapshot_repo "agent-master" "$am_before_full"
+      fi
+      report "agent-master: pinned to ${am_pin:0:7}"
+    else
+      report "agent-master: pin $am_pin not found, keeping current ($am_before)"
+    fi
+  elif git -C "$AM_CACHE" pull --ff-only --quiet 2>/dev/null; then
     am_after=$(git -C "$AM_CACHE" rev-parse --short HEAD 2>/dev/null || echo "none")
     if [ "$am_before" = "$am_after" ]; then
       report "agent-master: up to date ($am_after)"
     else
+      # Back up the outgoing custom skills before overwriting (enables rollback)
+      [ "$am_before_full" != "none" ] && snapshot_repo "agent-master" "$am_before_full"
       report "agent-master: updated $am_before -> $am_after"
     fi
   else

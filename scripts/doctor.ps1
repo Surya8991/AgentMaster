@@ -117,6 +117,21 @@ if (-not (Test-Path $PinsFile)) {
         Test-Pass "$pinCount pins valid"
     }
 }
+$pinsLocal = "$CacheDir\pins.local"
+if (Test-Path $pinsLocal) {
+    foreach ($line in Get-Content $pinsLocal | Where-Object { $_ -notmatch '^\s*(#|$)' }) {
+        $kv = $line -split '=', 2
+        if ($kv.Count -lt 2) { continue }
+        $pname = $kv[0].Trim(); $psha = $kv[1].Trim()
+        if ($psha -notmatch '^[0-9a-f]{40}$') {
+            Test-Warn "local pin '$pname' sha is not 40-char hex: $psha"
+        } elseif ($pname -ne "agent-master" -and $manifestNames -notcontains $pname) {
+            Test-Warn "local pin '$pname' not in repos.manifest"
+        } else {
+            Test-Note "local pin (rollback/manual): $pname=$($psha.Substring(0,7)) - remove from pins.local to track upstream"
+        }
+    }
+}
 
 # --- Ownership ---
 Write-Host ""

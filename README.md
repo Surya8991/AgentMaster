@@ -133,6 +133,7 @@ No manual skill selection. No guessing. No loading 5 skills when you need 1.
 | `/agent-master list` | List installed skills grouped by source repo |
 | `/agent-master routes` | Routing log, learned overrides, and unrouted skills |
 | `/agent-master profile [name]` | Show or switch the install profile (full/dev/business/minimal) |
+| `/agent-master rollback [repo]` | Restore a repo's skills to the pre-sync version and pin it |
 | `/caveman` | Enable token compression (~75% savings on all output) |
 | `/codereview` | Blunt, factual code review — finds bugs, security issues, doc mismatches |
 
@@ -145,6 +146,10 @@ Dependency repos are declared in `repos.manifest` (one line per repo: `name|url|
 ### Install Profiles
 
 Don't want all 44+ skills? Install a subset: `bash install.sh --profile dev` (or `.\install.ps1 -Profile dev`). Shipped profiles in `profiles.manifest`: **dev** (compression + superpowers workflow + session memory + all custom skills), **business** (compression + claude-skills domain expertise + orchestrator), **minimal** (orchestrator + compression), and the default **full** (everything). Switch anytime with `/agent-master profile <name>` — excluded skills are pruned (only ones AgentMaster installed; your own skills are never touched) and the subset resyncs. Profiles persist across auto-updates; define your own in `~/.claude/.agentmaster-cache/profiles.local`. The orchestrator skill itself is always installed, and an unknown profile name falls back to full rather than uninstalling anything.
+
+### Skill Rollback
+
+Every sync that changes a repo automatically backs up the outgoing skill versions first (`~/.claude/.agentmaster-cache/backups/<repo>/`, one generation each). If an upstream update breaks something, `/agent-master rollback <repo>` restores the previous versions **and pins the repo** in `pins.local` so auto-updates hold the rollback instead of re-clobbering it 6 hours later. Works for the orchestrator itself too (`rollback agent-master`). Undo by deleting the repo's line from `pins.local` — the next sync resumes tracking upstream. `pins.local` also serves as a general machine-local pin file: it wins over the repo-committed `repos.pins`.
 
 ### Routing Feedback Loop
 
