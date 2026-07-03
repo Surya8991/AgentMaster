@@ -64,6 +64,17 @@ try {
         return $null
     }
 
+    function Restore-DefaultBranch($CachePath) {
+        # A prior pin/rollback leaves the cache on a detached HEAD, where pull
+        # fails. Re-attach to the remote default branch before pulling.
+        $head = git -C $CachePath rev-parse --abbrev-ref HEAD 2>$null
+        if ($head -eq "HEAD") {
+            $def = git -C $CachePath symbolic-ref --short refs/remotes/origin/HEAD 2>$null
+            if ($def) { $def = $def -replace '^origin/', '' } else { $def = "main" }
+            git -C $CachePath checkout --quiet $def 2>&1 | Out-Null
+        }
+    }
+
     function Backup-RepoSkills($Repo, $PrevSha) {
         # Back up the currently installed skills owned by $Repo before they
         # are overwritten. One generation.
@@ -198,6 +209,7 @@ try {
             # would block the pull (e.g. left behind by older installers).
             git -C $cachePath reset --hard --quiet 2>&1 | Out-Null
             git -C $cachePath clean -fdq 2>&1 | Out-Null
+            Restore-DefaultBranch $cachePath
             git -C $cachePath pull --ff-only --quiet 2>&1 | Out-Null
             if ($LASTEXITCODE -ne 0) { Add-Report "${Name}: pull failed, keeping current ($before)"; return }
             $after = git -C $cachePath rev-parse --short HEAD 2>$null
@@ -265,6 +277,7 @@ try {
                 Add-Report "agent-master: pinned to $($amPin.Substring(0,7))"
             }
         } else {
+            Restore-DefaultBranch $amCache
             git -C $amCache pull --ff-only --quiet 2>&1 | Out-Null
             if ($LASTEXITCODE -ne 0) {
                 Add-Report "agent-master: pull failed, keeping current ($amBefore)"

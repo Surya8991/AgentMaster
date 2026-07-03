@@ -73,6 +73,16 @@ get_pin() {
   done
 }
 
+reattach_head() {
+  # A prior pin/rollback leaves the cache on a detached HEAD, where pull
+  # fails. Re-attach to the remote default branch before pulling.
+  if [ "$(git -C "$1" rev-parse --abbrev-ref HEAD 2>/dev/null)" = "HEAD" ]; then
+    local def
+    def=$(git -C "$1" symbolic-ref --short refs/remotes/origin/HEAD 2>/dev/null | sed 's|^origin/||')
+    git -C "$1" checkout --quiet "${def:-main}" 2>/dev/null || true
+  fi
+}
+
 snapshot_repo() {
   # snapshot_repo <repo> <prev_full_sha> — back up the currently installed
   # skills owned by <repo> before they are overwritten. One generation.
@@ -197,6 +207,7 @@ update_repo() {
       # would block the pull (e.g. left behind by older installers).
       git -C "$cache_path" reset --hard --quiet 2>/dev/null || true
       git -C "$cache_path" clean -fdq 2>/dev/null || true
+      reattach_head "$cache_path"
       if ! git -C "$cache_path" pull --ff-only --quiet 2>/dev/null; then
         report "$name: pull failed, keeping current ($before)"
         return 0
@@ -264,7 +275,7 @@ if [ -d "$AM_CACHE/.git" ]; then
     else
       report "agent-master: pin $am_pin not found, keeping current ($am_before)"
     fi
-  elif git -C "$AM_CACHE" pull --ff-only --quiet 2>/dev/null; then
+  elif reattach_head "$AM_CACHE"; git -C "$AM_CACHE" pull --ff-only --quiet 2>/dev/null; then
     am_after=$(git -C "$AM_CACHE" rev-parse --short HEAD 2>/dev/null || echo "none")
     if [ "$am_before" = "$am_after" ]; then
       report "agent-master: up to date ($am_after)"
