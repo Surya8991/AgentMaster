@@ -131,6 +131,7 @@ No manual skill selection. No guessing. No loading 5 skills when you need 1.
 | `/agent-master update` | Force-update all dependency repos and sync skills |
 | `/agent-master doctor` | Health-check installed skills, caches, and pins (PASS/WARN/FAIL) |
 | `/agent-master list` | List installed skills grouped by source repo |
+| `/agent-master routes` | Routing log, learned overrides, and unrouted skills |
 | `/caveman` | Enable token compression (~75% savings on all output) |
 | `/codereview` | Blunt, factual code review — finds bugs, security issues, doc mismatches |
 
@@ -139,6 +140,10 @@ No manual skill selection. No guessing. No loading 5 skills when you need 1.
 AgentMaster automatically pulls latest versions from all dependency repos on first invoke each session (background, non-blocking). Has a 6-hour cooldown to avoid spamming GitHub. Use `/agent-master update` to force an immediate sync.
 
 Dependency repos are declared in `repos.manifest` (one line per repo: `name|url|skill_source`). Add personal repos in `~/.claude/.agentmaster-cache/repos.local` (same format) — they survive self-updates. Pin any repo to an exact commit via `repos.pins` (`name=sha`). Every sync writes a report to `~/.claude/.agentmaster-cache/last-sync-report.txt` including before→after commits and skill-name collisions between repos.
+
+### Routing Feedback Loop
+
+Routing learns from use. Every routing decision is logged to `~/.claude/.agentmaster-cache/routing-log.txt`. When you correct a misroute in-session ("no, use X"), the correction is saved as a rule in `routing-overrides.md`, which loads every session and takes precedence over the static routing table — so the same mistake isn't made twice. Skills that sync in but aren't in the routing table are detected on every update (`unrouted-skills.txt`) and consulted as a fallback before AgentMaster asks you what a task is. Inspect all three with `/agent-master routes`.
 
 ### Dry-Run Example
 

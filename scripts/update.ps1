@@ -200,6 +200,37 @@ try {
         Update-Repo -Name $parts[0].Trim() -RepoUrl $parts[1].Trim() -SkillSource $parts[2].Trim()
     }
 
+    # Regenerate unrouted-skills.txt: installed skills never mentioned in the routing table
+    $routingTable = "$amCache\skills\agent-master\SKILL.md"
+    $unroutedFile = "$CacheDir\unrouted-skills.txt"
+    if (Test-Path $routingTable) {
+        $tableText = Get-Content $routingTable -Raw
+        $unroutedLines = @()
+        foreach ($dir in Get-ChildItem $SkillsDir -Directory) {
+            if ($tableText -match "\b$([regex]::Escape($dir.Name))\b") { continue }
+            $desc = ""
+            $md = "$($dir.FullName)\SKILL.md"
+            if (Test-Path $md) {
+                $content = Get-Content $md -TotalCount 30
+                for ($i = 0; $i -lt $content.Count; $i++) {
+                    if ($content[$i] -match '^description:') {
+                        $desc = ($content[$i] -replace '^description:\s*', '').Trim('"', "'", ' ')
+                        if ($desc -match '^[>|][-+]?$') {
+                            for ($j = $i + 1; $j -lt $content.Count; $j++) {
+                                if ($content[$j].Trim()) { $desc = $content[$j].Trim(); break }
+                            }
+                        }
+                        if ($desc.Length -gt 100) { $desc = $desc.Substring(0, 97) + "..." }
+                        break
+                    }
+                }
+            }
+            $unroutedLines += "$($dir.Name) - $desc"
+        }
+        Set-Content -Path $unroutedFile -Value $unroutedLines
+        Add-Report "unrouted skills: $($unroutedLines.Count) (not in routing table)"
+    }
+
     # Record timestamp
     [int](Get-Date -UFormat %s) | Out-File $LastUpdateFile -Force
 

@@ -59,6 +59,20 @@ User can point to a different file by saying "load rules from [path]".
 
 ---
 
+## Per-Session Routing Overrides Load
+
+On **first invocation each session**, check `~/.claude/.agentmaster-cache/routing-overrides.md`:
+
+```
+1. Check: test -f ~/.claude/.agentmaster-cache/routing-overrides.md
+2. If found: read it. Each rule maps a task pattern to a skill.
+   These overrides TAKE PRECEDENCE over the static routing table in Step 1 —
+   they encode past misroutes the user has corrected.
+3. If not found: skip silently.
+```
+
+---
+
 ## Argument Parsing
 
 Check ARGUMENTS for sub-commands:
@@ -68,6 +82,7 @@ Check ARGUMENTS for sub-commands:
 - If ARGUMENTS equals `update`: run update script in **foreground** — `bash ~/.claude/.agentmaster-cache/agent-master/scripts/update.sh`
 - If ARGUMENTS equals `doctor`: run `bash ~/.claude/.agentmaster-cache/agent-master/scripts/doctor.sh` and relay its output verbatim. Do NOT re-derive or summarize the checks yourself — the script is the source of truth.
 - If ARGUMENTS equals `list`: run `bash ~/.claude/.agentmaster-cache/agent-master/scripts/list.sh` and relay its output verbatim.
+- If ARGUMENTS equals `routes`: run `bash ~/.claude/.agentmaster-cache/agent-master/scripts/routes.sh` and relay its output verbatim.
 - If ARGUMENTS starts with `repomix`: forward the remaining args to the `repomix-pack` skill directly (e.g. `repomix refresh`, `repomix include src/**`).
 - Otherwise: treat ARGUMENTS as the task to classify and execute.
 
@@ -193,7 +208,30 @@ If the task spans multiple categories, apply these combination rules:
 4. For code tasks: superpowers workflow is NON-NEGOTIABLE.
    brainstorming → writing-plans → TDD/implementation → code-review → finish
    You cannot skip brainstorming. You cannot skip tests.
+
+5. LOG the decision (best effort — never block or delay the user's task):
+   echo "$(date +%F) | <task gist, max 10 words> | <category> | <skill(s)>" >> ~/.claude/.agentmaster-cache/routing-log.txt
 ```
+
+---
+
+## Misroute Capture
+
+When the user corrects a routing decision in-session (e.g. "no, use X", "that's the wrong skill", "I wanted a design audit not UI work"):
+
+```
+1. LOG the correction:
+   echo "$(date +%F) | <task gist> | <original category> | corrected -> <right skill>" >> ~/.claude/.agentmaster-cache/routing-log.txt
+
+2. PERSIST the lesson — append one rule to ~/.claude/.agentmaster-cache/routing-overrides.md:
+   - "<short task pattern>" → <right skill> (not <wrong skill>) — added YYYY-MM-DD
+
+3. CONFIRM briefly: "Noted — future '<pattern>' tasks route to <right skill>."
+
+4. Then invoke the right skill and continue the task.
+```
+
+Overrides load at the start of every session (see Per-Session Routing Overrides Load), so corrections persist. Keep patterns short and generalizable — describe the task type, not this specific request. Do NOT add an override when the original routing was defensible and the user simply changed their mind about what they wanted.
 
 ---
 
@@ -272,8 +310,9 @@ When no classification matches:
 
 1. **Specific skill mentioned?** → Invoke that skill directly
 2. **Conversational?** (greeting, meta-question) → Respond directly
-3. **Ambiguous?** → Ask ONE question: "Is this a code, marketing, strategy, or other task?"
-4. **Never guess** with more than 2 skills. When uncertain, ask.
+3. **Check unrouted skills** → read `~/.claude/.agentmaster-cache/unrouted-skills.txt` (skills installed but absent from the routing table above, one per line with description). If one clearly matches the task, invoke it and log the route as category `unrouted-match`.
+4. **Ambiguous?** → Ask ONE question: "Is this a code, marketing, strategy, or other task?"
+5. **Never guess** with more than 2 skills. When uncertain, ask.
 
 ---
 

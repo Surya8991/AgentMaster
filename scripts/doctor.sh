@@ -125,6 +125,25 @@ else
   pass "$(grep -c '=' "$OWNERS_FILE" 2>/dev/null || echo 0) skills have recorded owners ($orphans orphans)"
 fi
 
+# --- Routing ---
+echo ""
+echo "Routing:"
+UNROUTED_FILE="$CACHE_DIR/unrouted-skills.txt"
+if [ ! -f "$UNROUTED_FILE" ]; then
+  warn "unrouted-skills.txt not generated yet — run /agent-master update"
+elif [ -s "$UNROUTED_FILE" ]; then
+  n_unrouted=$(grep -c . "$UNROUTED_FILE")
+  note "$n_unrouted skills installed but not in the routing table (see /agent-master routes):"
+  head -5 "$UNROUTED_FILE" | sed 's/^/  NOTE    /'
+  [ "$n_unrouted" -gt 5 ] && note "  ... and $((n_unrouted-5)) more"
+else
+  pass "all installed skills are reachable from the routing table"
+fi
+OVERRIDES_FILE="$CACHE_DIR/routing-overrides.md"
+if [ -s "$OVERRIDES_FILE" ] && grep -qEv '^[[:space:]]*(#|$)' "$OVERRIDES_FILE"; then
+  note "$(grep -cEv '^[[:space:]]*(#|$)' "$OVERRIDES_FILE") routing overrides active (see /agent-master routes)"
+fi
+
 # --- Tooling & freshness ---
 echo ""
 echo "Tooling:"

@@ -222,6 +222,30 @@ while IFS='|' read -r name url source; do
   update_repo "$name" "$url" "$source"
 done < <(read_manifest)
 
+# Regenerate unrouted-skills.txt: installed skills never mentioned in the routing table
+ROUTING_TABLE="$AM_CACHE/skills/agent-master/SKILL.md"
+UNROUTED_FILE="$CACHE_DIR/unrouted-skills.txt"
+if [ -f "$ROUTING_TABLE" ]; then
+  : > "$UNROUTED_FILE"
+  unrouted=0
+  for skill_dir in "$SKILLS_DIR"/*/; do
+    [ ! -d "$skill_dir" ] && continue
+    sname=$(basename "$skill_dir")
+    if ! grep -qwF "$sname" "$ROUTING_TABLE"; then
+      sdesc=$(grep -m1 '^description:' "$skill_dir/SKILL.md" 2>/dev/null | sed 's/^description:[[:space:]]*//; s/^["'\'']//; s/["'\'']$//')
+      case "$sdesc" in
+        ">"|"|"|">-"|"|-"|">+"|"|+")
+          sdesc=$(awk '/^description:/{f=1; next} f && NF {print; exit}' "$skill_dir/SKILL.md" 2>/dev/null | sed 's/^[[:space:]]*//')
+          ;;
+      esac
+      [ ${#sdesc} -gt 100 ] && sdesc="${sdesc:0:97}..."
+      echo "$sname — $sdesc" >> "$UNROUTED_FILE"
+      unrouted=$((unrouted+1))
+    fi
+  done
+  report "unrouted skills: $unrouted (not in routing table)"
+fi
+
 # Record update timestamp
 date +%s > "$LAST_UPDATE_FILE"
 

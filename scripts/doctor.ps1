@@ -139,6 +139,30 @@ if (-not (Test-Path $OwnersFile)) {
     Test-Pass "$($owners.Count) skills have recorded owners ($orphans orphans)"
 }
 
+# --- Routing ---
+Write-Host ""
+Write-Host "Routing:"
+$unroutedFile = "$CacheDir\unrouted-skills.txt"
+if (-not (Test-Path $unroutedFile)) {
+    Test-Warn "unrouted-skills.txt not generated yet - run /agent-master update"
+} else {
+    $unrouted = @(Get-Content $unroutedFile | Where-Object { $_.Trim() })
+    if ($unrouted.Count -gt 0) {
+        Test-Note "$($unrouted.Count) skills installed but not in the routing table (see /agent-master routes):"
+        $unrouted | Select-Object -First 5 | ForEach-Object { Test-Note "  $_" }
+        if ($unrouted.Count -gt 5) { Test-Note "  ... and $($unrouted.Count - 5) more" }
+    } else {
+        Test-Pass "all installed skills are reachable from the routing table"
+    }
+}
+$overridesFile = "$CacheDir\routing-overrides.md"
+if (Test-Path $overridesFile) {
+    $activeOverrides = @(Get-Content $overridesFile | Where-Object { $_ -notmatch '^\s*(#|$)' })
+    if ($activeOverrides.Count -gt 0) {
+        Test-Note "$($activeOverrides.Count) routing overrides active (see /agent-master routes)"
+    }
+}
+
 # --- Tooling & freshness ---
 Write-Host ""
 Write-Host "Tooling:"
