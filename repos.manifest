@@ -23,5 +23,7 @@ wshobson|https://github.com/wshobson/agents.git|plugins/backend-development/skil
 wshobson|https://github.com/wshobson/agents.git|plugins/security-scanning/skills
 wshobson|https://github.com/wshobson/agents.git|plugins/llm-application-dev/skills
 wshobson|https://github.com/wshobson/agents.git|plugins/cicd-automation/skills
+wshobson|https://github.com/wshobson/agents.git|plugins/kubernetes-operations/skills
+wshobson|https://github.com/wshobson/agents.git|plugins/python-development/skills
 davila7|https://github.com/davila7/claude-code-templates.git|cli-tool/components/skills/git
 davila7|https://github.com/davila7/claude-code-templates.git|cli-tool/components/skills/database

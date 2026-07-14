@@ -1,6 +1,6 @@
 ---
 name: "agent-master"
-description: "Meta-orchestrator that classifies tasks and routes to the right combination of installed skills across caveman (output compression), superpowers (dev workflow), and claude-skills (domain expertise). 25 routing categories including whole-codebase analysis via repomix-pack, LLM/AI app dev, a live task dashboard, and curated tactical skill libraries (wshobson, davila7) for backend/security/CI-CD/database depth. Invoke with /agent-master. Use as default entry point for ambiguous or multi-domain requests."
+description: "Meta-orchestrator that classifies tasks and routes to the right combination of installed skills across caveman (output compression), superpowers (dev workflow), anthropic-skills (business/domain expertise), and wired tactical libraries (wshobson, davila7, impeccable, anthropic-official). 25 routing categories including whole-codebase analysis via repomix-pack, LLM/AI app dev, a live task dashboard, and curated tactical skill libraries (wshobson, davila7) for backend/security/CI-CD/database depth. Invoke with /agent-master. Use as default entry point for ambiguous or multi-domain requests."
 compatibility: opencode
 ---
 
@@ -21,7 +21,7 @@ bash ~/.claude/.agentmaster-cache/agent-master/scripts/update.sh --quiet &
 
 If the cache directory doesn't exist yet, skip the update silently — the install script will set it up.
 
-This pulls latest versions of caveman, superpowers, claude-skills, claude-mem, and AgentMaster itself. Has a 6-hour cooldown so it won't re-run repeatedly.
+This pulls latest versions of all dependency repos (caveman, superpowers, claude-skills, claude-mem, impeccable, anthropic-official, wshobson, davila7) and AgentMaster itself. Has a 6-hour cooldown so it won't re-run repeatedly.
 
 
 ## Per-Session Bootstrap: Repomix Snapshot
@@ -94,7 +94,7 @@ Check ARGUMENTS for sub-commands:
 |-------|--------|------|-------------|
 | **Output** | caveman | Token compression (~75% savings) | Only when user has enabled caveman mode (`/caveman`) |
 | **Workflow** | superpowers | Process discipline: brainstorm → plan → TDD → review → finish | Code/engineering tasks ONLY |
-| **Domain** | claude-skills + devops + anthropic built-ins | Subject matter expertise (240+ skills across 10 domains + docs/research) | When task needs domain knowledge |
+| **Domain** | anthropic-skills (business: marketing, sales, product, strategy) + wshobson/davila7/impeccable/anthropic-official (technical tactical) + custom (devops, security-audit) | Subject-matter expertise, ~125 installed skills + the anthropic-skills plugin | When task needs domain knowledge |
 
 **Rule:** Layers stack. Caveman compresses output of ANY skill. Superpowers enforces workflow for code tasks. Domain skills provide expertise. All three can be active simultaneously.
 
@@ -105,29 +105,29 @@ Read the user's input. Match to ONE primary category:
 
 | Category | Signal Words | Workflow Layer | Domain Layer | Entry Skill |
 |----------|-------------|----------------|--------------|-------------|
-| **Build/Create** | build, create, implement, add feature, scaffold, new component | superpowers: `brainstorming` | `engineering-team` or `engineering` | Invoke `brainstorming` FIRST (hard gate) |
-| **Refactor** | refactor, restructure, reorganize, clean up code, extract, decouple | superpowers: `brainstorming` | `engineering-team` | Invoke `brainstorming` FIRST (design before refactor) |
-| **Debug/Fix** | bug, crash, error, failing, broken, fix, not working, exception, traceback | superpowers: `systematic-debugging` | `engineering-team` (relevant specialty) | Invoke `systematic-debugging` |
+| **Build/Create** | build, create, implement, add feature, scaffold, new component | superpowers: `brainstorming` | wshobson `backend-development` (api-design-principles, architecture-patterns, microservices-patterns) + `python-development` (16 skills) + davila7 `database` — all auto-surface by description | Invoke `brainstorming` FIRST (hard gate). Tactical skills surface during implementation; no separate invoke. |
+| **Refactor** | refactor, restructure, reorganize, clean up code, extract, decouple | superpowers: `brainstorming` | wshobson `python-anti-patterns`, `python-design-patterns`, `architecture-patterns` (auto-surface) | Invoke `brainstorming` FIRST (design before refactor). |
+| **Debug/Fix** | bug, crash, error, failing, broken, fix, not working, exception, traceback | superpowers: `systematic-debugging` | wshobson `python-error-handling`, `python-resilience`, `python-performance-optimization` (auto-surface) | Invoke `systematic-debugging`. |
 | **Code Review** | review code, review this code, review PR, review my changes, check this diff, code review, /codereview | — | `codereview` | Invoke `codereview` (blunt mode). For PR workflow reviews → `requesting-code-review` (superpowers). |
 | **Commit/Ship** | commit, merge, finish branch, ship, ready to merge, push | superpowers: `finishing-a-development-branch` | — | Invoke `finishing-a-development-branch` |
-| **Test** | write tests, add tests, TDD, test coverage, unit test, integration test | superpowers: `test-driven-development` | `engineering-team` | Invoke `test-driven-development` |
-| **Marketing** | blog, SEO, copywriting, campaign, email sequence, ads, social media, content marketing, landing page copy | — | `marketing-skill` | Invoke `marketing-skill` (marketing-ops routes internally) |
-| **Strategy/Business** | business strategy, company roadmap, fundraise, burn rate, pivot, board meeting, scaling strategy | — | `c-level-advisor` | Invoke `c-level-advisor` (chief-of-staff routes internally) |
-| **Product** | PRD, user stories, personas, product roadmap, backlog grooming, UX research, product requirements | — | `product-team` | Invoke `product-team` |
-| **Finance** | valuation, DCF, budget, financial forecast, financial model, runway, ARR, MRR, unit economics | — | `finance` | Invoke `finance` |
-| **Business Growth** | customer success, churn analysis, sales pipeline, RFP, proposal writing, revenue ops | — | `business-growth` | Invoke `business-growth` |
-| **Project Mgmt** | Jira, scrum master, Confluence, velocity chart, retro, project plan, sprint health | — | `project-management` | Invoke `project-management` |
-| **Compliance** | ISO, FDA, MDR, GDPR, CAPA, QMS, audit, SOC2, compliance, regulatory | — | `ra-qm-team` | Invoke `ra-qm-team` |
-| **DevOps/Deploy** | deploy, CI/CD, Docker, Dockerfile, container, Kubernetes, k8s, Terraform, pipeline, GitHub Actions, nginx, production, staging, infrastructure, cloud, AWS, GCP, Azure, monitoring, uptime | superpowers: `writing-plans` (for complex infra only) | `devops` | Invoke `devops`. For multi-step infra (Terraform + CI/CD + monitoring), invoke `writing-plans` first. Pipeline-config specifics (github-actions-templates, gitlab-ci-patterns, secrets-management) come from wshobson `cicd-automation` skills — auto-surface, no separate invoke. |
+| **Test** | write tests, add tests, TDD, test coverage, unit test, integration test | superpowers: `test-driven-development` | wshobson `python-testing-patterns`, `temporal-python-testing`; anthropic-skills `webapp-testing` for browser/Playwright (auto-surface) | Invoke `test-driven-development`. |
+| **Marketing** | blog, SEO, copywriting, campaign, email sequence, ads, social media, content marketing, landing page copy | — | `anthropic-skills:running-marketing` | Invoke `anthropic-skills:running-marketing`. Related loaded skills auto-surface: `cold-email`, `email-sequence`, `copywriting`, `social`, `ai-seo`, `programmatic-seo`, `crafting-positioning`, `storytelling`. |
+| **Strategy/Business** | business strategy, company roadmap, fundraise, burn rate, pivot, board meeting, scaling strategy | — | `anthropic-skills:gtm-foundations` | Invoke `anthropic-skills:gtm-foundations` (+ `crafting-positioning`, `building-gtm-system`, `competitive-positioning`). Note: no dedicated fundraise/board-finance skill loaded — for financial specifics combine with Finance + `deep-research`. |
+| **Product** | PRD, user stories, personas, product roadmap, backlog grooming, UX research, product requirements | — | `anthropic-skills:building-product` | Invoke `anthropic-skills:building-product` (+ `validating-customers`, `customer-research`, `persona-classification`, `discovery`). |
+| **Finance** | valuation, DCF, budget, financial forecast, financial model, runway, ARR, MRR, unit economics | — | `anthropic-skills:setting-pricing` (pricing only) + `anthropic-skills:xlsx` (modeling) | No dedicated valuation/DCF skill is loaded. For pricing → `setting-pricing`/`pricing`. For models/forecasts → build in `anthropic-skills:xlsx`, gather inputs via `deep-research`. State this limitation rather than pretending a finance expert skill exists. |
+| **Business Growth** | customer success, churn analysis, sales pipeline, RFP, proposal writing, revenue ops | — | `anthropic-skills:executing-sales` | Invoke `anthropic-skills:executing-sales`. Related auto-surface: `pipeline-management`, `qualifying-leads`, `objection-handling`, `closing`, `customer-onboarding`, `deal-review-win-loss`. |
+| **Project Mgmt** | Jira, scrum master, Confluence, velocity chart, retro, project plan, sprint health | — | `anthropic-skills:schedule` + superpowers `writing-plans` | Loaded coverage is thin — use `anthropic-skills:schedule`/`time-management` for planning and superpowers `writing-plans` for structured project plans. No Jira/scrum-specific skill is loaded; say so. |
+| **Compliance** | ISO, FDA, MDR, GDPR, CAPA, QMS, audit, SOC2, compliance, regulatory | — | `anthropic-skills:compliance-handling` (general) + `security-audit` (technical controls) | For regulated-domain depth (FDA/ISO/MDR/GDPR) no dedicated skill is loaded — use `compliance-handling` for general handling, `security-audit` for SOC2/technical controls, and flag that specialized regulatory review is out of scope. |
+| **DevOps/Deploy** | deploy, CI/CD, Docker, Dockerfile, container, Kubernetes, k8s, Terraform, pipeline, GitHub Actions, nginx, production, staging, infrastructure, cloud, AWS, GCP, Azure, monitoring, uptime | superpowers: `writing-plans` (for complex infra only) | `devops` | Invoke `devops`. For multi-step infra (Terraform + CI/CD + monitoring), invoke `writing-plans` first. Pipeline-config specifics (github-actions-templates, gitlab-ci-patterns, secrets-management) from wshobson `cicd-automation`; Kubernetes specifics (k8s-manifest-generator, helm-chart-scaffolding, k8s-security-policies, gitops-workflow) from wshobson `kubernetes-operations` — all auto-surface, no separate invoke. |
 | **Database Design** | schema design, database migration, query optimization, SQL, Postgres, indexing strategy, ORM modeling | — | `davila7` `database` skills (sql-pro, database-optimizer, postgresql-optimization, database-migration) | These tactical skills surface by description — no entry skill to invoke first. For app architecture spanning DB + backend, combine with Build/Create. |
-| **Security** | security scan, vulnerability, pen test, OWASP, XSS, CSRF, injection, CVE, dependency audit, secrets scanning, threat model, hardening | — | `security-audit` | Invoke `security-audit`. For infra security → combine with `devops`. For compliance → combine with `ra-qm-team`. For deep threat-modeling technique (STRIDE, attack trees, SAST config) → the wshobson `security-scanning` tactical skills surface automatically by description. |
+| **Security** | security scan, vulnerability, pen test, OWASP, XSS, CSRF, injection, CVE, dependency audit, secrets scanning, threat model, hardening | — | `security-audit` | Invoke `security-audit`. For infra security → combine with `devops`. For compliance → combine with Compliance category (`anthropic-skills:compliance-handling`). For deep threat-modeling technique (STRIDE, attack trees, SAST config) → the wshobson `security-scanning` tactical skills surface automatically by description. |
 | **UI/UX Design** | design/redesign UI, improve UX, polish, critique, audit design, animate, micro-interactions, color palette, typography, wireframe, layout, responsive design, accessibility, design system, component library, anti-patterns, live browser iteration | — | `impeccable` (frontend craft) or `anthropic-skills:ui-ux-pro-max` (design-system reference) | Invoke `impeccable` for building/polishing/auditing real frontend code and browser iteration. Use `anthropic-skills:ui-ux-pro-max` when the ask is style/palette/font-pairing reference or planning without touching code. |
 | **Documentation** | write docs, generate PDF, create DOCX, technical spec, Word document, spreadsheet, presentation, slides | — | Anthropic built-in skills | Route by format: `.docx`/Word → `anthropic-skills:docx`, `.pdf` → `anthropic-skills:pdf`, slides/`.pptx` → `anthropic-skills:pptx`, spreadsheet/`.xlsx` → `anthropic-skills:xlsx`. If no format specified, default to `anthropic-skills:docx`. |
 | **Research** | research, investigate, analyze market, competitor analysis, deep dive, explore topic | — | `anthropic-skills:deep-research` | Invoke `anthropic-skills:deep-research` |
 | **Memory/History** | last time, previous session, how did we, did we already, past work, search memory, what did I do | — | `mem-search` | Invoke `mem-search`. For project timeline → `timeline-report`. For knowledge base → `knowledge-agent`. |
 | **Explore Codebase** | explore codebase, code structure, find functions, understand architecture, how is this organized | — | `smart-explore` | Invoke `smart-explore` (AST-based, token-efficient) |
-| **Whole-Codebase Analysis** | entire codebase, whole repo, across the project, full audit, full scan, architecture review, onboard me to this repo, refactor X across | — | `repomix-pack` → calling skill | Invoke `repomix-pack` FIRST to produce `.agentmaster/codebase.xml`, then route to the analysis skill (e.g. `security-audit`, `codereview`, `engineering-team`) which reads that file as input. |
-| **LLM/AI App Dev** | LLM app, AI app, RAG, vector DB, embeddings, agent pipeline, prompt engineering, LangChain, LlamaIndex, AI SDK, Vercel AI, fine-tune, AI backend | superpowers: `brainstorming` | `engineering-team` (senior-backend, senior-ai) | Invoke `brainstorming` FIRST. Reference `Tool-Stack-Reference/hub/tools-ai-infra.md` + `tools-ai-agents.md` for stack decisions. Tactical depth (rag-implementation, embedding-strategies, langchain-architecture, prompt-engineering-patterns) comes from wshobson `llm-application-dev` skills — they surface automatically by description, no separate invoke needed. |
+| **Whole-Codebase Analysis** | entire codebase, whole repo, across the project, full audit, full scan, architecture review, onboard me to this repo, refactor X across | — | `repomix-pack` → calling skill | Invoke `repomix-pack` FIRST to produce `.agentmaster/codebase.xml`, then route to the analysis skill (e.g. `security-audit`, `codereview`, or a Build/Create refactor pass) which reads that file as input. |
+| **LLM/AI App Dev** | LLM app, AI app, RAG, vector DB, embeddings, agent pipeline, prompt engineering, LangChain, LlamaIndex, AI SDK, Vercel AI, fine-tune, AI backend | superpowers: `brainstorming` | wshobson `llm-application-dev` (rag-implementation, embedding-strategies, langchain-architecture, prompt-engineering-patterns, llm-evaluation, vector-index-tuning) + `anthropic-skills:mcp-builder` for MCP servers — auto-surface | Invoke `brainstorming` FIRST. Reference `Tool-Stack-Reference/hub/tools-ai-infra.md` + `tools-ai-agents.md` for stack decisions. Tactical skills surface by description; no separate invoke needed. |
 | **Task Dashboard** | open/launch/show the task board, task viewer, kanban, task dashboard, visualize tasks, what is Claude working on | — | `task-viewer` | Invoke `task-viewer` to launch the claude-task-viewer web dashboard. Observation only — it does not create/edit task state. |
 | **Simple Question** | Direct factual question, no action needed | — | — | Answer directly. No routing. |
 
@@ -167,21 +167,21 @@ If the task spans multiple categories, apply these combination rules:
 
 | Combination | How to Route |
 |-------------|-------------|
-| **Code + Domain expertise** | Superpowers workflow (brainstorming first) + domain skill injected during plan execution. Example: "Build auth system" → `brainstorming` + `engineering-team` (senior-security, senior-backend) |
-| **Product + Code** | Sequential: `product-team` for requirements FIRST, then superpowers workflow for implementation |
-| **Strategy + Finance** | Route to `c-level-advisor` only — chief-of-staff invokes CFO internally. Do NOT separately invoke `finance`. |
-| **Marketing + Code** | If building a tool/page: superpowers workflow + `marketing-skill` for content. If writing copy only: `marketing-skill` alone. |
+| **Code + Domain expertise** | Superpowers workflow (brainstorming first) + tactical skills auto-surface during plan execution. Example: "Build auth system" → `brainstorming` + wshobson `backend-development`/`security-scanning` + `security-audit`. |
+| **Product + Code** | Sequential: `anthropic-skills:building-product` for requirements FIRST, then superpowers workflow for implementation |
+| **Strategy + Finance** | `anthropic-skills:gtm-foundations` for strategy + `anthropic-skills:xlsx`/`setting-pricing` for the financial side. No combined C-suite router exists — run them as two steps. |
+| **Marketing + Code** | If building a tool/page: superpowers workflow + `anthropic-skills:running-marketing` for content. If writing copy only: `anthropic-skills:running-marketing` (+ `copywriting`) alone. |
 | **Debug + Domain** | `systematic-debugging` + relevant domain skill for expertise context |
 | **Refactor + Test** | `brainstorming` for design + `test-driven-development` during execution |
 | **Code + DevOps** | Superpowers workflow for code + `devops` for deployment config. Example: "Build API and deploy to AWS" → `brainstorming` + `devops` |
-| **DevOps + Compliance** | `devops` for infra + `ra-qm-team` for compliance checks. Example: "Deploy HIPAA-compliant infrastructure" |
+| **DevOps + Compliance** | `devops` for infra + `anthropic-skills:compliance-handling` / `security-audit` for compliance checks. Example: "Deploy HIPAA-compliant infrastructure" (flag that HIPAA-specific review is beyond loaded skills). |
 | **Code + Documentation** | Build code first (superpowers), then generate docs. Route to `anthropic-skills:docx/pdf/pptx` for doc output format |
 | **Research + Any Domain** | `anthropic-skills:deep-research` first to gather context, then route to domain skill for action |
 | **Security + Code** | `security-audit` for findings + superpowers workflow for implementing fixes |
-| **Security + Compliance** | `security-audit` + `ra-qm-team`. Example: "SOC2 security audit" → both skills |
+| **Security + Compliance** | `security-audit` + `anthropic-skills:compliance-handling`. Example: "SOC2 security audit" → `security-audit` for technical controls, `compliance-handling` for the framework mapping. |
 | **Security + DevOps** | `security-audit` for app-level + `devops` for infra-level. Example: "Harden our production setup" |
 | **UI/UX + Code** | `impeccable` for frontend design decisions + real implementation/polish (it writes and iterates working code directly). Use `anthropic-skills:ui-ux-pro-max` first only when a design-system/palette reference is needed before building. |
-| **Repomix + Audit/Review** | `repomix-pack` first to snapshot the repo, then `security-audit` / `codereview` / `engineering-team` reads `.agentmaster/codebase.xml`. Use whenever the analysis must cover the whole repo, not a diff. |
+| **Repomix + Audit/Review** | `repomix-pack` first to snapshot the repo, then `security-audit` / `codereview` reads `.agentmaster/codebase.xml`. Use whenever the analysis must cover the whole repo, not a diff. |
 
 ### Hard Limit
 
@@ -196,11 +196,13 @@ If the task spans multiple categories, apply these combination rules:
 
 2. INVOKE the entry skill using the Skill tool.
 
-3. DEFER to internal routers:
-   - c-level-advisor → chief-of-staff handles sub-routing to C-suite roles
-   - marketing-skill → marketing-ops handles sub-routing to 42 skills
-   - engineering-team → routes to 23 specialty skills internally
-   - Do NOT manually pick sub-skills within these ecosystems.
+3. TACTICAL SKILLS AUTO-SURFACE (no internal routers):
+   - Domain/tactical skills (anthropic-skills:*, wshobson, davila7, anthropic-official,
+     impeccable) are individual skills that Claude Code matches by description — you do
+     NOT invoke a bundle that fans out. Name the most-specific entry skill and let related
+     ones surface. E.g. Marketing → `anthropic-skills:running-marketing`; `cold-email` etc.
+     surface on their own when the sub-task fits.
+   - Prefer the most specific skill available over a general one.
 
 4. For code tasks: superpowers workflow is NON-NEGOTIABLE.
    brainstorming → writing-plans → TDD/implementation → code-review → finish
@@ -271,12 +273,14 @@ AgentMaster Status
 Caveman: [on (level) / off — based on conversation context]
 Last routed to: [skill name or "none yet"]
 Active workflow: [superpowers stage or "none"]
-Available domains: engineering-team, marketing-skill, c-level-advisor,
-                   product-team, finance, business-growth,
-                   project-management, ra-qm-team, devops, security-audit
-Custom skills:     codereview, repomix-pack
+Business domains:  anthropic-skills:running-marketing, executing-sales, building-product,
+                   gtm-foundations, setting-pricing, compliance-handling, deep-research
+Code/tactical:     wshobson (backend-development, python-development, kubernetes-operations,
+                   cicd-automation, security-scanning, llm-application-dev),
+                   davila7 (database, git), impeccable, anthropic-official
+Custom skills:     codereview, devops, security-audit, repomix-pack, task-viewer
 Memory/Explore:    mem-search, smart-explore, knowledge-agent, timeline-report, make-plan
-Built-in skills:   anthropic-skills:docx, pdf, pptx, xlsx, deep-research, ui-ux-pro-max
+Built-in skills:   anthropic-skills:docx, pdf, pptx, xlsx, deep-research, ui-ux-pro-max, mcp-builder
 
 Last sync:
 [contents of ~/.claude/.agentmaster-cache/last-sync-report.txt, or "no sync report yet"]
@@ -308,7 +312,7 @@ When no classification matches:
 
 ## What AgentMaster Does NOT Do
 
-- Does NOT replace internal routers (chief-of-staff, marketing-ops)
+- Does NOT fan out to bundle sub-routers — tactical/domain skills are individual and surface by description
 - Does NOT intercept direct skill invocations (if user says `/brainstorming`, that skill runs directly)
 - Does NOT load all sub-skills at once (context window protection)
 - Does NOT route simple questions through skills
