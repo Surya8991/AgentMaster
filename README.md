@@ -8,8 +8,8 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/Skills-42+-10B981?style=for-the-badge" alt="42+ Skills">
-  <img src="https://img.shields.io/badge/Categories-23-F59E0B?style=for-the-badge" alt="23 Categories">
+  <img src="https://img.shields.io/badge/Skills-125+-10B981?style=for-the-badge" alt="125+ Skills">
+  <img src="https://img.shields.io/badge/Categories-25-F59E0B?style=for-the-badge" alt="25 Categories">
   <img src="https://img.shields.io/badge/Platforms-11-6366F1?style=for-the-badge" alt="11 Platforms">
   <img src="https://img.shields.io/badge/Token_Savings-~75%25-EF4444?style=for-the-badge" alt="75% Token Savings">
 </p>
@@ -104,13 +104,13 @@ You say something. AgentMaster classifies it and routes to the right skill(s):
 
 ```
 You: "Build an auth system with JWT"
-AgentMaster: Routing → brainstorming (workflow) + engineering-team (domain)
+AgentMaster: Routing → brainstorming (workflow) + wshobson backend-development/security-scanning (auto-surface)
 
 You: "Fix this crash in the payment module"  
 AgentMaster: Routing → systematic-debugging
 
 You: "Write SEO copy for the landing page"
-AgentMaster: Routing → marketing-skill (marketing-ops routes internally)
+AgentMaster: Routing → anthropic-skills:running-marketing (+ copywriting, ai-seo)
 
 You: "Deploy to AWS with Terraform"
 AgentMaster: Routing → writing-plans (complex infra) + devops
@@ -145,7 +145,7 @@ Dependency repos are declared in `repos.manifest` (one line per repo: `name|url|
 
 ### Install Profiles
 
-Don't want all 44+ skills? Install a subset: `bash install.sh --profile dev` (or `.\install.ps1 -Profile dev`). Shipped profiles in `profiles.manifest`: **dev** (compression + superpowers workflow + session memory + all custom skills), **business** (compression + claude-skills domain expertise + orchestrator), **minimal** (orchestrator + compression), and the default **full** (everything). Switch anytime with `/agent-master profile <name>` — excluded skills are pruned (only ones AgentMaster installed; your own skills are never touched) and the subset resyncs. Profiles persist across auto-updates; define your own in `~/.claude/.agentmaster-cache/profiles.local`. The orchestrator skill itself is always installed, and an unknown profile name falls back to full rather than uninstalling anything.
+Don't want all ~125 skills? Install a subset: `bash install.sh --profile dev` (or `.\install.ps1 -Profile dev`). Shipped profiles in `profiles.manifest`: **dev** (compression + superpowers workflow + session memory + frontend design + wshobson/davila7 tactical + all custom skills), **business** (compression + orchestrator + repo packing), **minimal** (orchestrator + compression), and the default **full** (everything). Switch anytime with `/agent-master profile <name>` — excluded skills are pruned (only ones AgentMaster installed; your own skills are never touched) and the subset resyncs. Profiles persist across auto-updates; define your own in `~/.claude/.agentmaster-cache/profiles.local`. The orchestrator skill itself is always installed, and an unknown profile name falls back to full rather than uninstalling anything.
 
 ### Skill Rollback
 
@@ -168,9 +168,9 @@ AgentMaster Route Plan
 Task: deploy HIPAA-compliant API to AWS
 Category: DevOps/Deploy + Compliance
 Workflow: writing-plans (complex infra)
-Domain: devops + ra-qm-team
+Domain: devops + anthropic-skills:compliance-handling
 Entry point: writing-plans
-Combination: devops + ra-qm-team (HIPAA compliance)
+Combination: devops + compliance-handling (HIPAA — flag regulated depth is out of scope)
 Conflicts: none
 ```
 
@@ -190,41 +190,45 @@ Three layers that **stack, never compete**:
 │  Active for code/engineering tasks ONLY.    │
 │  Non-negotiable: can't skip brainstorming.  │
 ├─────────────────────────────────────────────┤
-│  DOMAIN LAYER: claude-skills + custom       │
-│  240+ skills across 12 domains.             │
-│  Provides subject matter expertise.         │
-│  Internal routers handle sub-routing.       │
+│  DOMAIN LAYER: anthropic-skills (business)  │
+│  + wshobson/davila7/impeccable (technical)  │
+│  + custom (devops, security-audit).         │
+│  ~125 installed skills provide expertise.   │
 └─────────────────────────────────────────────┘
 ```
 
-**Key principle:** AgentMaster routes to the ecosystem entry point and lets internal routers handle the rest. It never duplicates the chief-of-staff (C-suite) or marketing-ops (marketing) routing logic.
+**Key principle:** AgentMaster names the most-specific entry skill; related tactical/domain skills surface on their own by description (they are individual skills, not bundles that fan out).
 
 ## Routing Table
 
-### 23 Categories
+### 25 Categories
 
 | Category | Signal Words | Routes To |
 |----------|-------------|-----------|
-| **Build/Create** | build, create, implement, scaffold | `brainstorming` → `engineering-team` |
-| **Refactor** | refactor, restructure, clean up | `brainstorming` → `engineering-team` |
-| **Debug/Fix** | bug, crash, error, fix, broken | `systematic-debugging` |
+| **Build/Create** | build, create, implement, scaffold | `brainstorming` → superpowers + wshobson `backend-development`/`python-development`, davila7 `database` (auto-surface) |
+| **Refactor** | refactor, restructure, clean up | `brainstorming` → wshobson `python-anti-patterns`/`python-design-patterns`/`architecture-patterns` |
+| **Debug/Fix** | bug, crash, error, fix, broken | `systematic-debugging` + wshobson `python-error-handling`/`python-resilience` |
 | **Code Review** | review code, /codereview, check diff | `codereview` (blunt) or `requesting-code-review` (PR workflow) |
 | **Commit/Ship** | commit, merge, ship, push | `finishing-a-development-branch` |
-| **Test** | write tests, TDD, coverage | `test-driven-development` |
-| **Marketing** | blog, SEO, campaign, ads, copy | `marketing-skill` (44 sub-skills) |
-| **Strategy** | fundraise, roadmap, pivot, board | `c-level-advisor` (28 sub-skills) |
-| **Product** | PRD, user stories, personas | `product-team` (16 sub-skills) |
-| **Finance** | DCF, budget, runway, ARR | `finance` |
-| **Business Growth** | churn, pipeline, RFP, proposal | `business-growth` |
-| **Project Mgmt** | Jira, sprint, scrum, retro | `project-management` |
-| **Compliance** | ISO, FDA, GDPR, SOC2, audit | `ra-qm-team` |
-| **DevOps/Deploy** | Docker, CI/CD, Terraform, AWS | `devops` |
-| **Security** | OWASP, XSS, vulnerability, pen test | `security-audit` |
-| **UI/UX Design** | wireframe, color palette, layout | `anthropic-skills:ui-ux-pro-max` |
+| **Test** | write tests, TDD, coverage | `test-driven-development` + wshobson `python-testing-patterns`, anthropic-skills `webapp-testing` |
+| **Marketing** | blog, SEO, campaign, ads, copy | `anthropic-skills:running-marketing` (+ cold-email, copywriting, ai-seo) |
+| **Strategy** | fundraise, roadmap, pivot, board | `anthropic-skills:gtm-foundations` (+ crafting-positioning) |
+| **Product** | PRD, user stories, personas | `anthropic-skills:building-product` (+ validating-customers) |
+| **Finance** | DCF, budget, runway, ARR | `anthropic-skills:setting-pricing` + `xlsx` (no dedicated valuation skill — flagged) |
+| **Business Growth** | churn, pipeline, RFP, proposal | `anthropic-skills:executing-sales` (+ pipeline-management) |
+| **Project Mgmt** | Jira, sprint, scrum, retro | `anthropic-skills:schedule` + `writing-plans` (thin coverage — flagged) |
+| **Compliance** | ISO, FDA, GDPR, SOC2, audit | `anthropic-skills:compliance-handling` + `security-audit` (regulated depth flagged) |
+| **Database Design** | schema, migration, query optimization, SQL, Postgres | davila7 `database` (sql-pro, database-optimizer, postgresql-optimization) |
+| **DevOps/Deploy** | Docker, CI/CD, Terraform, AWS, Kubernetes | `devops` + wshobson `cicd-automation`/`kubernetes-operations` |
+| **Security** | OWASP, XSS, vulnerability, pen test | `security-audit` + wshobson `security-scanning` (STRIDE, SAST) |
+| **UI/UX Design** | design/polish/audit UI, wireframe, color, layout, animation | `impeccable` (frontend craft) or `anthropic-skills:ui-ux-pro-max` (reference) |
 | **Documentation** | write docs, generate PDF/DOCX | `anthropic-skills:docx/pdf/pptx/xlsx` |
 | **Research** | analyze market, deep dive, investigate | `anthropic-skills:deep-research` |
+| **LLM/AI App Dev** | RAG, embeddings, LangChain, prompt engineering, MCP | `brainstorming` + wshobson `llm-application-dev`, `anthropic-skills:mcp-builder` |
 | **Memory/History** | last time, previous session, how did we | `mem-search` / `timeline-report` |
 | **Explore Codebase** | code structure, find functions | `smart-explore` |
+| **Whole-Codebase Analysis** | entire repo, full audit, architecture review | `repomix-pack` → analysis skill |
+| **Task Dashboard** | task board, kanban, visualize tasks | `task-viewer` (launches claude-task-viewer) |
 | **Simple Question** | factual question, no action | direct answer (no routing) |
 
 ### Smart Tiebreakers
@@ -249,10 +253,10 @@ When words match multiple categories, AgentMaster resolves automatically:
 |-------|-----------------|
 | Code + DevOps | Superpowers workflow + `devops` for deployment |
 | Security + Code | `security-audit` for findings + superpowers for fixes |
-| Security + Compliance | `security-audit` + `ra-qm-team` |
+| Security + Compliance | `security-audit` + `anthropic-skills:compliance-handling` |
 | Security + DevOps | `security-audit` (app) + `devops` (infra) |
-| Product + Code | `product-team` for requirements, then superpowers for code |
-| UI/UX + Code | `ui-ux-pro-max` for design, then superpowers to implement |
+| Product + Code | `anthropic-skills:building-product` for requirements, then superpowers for code |
+| UI/UX + Code | `impeccable` for design + implementation (writes working code directly); `ui-ux-pro-max` for reference-only |
 | Research + Any | `deep-research` first, then domain skill |
 | Code + Docs | Build first, then `anthropic-skills:docx/pdf` |
 
@@ -262,19 +266,23 @@ When words match multiple categories, AgentMaster resolves automatically:
 
 | Source | What | Skills |
 |--------|------|--------|
-| **This repo** | Orchestrator + custom skills | `agent-master`, `devops`, `security-audit`, `codereview`, `repomix-pack` |
+| **This repo** | Orchestrator + custom skills | `agent-master`, `devops`, `security-audit`, `codereview`, `repomix-pack`, `task-viewer` |
 | [caveman](https://github.com/JuliusBrussee/caveman) | Token compression | `caveman`, `caveman-commit`, `caveman-review`, `caveman-help`, `compress` |
 | [superpowers](https://github.com/obra/superpowers) | Dev workflow | `brainstorming`, `writing-plans`, `test-driven-development`, `systematic-debugging`, +10 more |
-| [claude-skills](https://github.com/alirezarezvani/claude-skills) | Domain expertise | `engineering-team`, `marketing-skill`, `product-team`, `c-level-advisor`, `finance`, +5 more |
+| [claude-skills](https://github.com/alirezarezvani/claude-skills) | Repeatable agent loops | `loop-library` (repo is a plugin-of-plugins; its business bundles don't install flat — business domains are served by the anthropic-skills plugin instead) |
 | [claude-mem](https://github.com/thedotmack/claude-mem) | Session memory | `mem-search`, `smart-explore`, `knowledge-agent`, `make-plan`, `do`, `timeline-report`, `version-bump` |
+| [impeccable](https://github.com/pbakaus/impeccable) | Frontend design | `impeccable` (design/polish/audit + 23 commands) |
+| [anthropics/skills](https://github.com/anthropics/skills) | Official Anthropic skills | `docx`, `pdf`, `pptx`, `xlsx`, `frontend-design`, `mcp-builder`, `skill-creator`, `webapp-testing`, +9 more |
+| [wshobson/agents](https://github.com/wshobson/agents) | Technical tactical (6 curated subsets) | `backend-development`, `python-development`, `kubernetes-operations`, `cicd-automation`, `security-scanning`, `llm-application-dev` — 46 skills |
+| [davila7/claude-code-templates](https://github.com/davila7/claude-code-templates) | DB + git tactical (2 curated subsets) | `database`, `git` — 16 skills |
 | [AgentMaster](https://github.com/Surya8991/AgentMaster) *(self-update)* | Keeps orchestrator current | auto-synced via `~/.claude/.agentmaster-cache/agent-master` |
-| **Total** | | **42 skills** |
+| **Total** | | **~125 skills** (full profile) |
 
 ### Whole-Codebase Snapshots (Repomix)
 
 `repomix-pack` wraps [repomix](https://github.com/yamadashy/repomix) so any skill can analyze the entire repo cheaply.
 
-**Auto-runs at the start of every new session** when AgentMaster detects a code repo (`.git/`, `package.json`, `pyproject.toml`, `Cargo.toml`, or `go.mod` present). The snapshot lives at `.agentmaster/codebase.xml` and is reused by `security-audit`, `codereview`, and `engineering-team` for whole-repo analysis. Has a built-in staleness check so it only re-packs when source files change.
+**Auto-runs at the start of every new session** when AgentMaster detects a code repo (`.git/`, `package.json`, `pyproject.toml`, `Cargo.toml`, or `go.mod` present). The snapshot lives at `.agentmaster/codebase.xml` and is reused by `security-audit`, `codereview`, and refactor passes for whole-repo analysis. Has a built-in staleness check so it only re-packs when source files change.
 
 ```bash
 # Manual control
@@ -318,11 +326,12 @@ When `/caveman` is active, AgentMaster automatically:
 ```
 AgentMaster/
 ├── skills/                          # Source of truth (Claude Code format)
-│   ├── agent-master/SKILL.md        #   Meta-orchestrator (23 categories)
+│   ├── agent-master/SKILL.md        #   Meta-orchestrator (25 categories)
 │   ├── codereview/SKILL.md          #   Blunt code review (/codereview)
 │   ├── devops/SKILL.md              #   CI/CD, Docker, Terraform, deployment
 │   ├── repomix-pack/SKILL.md        #   Whole-codebase snapshot via repomix
-│   └── security-audit/SKILL.md      #   OWASP Top 10, vuln scanning
+│   ├── security-audit/SKILL.md      #   OWASP Top 10, vuln scanning
+│   └── task-viewer/SKILL.md         #   Launches claude-task-viewer dashboard
 │
 ├── .cursor/rules/                   # Auto-generated Cursor format
 ├── .windsurf/skills/                # Auto-generated Windsurf format
@@ -370,7 +379,7 @@ AgentMaster/
 
 ```bash
 # Remove only AgentMaster custom skills (agent-master, codereview, devops, security-audit, repomix-pack)
-# Keeps third-party skills (caveman, superpowers, claude-skills, claude-mem) intact
+# Keeps third-party skills (caveman, superpowers, claude-skills, claude-mem, impeccable, anthropic-official, wshobson, davila7) intact
 bash uninstall.sh
 
 # Nuclear option: remove everything
