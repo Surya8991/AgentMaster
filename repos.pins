@@ -6,7 +6,11 @@
 # it to an exact, reviewed commit instead.
 #
 # Format: one line per repo, <name>=<full 40-char commit sha>
-# Valid names: caveman, superpowers, claude-skills, claude-mem, impeccable, anthropic-official
+# Valid names: caveman, superpowers, claude-skills, claude-mem, impeccable,
+# anthropic-official, wshobson, davila7
+# Note: wshobson and davila7 each appear as multiple lines in repos.manifest
+# (one upstream clone, several curated subset paths) — a single pin line
+# here covers all of a name's subset lines, since they share one clone.
 # Unpinned repos keep tracking the latest default branch.
 #
 # To pin: look up the commit on GitHub, review the diff, then add e.g.

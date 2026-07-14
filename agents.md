@@ -1,7 +1,7 @@
 # AgentMaster — Agent Context
 
 ## Overview
-Meta-orchestrator for AI coding agents. One skill (`/agent-master`) routes all tasks to the right combination of installed skills across caveman (output compression), superpowers (dev workflow), and claude-skills (domain expertise). Supports 11 platforms via auto-generated platform files.
+Meta-orchestrator for AI coding agents. One skill (`/agent-master`) routes all tasks to the right combination of installed skills across caveman (output compression), superpowers (dev workflow), claude-skills (domain expertise), and curated tactical libraries (impeccable, anthropic-official, wshobson, davila7). Supports 11 platforms via auto-generated platform files.
 
 ## Stack
 - **Language**: Bash (scripts), Node.js (Tool-Stack-Reference generators)
@@ -11,11 +11,12 @@ Meta-orchestrator for AI coding agents. One skill (`/agent-master`) routes all t
 ## Key Dirs & Files
 ```
 skills/                        ← SOURCE OF TRUTH — edit skills here only
-  agent-master/SKILL.md        ← Main orchestrator (23 routing categories)
+  agent-master/SKILL.md        ← Main orchestrator (25 routing categories)
   codereview/SKILL.md          ← /codereview skill
   devops/SKILL.md              ← DevOps skill
   repomix-pack/SKILL.md        ← Whole-repo snapshot via repomix
   security-audit/SKILL.md      ← Security audit skill
+  task-viewer/SKILL.md         ← Launches claude-task-viewer dashboard (app path in ~/.claude/.agentmaster-cache/task-viewer.path)
 
 scripts/
   convert.sh                   ← Regenerates ALL platform files from skills/
@@ -48,7 +49,8 @@ bash install.sh
 # Install to a specific platform
 bash scripts/install-platform.sh cursor
 
-# Update all dependency skills (caveman, superpowers, claude-skills, claude-mem)
+# Update all dependency skills (caveman, superpowers, claude-skills, claude-mem,
+# impeccable, anthropic-official, wshobson, davila7)
 bash scripts/update.sh
 ```
 
@@ -71,5 +73,24 @@ None. No `.env` file required.
 - `scripts/update.sh` uses `set -e` — any non-subshelled `cd` that fails will silently put subsequent commands in the wrong directory. Fixed to use `git -C` pattern
 - `Tool-Stack-Reference/hub-*.json` are gitignored intermediates — if hub/ looks outdated, regenerate from master-hub.html
 
-### Routing categories (23 total)
-Build/Create, Refactor, Debug/Fix, Code Review, Commit/Ship, Test, Marketing, Strategy/Business, Product, Finance, Business Growth, Project Mgmt, Compliance, DevOps/Deploy, Security, UI/UX Design, Documentation, Research, Memory/History, Explore Codebase, LLM/AI App Dev, Simple Question
+### Routing categories (25 total)
+Build/Create, Refactor, Debug/Fix, Code Review, Commit/Ship, Test, Marketing, Strategy/Business, Product, Finance, Business Growth, Project Mgmt, Compliance, DevOps/Deploy, Database Design, Security, UI/UX Design, Documentation, Research, Memory/History, Explore Codebase, Whole-Codebase Analysis, LLM/AI App Dev, Task Dashboard, Simple Question
+
+### Dependency repo survey (repos.manifest)
+
+| Name | Upstream | skill_source | Notes |
+|------|----------|---------------|-------|
+| caveman | JuliusBrussee/caveman | skills | Output compression |
+| superpowers | obra/superpowers | skills | Dev workflow discipline |
+| claude-skills | alirezarezvani/claude-skills | . | Domain-expertise ecosystem (marketing, product, finance, etc.) |
+| claude-mem | thedotmack/claude-mem | plugin/skills | Session memory, timeline, knowledge-agent |
+| impeccable | pbakaus/impeccable | plugin/skills | Frontend design/polish/audit, 1 skill + 23 commands |
+| anthropic-official | anthropics/skills | skills | Official Anthropic skills (docx, pdf, pptx, xlsx, frontend-design, mcp-builder, skill-creator, webapp-testing, etc.) |
+| wshobson | wshobson/agents | plugins/backend-development/skills, plugins/security-scanning/skills, plugins/llm-application-dev/skills, plugins/cicd-automation/skills | 4 curated subsets out of 44 available plugins (see below). One repo name, 4 manifest lines — installer clones once, copies each subset. |
+| davila7 | davila7/claude-code-templates | cli-tool/components/skills/git, cli-tool/components/skills/database | 2 curated categories out of ~27 available (see below). `document-processing` deliberately excluded — its skills are literally named `docx`/`pdf`/`pptx`/`xlsx` and would silently overwrite anthropic-official's versions (last-writer-wins collision). |
+
+**Available but NOT wired** (add a `repos.manifest` line under the existing `wshobson`/`davila7` name to enable):
+- wshobson/agents plugins (40 more): accessibility-compliance, agent-teams, api-scaffolding, blockchain-web3, brand-landingpage, business-analytics, cloud-infrastructure, database-design, data-engineering, documentation-generation, framework-migration, frontend-mobile-development, game-development, hr-legal-compliance, incident-response, javascript-typescript, kubernetes-operations, machine-learning-ops, observability-monitoring, payment-processing, python-development, quantitative-trading, reverse-engineering, security-scanning (wired), shell-scripting, systems-programming, ui-design, and more — run `curl -s https://api.github.com/repos/wshobson/agents/git/trees/main?recursive=1 | grep -o '"path": *"plugins/[^/]*/skills/[^"]*SKILL.md"'` for the live list.
+- davila7/claude-code-templates categories (~25 more): development (227 skills — huge, review before wiring), scientific (139), ai-research (130), business-marketing (49), productivity (46), security (44 — offensive/pentest-flavored, distinct from `security-audit`), creative-design (42), enterprise-communication (33), web-development (30), workflow-automation (22), career (21), document-processing (18 — **do not wire**, see collision note above), utilities (12), railway (12), web-data (6), sentry (6), pocketbase (6), ai-maestro (6), media (5), video (4), and a few 1-3 skill niches.
+
+Before wiring any more of these: re-run the collision check (`comm -12` current skill names vs candidate skill dir names) — `document-processing` was not the only one likely to collide, just the one caught so far.

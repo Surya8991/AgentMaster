@@ -1,6 +1,6 @@
 ---
 name: "agent-master"
-description: "Meta-orchestrator that classifies tasks and routes to the right combination of installed skills across caveman (output compression), superpowers (dev workflow), and claude-skills (domain expertise). 23 routing categories including whole-codebase analysis via repomix-pack and LLM/AI app dev. Invoke with /agent-master. Use as default entry point for ambiguous or multi-domain requests."
+description: "Meta-orchestrator that classifies tasks and routes to the right combination of installed skills across caveman (output compression), superpowers (dev workflow), and claude-skills (domain expertise). 25 routing categories including whole-codebase analysis via repomix-pack, LLM/AI app dev, a live task dashboard, and curated tactical skill libraries (wshobson, davila7) for backend/security/CI-CD/database depth. Invoke with /agent-master. Use as default entry point for ambiguous or multi-domain requests."
 compatibility: opencode
 ---
 
@@ -57,6 +57,19 @@ Project `RULES.md` takes precedence over defaults for this session. Use it to en
 User can point to a different file by saying "load rules from [path]".
 
 
+## Per-Session Routing Overrides Load
+
+On **first invocation each session**, check `~/.claude/.agentmaster-cache/routing-overrides.md`:
+
+```
+1. Check: test -f ~/.claude/.agentmaster-cache/routing-overrides.md
+2. If found: read it. Each rule maps a task pattern to a skill.
+   These overrides TAKE PRECEDENCE over the static routing table in Step 1 —
+   they encode past misroutes the user has corrected.
+3. If not found: skip silently.
+```
+
+
 ## Argument Parsing
 
 Check ARGUMENTS for sub-commands:
@@ -64,8 +77,15 @@ Check ARGUMENTS for sub-commands:
 - If ARGUMENTS starts with `route `: extract the rest as a query. Run **dry-run mode** (Step 5a) — classify and show routing plan WITHOUT executing.
 - If ARGUMENTS equals `status`: run **status mode** (Step 5b) — show current session state.
 - If ARGUMENTS equals `update`: run update script in **foreground** — `bash ~/.claude/.agentmaster-cache/agent-master/scripts/update.sh`
+- If ARGUMENTS equals `doctor`: run `bash ~/.claude/.agentmaster-cache/agent-master/scripts/doctor.sh` and relay its output verbatim. Do NOT re-derive or summarize the checks yourself — the script is the source of truth.
+- If ARGUMENTS equals `list`: run `bash ~/.claude/.agentmaster-cache/agent-master/scripts/list.sh` and relay its output verbatim.
+- If ARGUMENTS equals `routes`: run `bash ~/.claude/.agentmaster-cache/agent-master/scripts/routes.sh` and relay its output verbatim.
+- If ARGUMENTS starts with `profile`: run `bash ~/.claude/.agentmaster-cache/agent-master/scripts/profile.sh <name-if-given>` and relay its output verbatim. With no name it shows the active + available profiles; with a name it switches profile (prunes excluded skills and resyncs).
+- If ARGUMENTS starts with `rollback`: run `bash ~/.claude/.agentmaster-cache/agent-master/scripts/rollback.sh <repo-if-given>` and relay its output verbatim. With no repo it lists available backups; with a repo it restores the pre-sync version and pins it locally so auto-updates hold the rollback.
 - If ARGUMENTS starts with `repomix`: forward the remaining args to the `repomix-pack` skill directly (e.g. `repomix refresh`, `repomix include src/**`).
 - Otherwise: treat ARGUMENTS as the task to classify and execute.
+
+(On Windows without bash, use the `.ps1` counterparts in the same directory.)
 
 
 ## Three Layers (Stack, Never Compete)
@@ -98,15 +118,17 @@ Read the user's input. Match to ONE primary category:
 | **Business Growth** | customer success, churn analysis, sales pipeline, RFP, proposal writing, revenue ops | — | `business-growth` | Invoke `business-growth` |
 | **Project Mgmt** | Jira, scrum master, Confluence, velocity chart, retro, project plan, sprint health | — | `project-management` | Invoke `project-management` |
 | **Compliance** | ISO, FDA, MDR, GDPR, CAPA, QMS, audit, SOC2, compliance, regulatory | — | `ra-qm-team` | Invoke `ra-qm-team` |
-| **DevOps/Deploy** | deploy, CI/CD, Docker, Dockerfile, container, Kubernetes, k8s, Terraform, pipeline, GitHub Actions, nginx, production, staging, infrastructure, cloud, AWS, GCP, Azure, monitoring, uptime | superpowers: `writing-plans` (for complex infra only) | `devops` | Invoke `devops`. For multi-step infra (Terraform + CI/CD + monitoring), invoke `writing-plans` first. |
-| **Security** | security scan, vulnerability, pen test, OWASP, XSS, CSRF, injection, CVE, dependency audit, secrets scanning, threat model, hardening | — | `security-audit` | Invoke `security-audit`. For infra security → combine with `devops`. For compliance → combine with `ra-qm-team`. |
-| **UI/UX Design** | design the UI, improve UX, color palette, typography, wireframe, layout, responsive design, accessibility, design system, component library | — | `anthropic-skills:ui-ux-pro-max` | Invoke `anthropic-skills:ui-ux-pro-max` |
+| **DevOps/Deploy** | deploy, CI/CD, Docker, Dockerfile, container, Kubernetes, k8s, Terraform, pipeline, GitHub Actions, nginx, production, staging, infrastructure, cloud, AWS, GCP, Azure, monitoring, uptime | superpowers: `writing-plans` (for complex infra only) | `devops` | Invoke `devops`. For multi-step infra (Terraform + CI/CD + monitoring), invoke `writing-plans` first. Pipeline-config specifics (github-actions-templates, gitlab-ci-patterns, secrets-management) come from wshobson `cicd-automation` skills — auto-surface, no separate invoke. |
+| **Database Design** | schema design, database migration, query optimization, SQL, Postgres, indexing strategy, ORM modeling | — | `davila7` `database` skills (sql-pro, database-optimizer, postgresql-optimization, database-migration) | These tactical skills surface by description — no entry skill to invoke first. For app architecture spanning DB + backend, combine with Build/Create. |
+| **Security** | security scan, vulnerability, pen test, OWASP, XSS, CSRF, injection, CVE, dependency audit, secrets scanning, threat model, hardening | — | `security-audit` | Invoke `security-audit`. For infra security → combine with `devops`. For compliance → combine with `ra-qm-team`. For deep threat-modeling technique (STRIDE, attack trees, SAST config) → the wshobson `security-scanning` tactical skills surface automatically by description. |
+| **UI/UX Design** | design/redesign UI, improve UX, polish, critique, audit design, animate, micro-interactions, color palette, typography, wireframe, layout, responsive design, accessibility, design system, component library, anti-patterns, live browser iteration | — | `impeccable` (frontend craft) or `anthropic-skills:ui-ux-pro-max` (design-system reference) | Invoke `impeccable` for building/polishing/auditing real frontend code and browser iteration. Use `anthropic-skills:ui-ux-pro-max` when the ask is style/palette/font-pairing reference or planning without touching code. |
 | **Documentation** | write docs, generate PDF, create DOCX, technical spec, Word document, spreadsheet, presentation, slides | — | Anthropic built-in skills | Route by format: `.docx`/Word → `anthropic-skills:docx`, `.pdf` → `anthropic-skills:pdf`, slides/`.pptx` → `anthropic-skills:pptx`, spreadsheet/`.xlsx` → `anthropic-skills:xlsx`. If no format specified, default to `anthropic-skills:docx`. |
 | **Research** | research, investigate, analyze market, competitor analysis, deep dive, explore topic | — | `anthropic-skills:deep-research` | Invoke `anthropic-skills:deep-research` |
 | **Memory/History** | last time, previous session, how did we, did we already, past work, search memory, what did I do | — | `mem-search` | Invoke `mem-search`. For project timeline → `timeline-report`. For knowledge base → `knowledge-agent`. |
 | **Explore Codebase** | explore codebase, code structure, find functions, understand architecture, how is this organized | — | `smart-explore` | Invoke `smart-explore` (AST-based, token-efficient) |
 | **Whole-Codebase Analysis** | entire codebase, whole repo, across the project, full audit, full scan, architecture review, onboard me to this repo, refactor X across | — | `repomix-pack` → calling skill | Invoke `repomix-pack` FIRST to produce `.agentmaster/codebase.xml`, then route to the analysis skill (e.g. `security-audit`, `codereview`, `engineering-team`) which reads that file as input. |
-| **LLM/AI App Dev** | LLM app, AI app, RAG, vector DB, embeddings, agent pipeline, prompt engineering, LangChain, LlamaIndex, AI SDK, Vercel AI, fine-tune, AI backend | superpowers: `brainstorming` | `engineering-team` (senior-backend, senior-ai) | Invoke `brainstorming` FIRST. Reference `Tool-Stack-Reference/hub/tools-ai-infra.md` + `tools-ai-agents.md` for stack decisions. |
+| **LLM/AI App Dev** | LLM app, AI app, RAG, vector DB, embeddings, agent pipeline, prompt engineering, LangChain, LlamaIndex, AI SDK, Vercel AI, fine-tune, AI backend | superpowers: `brainstorming` | `engineering-team` (senior-backend, senior-ai) | Invoke `brainstorming` FIRST. Reference `Tool-Stack-Reference/hub/tools-ai-infra.md` + `tools-ai-agents.md` for stack decisions. Tactical depth (rag-implementation, embedding-strategies, langchain-architecture, prompt-engineering-patterns) comes from wshobson `llm-application-dev` skills — they surface automatically by description, no separate invoke needed. |
+| **Task Dashboard** | open/launch/show the task board, task viewer, kanban, task dashboard, visualize tasks, what is Claude working on | — | `task-viewer` | Invoke `task-viewer` to launch the claude-task-viewer web dashboard. Observation only — it does not create/edit task state. |
 | **Simple Question** | Direct factual question, no action needed | — | — | Answer directly. No routing. |
 
 ### Conflict Resolution (Tiebreakers)
@@ -158,7 +180,7 @@ If the task spans multiple categories, apply these combination rules:
 | **Security + Code** | `security-audit` for findings + superpowers workflow for implementing fixes |
 | **Security + Compliance** | `security-audit` + `ra-qm-team`. Example: "SOC2 security audit" → both skills |
 | **Security + DevOps** | `security-audit` for app-level + `devops` for infra-level. Example: "Harden our production setup" |
-| **UI/UX + Code** | `anthropic-skills:ui-ux-pro-max` for design decisions, then superpowers workflow to implement |
+| **UI/UX + Code** | `impeccable` for frontend design decisions + real implementation/polish (it writes and iterates working code directly). Use `anthropic-skills:ui-ux-pro-max` first only when a design-system/palette reference is needed before building. |
 | **Repomix + Audit/Review** | `repomix-pack` first to snapshot the repo, then `security-audit` / `codereview` / `engineering-team` reads `.agentmaster/codebase.xml`. Use whenever the analysis must cover the whole repo, not a diff. |
 
 ### Hard Limit
@@ -183,7 +205,29 @@ If the task spans multiple categories, apply these combination rules:
 4. For code tasks: superpowers workflow is NON-NEGOTIABLE.
    brainstorming → writing-plans → TDD/implementation → code-review → finish
    You cannot skip brainstorming. You cannot skip tests.
+
+5. LOG the decision (best effort — never block or delay the user's task):
+   echo "$(date +%F) | <task gist, max 10 words> | <category> | <skill(s)>" >> ~/.claude/.agentmaster-cache/routing-log.txt
 ```
+
+
+## Misroute Capture
+
+When the user corrects a routing decision in-session (e.g. "no, use X", "that's the wrong skill", "I wanted a design audit not UI work"):
+
+```
+1. LOG the correction:
+   echo "$(date +%F) | <task gist> | <original category> | corrected -> <right skill>" >> ~/.claude/.agentmaster-cache/routing-log.txt
+
+2. PERSIST the lesson — append one rule to ~/.claude/.agentmaster-cache/routing-overrides.md:
+   - "<short task pattern>" → <right skill> (not <wrong skill>) — added YYYY-MM-DD
+
+3. CONFIRM briefly: "Noted — future '<pattern>' tasks route to <right skill>."
+
+4. Then invoke the right skill and continue the task.
+```
+
+Overrides load at the start of every session (see Per-Session Routing Overrides Load), so corrections persist. Keep patterns short and generalizable — describe the task type, not this specific request. Do NOT add an override when the original routing was defensible and the user simply changed their mind about what they wanted.
 
 
 ## Step 4: Caveman Integration
@@ -233,7 +277,12 @@ Available domains: engineering-team, marketing-skill, c-level-advisor,
 Custom skills:     codereview, repomix-pack
 Memory/Explore:    mem-search, smart-explore, knowledge-agent, timeline-report, make-plan
 Built-in skills:   anthropic-skills:docx, pdf, pptx, xlsx, deep-research, ui-ux-pro-max
+
+Last sync:
+[contents of ~/.claude/.agentmaster-cache/last-sync-report.txt, or "no sync report yet"]
 ```
+
+For the "Last sync" section, read `~/.claude/.agentmaster-cache/last-sync-report.txt` and include it verbatim. If the file doesn't exist, show "no sync report yet — run /agent-master update".
 
 
 ## Loop Prevention
@@ -252,8 +301,9 @@ When no classification matches:
 
 1. **Specific skill mentioned?** → Invoke that skill directly
 2. **Conversational?** (greeting, meta-question) → Respond directly
-3. **Ambiguous?** → Ask ONE question: "Is this a code, marketing, strategy, or other task?"
-4. **Never guess** with more than 2 skills. When uncertain, ask.
+3. **Check unrouted skills** → read `~/.claude/.agentmaster-cache/unrouted-skills.txt` (skills installed but absent from the routing table above, one per line with description). If one clearly matches the task, invoke it and log the route as category `unrouted-match`.
+4. **Ambiguous?** → Ask ONE question: "Is this a code, marketing, strategy, or other task?"
+5. **Never guess** with more than 2 skills. When uncertain, ask.
 
 
 ## What AgentMaster Does NOT Do

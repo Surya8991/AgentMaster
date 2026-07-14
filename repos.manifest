@@ -12,3 +12,16 @@ claude-skills|https://github.com/alirezarezvani/claude-skills.git|.
 claude-mem|https://github.com/thedotmack/claude-mem.git|plugin/skills
 impeccable|https://github.com/pbakaus/impeccable.git|plugin/skills
 anthropic-official|https://github.com/anthropics/skills.git|skills
+
+# Curated subsets — one upstream repo, multiple skill_source lines under the
+# same name so the installer/updater clone it once and copy each subset dir.
+# Reject: davila7's document-processing category (skills named docx/pdf/pptx/xlsx
+# collide with anthropic-official's) — deliberately not wired to avoid overwriting
+# the official document skills. Other davila7/wshobson categories exist unwired
+# (see agents.md for the full survey); add lines here if you want more.
+wshobson|https://github.com/wshobson/agents.git|plugins/backend-development/skills
+wshobson|https://github.com/wshobson/agents.git|plugins/security-scanning/skills
+wshobson|https://github.com/wshobson/agents.git|plugins/llm-application-dev/skills
+wshobson|https://github.com/wshobson/agents.git|plugins/cicd-automation/skills
+davila7|https://github.com/davila7/claude-code-templates.git|cli-tool/components/skills/git
+davila7|https://github.com/davila7/claude-code-templates.git|cli-tool/components/skills/database

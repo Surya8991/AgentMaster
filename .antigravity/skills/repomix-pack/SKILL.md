@@ -3,7 +3,7 @@ name: "repomix-pack"
 description: "Packs the entire codebase (or selected folders) into a single token-efficient file using repomix, so other skills can analyze the whole repo without re-reading individual files. Use when the task requires whole-codebase context: full security audits, cross-cutting refactors, architecture review, project-wide code review, or first-time onboarding to an unfamiliar repo. Auto-runs once per session at first invocation of agent-master."
 risk: low
 source: community
-date_added: 2026-05-16
+date_added: 2026-07-14
 ---
 
 # Repomix Pack — Whole-Codebase Snapshot
