@@ -6,7 +6,7 @@
 # it to an exact, reviewed commit instead.
 #
 # Format: one line per repo, <name>=<full 40-char commit sha>
-# Valid names: caveman, superpowers, claude-skills, claude-mem
+# Valid names: caveman, superpowers, claude-skills, claude-mem, impeccable
 # Unpinned repos keep tracking the latest default branch.
 #
 # To pin: look up the commit on GitHub, review the diff, then add e.g.

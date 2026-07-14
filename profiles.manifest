@@ -10,10 +10,11 @@
 # Personal profiles go in ~/.claude/.agentmaster-cache/profiles.local (same format);
 # they are merged after this file and survive AgentMaster self-updates.
 
-# dev — code workflow: compression, superpowers discipline, session memory, all custom skills
+# dev — code workflow: compression, superpowers discipline, session memory, frontend design, all custom skills
 dev|caveman|*
 dev|superpowers|*
 dev|claude-mem|*
+dev|impeccable|*
 dev|agent-master|*
 
 # business — domain expertise: compression, claude-skills, orchestrator + repo packing
