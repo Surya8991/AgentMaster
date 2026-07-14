@@ -1,6 +1,6 @@
 ---
 type: auto
-description: "Meta-orchestrator that classifies tasks and routes to the right combination of installed skills across caveman (output compression), superpowers (dev workflow), anthropic-skills (business/domain expertise), and wired tactical libraries (wshobson, davila7, impeccable, anthropic-official). 25 routing categories including whole-codebase analysis via repomix-pack, LLM/AI app dev, a live task dashboard, and curated tactical skill libraries (wshobson, davila7) for backend/security/CI-CD/database depth. Invoke with /agent-master. Use as default entry point for ambiguous or multi-domain requests."
+description: "Meta-orchestrator that classifies tasks and routes to the right combination of installed skills across caveman (output compression), superpowers (dev workflow), anthropic-skills (business/domain expertise), and wired tactical libraries (wshobson, davila7, impeccable, anthropic-official). 26 routing categories including whole-codebase analysis via repomix-pack, LLM/AI app dev, a live task dashboard, meta skill discovery, and curated tactical skill libraries (wshobson, davila7) for backend/security/CI-CD/database depth. Invoke with /agent-master. Use as default entry point for ambiguous or multi-domain requests."
 ---
 
 # AgentMaster — Meta-Orchestrator
@@ -128,6 +128,7 @@ Read the user's input. Match to ONE primary category:
 | **Whole-Codebase Analysis** | entire codebase, whole repo, across the project, full audit, full scan, architecture review, onboard me to this repo, refactor X across | — | `repomix-pack` → calling skill | Invoke `repomix-pack` FIRST to produce `.agentmaster/codebase.xml`, then route to the analysis skill (e.g. `security-audit`, `codereview`, or a Build/Create refactor pass) which reads that file as input. |
 | **LLM/AI App Dev** | LLM app, AI app, RAG, vector DB, embeddings, agent pipeline, prompt engineering, LangChain, LlamaIndex, AI SDK, Vercel AI, fine-tune, AI backend | superpowers: `brainstorming` | wshobson `llm-application-dev` (rag-implementation, embedding-strategies, langchain-architecture, prompt-engineering-patterns, llm-evaluation, vector-index-tuning) + `anthropic-skills:mcp-builder` for MCP servers — auto-surface | Invoke `brainstorming` FIRST. Reference `Tool-Stack-Reference/hub/tools-ai-infra.md` + `tools-ai-agents.md` for stack decisions. Tactical skills surface by description; no separate invoke needed. |
 | **Task Dashboard** | open/launch/show the task board, task viewer, kanban, task dashboard, visualize tasks, what is Claude working on | — | `task-viewer` | Invoke `task-viewer` to launch the claude-task-viewer web dashboard. Observation only — it does not create/edit task state. |
+| **Meta/Skill Discovery** | find a skill for, is there a skill that, what skill should I use, which skill covers, search for a skill, do we have a skill for | — | `anthropic-skills:find-skills` | Invoke `anthropic-skills:find-skills` to search across installed skills and suggest the best match. Different from routing itself (Step 1) — use this when the user explicitly asks to discover/locate a skill rather than asking AgentMaster to just do the task. |
 | **Simple Question** | Direct factual question, no action needed | — | — | Answer directly. No routing. |
 
 ### Conflict Resolution (Tiebreakers)
@@ -279,7 +280,8 @@ Code/tactical:     wshobson (backend-development, python-development, kubernetes
                    davila7 (database, git), impeccable, anthropic-official
 Custom skills:     codereview, devops, security-audit, repomix-pack, task-viewer
 Memory/Explore:    mem-search, smart-explore, knowledge-agent, timeline-report, make-plan
-Built-in skills:   anthropic-skills:docx, pdf, pptx, xlsx, deep-research, ui-ux-pro-max, mcp-builder
+Built-in skills:   anthropic-skills:docx, pdf, pptx, xlsx, deep-research, ui-ux-pro-max, mcp-builder,
+                   find-skills
 
 Last sync:
 [contents of ~/.claude/.agentmaster-cache/last-sync-report.txt, or "no sync report yet"]
