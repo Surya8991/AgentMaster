@@ -1,0 +1,11 @@
+# Normalize line endings so Linux CI (shellcheck, bash) never sees CRLF.
+# Text files are stored and checked out with LF regardless of the OS that wrote them.
+* text=auto eol=lf
+
+# Shell scripts MUST be LF (CRLF makes bash and shellcheck fail with SC1017).
+*.sh text eol=lf
+
+# Windows-native scripts keep CRLF.
+*.ps1 text eol=crlf
+*.bat text eol=crlf
+*.cmd text eol=crlf
