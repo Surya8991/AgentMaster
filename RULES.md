@@ -5,12 +5,13 @@
 - Before any push: run lint, tests, check for secrets/env vars, verify no broken imports — fix all issues first.
 - Commit messages must be descriptive (what + why), conventional commits format preferred.
 - Never force push. Never amend a pushed commit.
+- Push auth: repos here are owned by Surya8991, but the default-active `gh` account is `edstellarmarketing`, which 403s on push. To push: `gh auth switch --user Surya8991`, push, then switch back. Never commit or push with the `edstellarmarketing` identity on a repo it doesn't own — CI blocks it.
 
 ## Tools & Tech
 - Always use the best tool/tech for the task — don't default to familiar, default to optimal.
 - Prefer lightweight solutions: fewer dependencies, smaller bundle, less complexity.
 - Reduce token usage at every step — prefer targeted reads over full-file reads, use repomix for whole-repo context.
-- Full tool/tech reference: `D:/Coding/AgentMaster/Tool-Stack-Reference/hub/` (62 files, 1524 tools + 1767 tech, free-first)
+- Full tool/tech reference: `C:/Users/Surya/Desktop/Coding/AgentMaster/Tool-Stack-Reference/hub/` (62 files, 1524 tools + 1767 tech, free-first)
   - Key refs: `tools-ai-coding.md`, `tools-ai-agents.md`, `tools-ai-infra.md`, `tools-api-dev-tools.md`
   - Tech refs: `tech-js-ts-packages.md`, `tech-python-packages.md`, `tech-databases-storage-search.md`, `tech-devops-infra.md`
 
@@ -37,16 +38,17 @@
 - All code/file generators must be idempotent: running twice = same result as once. Append-only generators that skip existing content are forbidden — they go stale silently.
 - Any count, enum, or routing table referenced in docs/README must be updated in the same commit as the code change. Doc drift is a bug.
 
-## Project Agents File
-- Every project gets an `agents.md` at the repo root on first session.
-- Contents: project overview, stack, key dirs/files, how to run/build/test, env vars needed, agent-specific notes (what to avoid, what's sensitive, known gotchas).
-- Keep it updated — whenever architecture changes, add a feature, or change the stack, update agents.md in the same commit.
-- If `agents.md` already exists, read it before doing anything else in that project.
+## Project Doc Spine
+- Every project gets the canonical 4-file spine on first session: `AGENTS.md` (real context), `CLAUDE.md` (a one-line `@AGENTS.md` import — never real content, so the two never drift), `PROJECTLOG.md` (status + decisions + history), and `README.md`. Use `/agent-master scaffold` to create the missing ones.
+- `AGENTS.md` contents: project overview, stack, key dirs/files, how to run/build/test, env vars needed, agent-specific notes (what to avoid, what's sensitive, known gotchas).
+- `PROJECTLOG.md`: STATUS (current / ongoing / pending / blocked / done / decisions / verification) then REFERENCE (what-it-is / stack / data-model / core-loop / env / commands / conventions). Update it with every meaningful change.
+- Keep them updated — whenever architecture changes, a feature is added, or the stack changes, update `AGENTS.md`/`PROJECTLOG.md` in the same commit.
+- If the spine already exists, read `AGENTS.md` before doing anything else in that project.
 
 ## Project Context
 - GitHub username: Surya8991
-- Main projects dir: D:/Coding/
-- Skills dir: C:/Users/surya/.claude/skills/
+- Main projects dirs: C:/Users/Surya/Desktop/Coding/ and C:/Users/Surya/Desktop/AI Agents/
+- Skills dir: C:/Users/Surya/.claude/skills/
 
 ## Asking vs Doing
 - Destructive ops (delete, reset, drop DB, overwrite, force push): confirm first, always.
@@ -116,3 +118,13 @@
 ### Memory
 - Use /mem-search before starting any task that might duplicate prior work ("did we already solve this?").
 - Use /timeline-report for project history questions, not git log.
+
+### Skill Development (working ON AgentMaster itself)
+- Edit skills in `skills/` only — it is the source of truth. After any skill edit run `bash scripts/convert.sh --all` (or `powershell -File scripts/convert.ps1 -All`). Never hand-edit generated platform files (`.cursor/`, `.windsurf/`, `.clinerules/`, `.codex/`, `.gemini/`, `.antigravity/`, `.opencode/`, `.augment/`, `CONVENTIONS.md`, `.github/copilot-instructions.md`) — convert overwrites them.
+- Iterate locally with `bash scripts/dev-sync.sh` — it pushes the working tree to the live install and writes a `.dev` marker that freezes auto-update so local edits are not reverted mid-session. Run `bash scripts/dev-sync.sh --off` once pushed, or the next session keeps skipping self-update.
+- Run `bash tests/smoke.sh` before committing (CI runs it plus `shellcheck --severity=error`).
+
+### Dependency Wiring
+- Before wiring a new dependency subset or repo, run the collision check: `comm -12` current installed skill names vs the candidate's skill dir names. Wiring is last-writer-wins — a collision silently overwrites an existing skill.
+- Never wire davila7's `document-processing` (collides with the official docx/pdf/pptx/xlsx) or its large collision-heavy categories (`development`, `ai-research`, `productivity`, `security`, `creative-design`).
+- Every skill must carry a `SKILL.md` — the installer requires it, and non-skill folders are skipped.
