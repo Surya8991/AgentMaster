@@ -166,7 +166,10 @@ sync_skills() {
     [ ! -d "$skill_dir" ] && continue
     local skill_name
     skill_name=$(basename "$skill_dir")
-    if [ -f "$skill_dir/SKILL.md" ] || [ "$skill_source" = "skills" ]; then
+    # Only real skills (must carry a SKILL.md). The old `|| skill_source=skills`
+    # clause copied every child dir, dragging in non-skill output folders like
+    # caveman's `generated/` (which has no SKILL.md) and leaving a permanent doctor FAIL.
+    if [ -f "$skill_dir/SKILL.md" ] || [ -f "$skill_dir/skill.md" ]; then
       skill_in_profile "$name" "$skill_name" || continue
       cp -r "$skill_dir" "$SKILLS_DIR/$skill_name" 2>/dev/null || true
       record_owner "$skill_name" "$name"
@@ -255,7 +258,11 @@ mkdir -p "$SKILLS_DIR"
 # Update AgentMaster itself first so a freshly pushed repos.manifest/repos.pins
 # takes effect in the same run
 AM_CACHE="$CACHE_DIR/agent-master"
-if [ -d "$AM_CACHE/.git" ]; then
+if [ -f "$CACHE_DIR/.dev" ]; then
+  # Dev mode (see dev-sync.sh): the cache holds the operator's local working tree.
+  # Do NOT reset/pull it — that would discard uncommitted local edits.
+  report "agent-master: dev mode (.dev marker) — skipping self-update, using local working tree"
+elif [ -d "$AM_CACHE/.git" ]; then
   am_before=$(git -C "$AM_CACHE" rev-parse --short HEAD 2>/dev/null || echo "none")
   am_before_full=$(git -C "$AM_CACHE" rev-parse HEAD 2>/dev/null || echo "none")
   # Caches are machine-managed mirrors — discard any local edits that
@@ -337,7 +344,14 @@ if [ -f "$ROUTING_TABLE" ]; then
   for skill_dir in "$SKILLS_DIR"/*/; do
     [ ! -d "$skill_dir" ] && continue
     sname=$(basename "$skill_dir")
-    if ! grep -qwF "$sname" "$ROUTING_TABLE"; then
+    # A skill counts as "routed" if the table names it in backticks (`name`), or —
+    # only for names long enough not to collide with English prose (>=6 chars) — as a
+    # bare word. Short names like `do`/`run` MUST be backticked to count, otherwise the
+    # word "do" appearing anywhere in the table would hide a genuinely unrouted skill.
+    if grep -qF "\`$sname\`" "$ROUTING_TABLE" || \
+       { [ "${#sname}" -ge 6 ] && grep -qwF "$sname" "$ROUTING_TABLE"; }; then
+      :
+    else
       sdesc=$(grep -m1 '^description:' "$skill_dir/SKILL.md" 2>/dev/null | sed 's/^description:[[:space:]]*//; s/^["'\'']//; s/["'\'']$//')
       case "$sdesc" in
         ">"|"|"|">-"|"|-"|">+"|"|+")

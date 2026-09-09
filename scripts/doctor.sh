@@ -185,6 +185,47 @@ else
   warn "never synced — run /agent-master update"
 fi
 
+# --- Generated files & dev mode ---
+echo ""
+echo "Generated & dev:"
+DOCTOR_DIR="$(cd "$(dirname "$0")" && pwd)"
+REPO_DIR="$(dirname "$DOCTOR_DIR")"
+if [ -f "$CACHE_DIR/.dev" ]; then
+  note "dev mode ON (.dev marker) — auto-updater is NOT pulling remote for agent-master (dev-sync.sh --off to resume)"
+fi
+if [ -f "$REPO_DIR/scripts/scaffold.sh" ]; then
+  n_tmpl=$(find "$REPO_DIR/scripts/templates" -name '*.tmpl' 2>/dev/null | wc -l)
+  if [ "$n_tmpl" -ge 4 ]; then
+    pass "scaffold ready ($n_tmpl templates)"
+  else
+    warn "scaffold templates missing (found $n_tmpl, expected >=4) — run /agent-master update"
+  fi
+else
+  warn "scaffold.sh not in cache — run /agent-master update"
+fi
+# Platform-file staleness: is a source SKILL.md newer than the newest generated file?
+# Skip in dev mode — dev-sync refreshes skills/ but deliberately not the cache's
+# platform dirs, so newer skill mtimes there are expected, not a "forgot convert".
+if [ ! -f "$CACHE_DIR/.dev" ]; then
+  newest_src=$(find "$REPO_DIR/skills" -name SKILL.md -printf '%T@\n' 2>/dev/null | sort -rn | head -1)
+  newest_gen=$(find "$REPO_DIR/.cursor" "$REPO_DIR/.windsurf" "$REPO_DIR/.clinerules" -type f -printf '%T@\n' 2>/dev/null | sort -rn | head -1)
+  if [ -n "$newest_src" ] && [ -n "$newest_gen" ]; then
+    if awk "BEGIN{exit !($newest_src > $newest_gen + 2)}"; then
+      warn "a source SKILL.md is newer than the generated platform files — run convert.sh --all"
+    else
+      pass "platform files are up to date with sources"
+    fi
+  fi
+fi
+# Installed vs cache agent-master skill drift (skip in dev mode, where they differ by design)
+if [ ! -f "$CACHE_DIR/.dev" ] && [ -f "$SKILLS_DIR/agent-master/SKILL.md" ] && [ -f "$REPO_DIR/skills/agent-master/SKILL.md" ]; then
+  if diff -q "$SKILLS_DIR/agent-master/SKILL.md" "$REPO_DIR/skills/agent-master/SKILL.md" >/dev/null 2>&1; then
+    pass "installed agent-master skill matches cache"
+  else
+    warn "installed agent-master skill differs from cache — run /agent-master update"
+  fi
+fi
+
 # --- Summary ---
 echo ""
 echo "=================="

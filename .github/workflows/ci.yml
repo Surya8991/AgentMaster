@@ -1,0 +1,29 @@
+name: CI
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+    branches: ["**"]
+
+jobs:
+  shellcheck:
+    name: ShellCheck (error severity)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install shellcheck
+        run: sudo apt-get update && sudo apt-get install -y shellcheck
+      - name: Lint scripts (fail only on error-level findings)
+        run: |
+          set -eu
+          # Style/info/warning findings don't block; genuine bugs (error severity) do.
+          shellcheck --severity=error scripts/*.sh tests/*.sh
+
+  smoke:
+    name: Smoke tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run smoke tests
+        run: bash tests/smoke.sh

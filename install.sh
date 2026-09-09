@@ -122,7 +122,9 @@ install_from_cache() {
     [ ! -d "$skill_dir" ] && continue
     local skill_name
     skill_name=$(basename "$skill_dir")
-    if [ -f "$skill_dir/SKILL.md" ] || [ "$skill_source" = "skills" ]; then
+    # Only real skills (must carry a SKILL.md) — the old `|| skill_source=skills`
+    # clause dragged in non-skill folders like caveman's `generated/`.
+    if [ -f "$skill_dir/SKILL.md" ] || [ -f "$skill_dir/skill.md" ]; then
       skill_in_profile "$name" "$skill_name" || continue
       cp -r "$skill_dir" "$SKILLS_DIR/$skill_name"
       record_owner "$skill_name" "$name"
