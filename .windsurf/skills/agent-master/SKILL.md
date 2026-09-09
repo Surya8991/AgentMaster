@@ -1,6 +1,6 @@
 ---
 name: "agent-master"
-description: "Meta-orchestrator that classifies tasks and routes to the right combination of installed skills across caveman (output compression), superpowers (dev workflow), anthropic-skills (business/domain expertise), and wired tactical libraries (wshobson, davila7, impeccable, anthropic-official). 26 routing categories including whole-codebase analysis via repomix-pack, LLM/AI app dev, a live task dashboard, meta skill discovery, and curated tactical skill libraries (wshobson, davila7) for backend/security/CI-CD/database depth. Invoke with /agent-master. Use as default entry point for ambiguous or multi-domain requests."
+description: "Meta-orchestrator that classifies tasks and routes to the right combination of installed skills across caveman (output compression), superpowers (dev workflow), anthropic-skills (business/domain expertise), and wired tactical libraries (wshobson, davila7, impeccable, anthropic-official). 26 routing categories including whole-codebase analysis via repomix-pack, LLM/AI app dev, a live task dashboard, meta skill discovery, and curated tactical skill libraries (wshobson, davila7) for backend/security/CI-CD/database depth. Also scaffolds the canonical project-doc spine (README/AGENTS.md/CLAUDE.md/PROJECTLOG.md) in new projects via `/agent-master scaffold`. Invoke with /agent-master. Use as default entry point for ambiguous or multi-domain requests."
 trigger: always_on
 ---
 
@@ -57,6 +57,37 @@ Project `RULES.md` takes precedence over defaults for this session. Use it to en
 User can point to a different file by saying "load rules from [path]".
 
 
+## Per-Session Project Scaffolding Check
+
+On the **first invocation each session**, and only when the working directory looks like a
+code repo (same detection as the repomix bootstrap), check whether the project has the
+canonical documentation spine this workspace uses:
+
+```
+README.md · AGENTS.md · CLAUDE.md (a one-line @AGENTS.md import) · PROJECTLOG.md
+```
+
+```
+1. Run (report-only, never writes): bash ~/.claude/.agentmaster-cache/agent-master/scripts/scaffold.sh
+2. If it reports missing files, SURFACE ONE concise suggestion to the user, e.g.:
+   "This project is missing AGENTS.md and PROJECTLOG.md. Want me to scaffold the
+    standard doc set? → /agent-master scaffold apply"
+3. Do NOT create any files automatically. Scaffolding is opt-in — wait for the user to
+   confirm or run `scaffold apply`.
+4. Runs ONCE per session. Track with the same bootstrap marker used for repomix.
+5. If the spine is complete, or the dir is not a repo, say nothing.
+```
+
+Why these files: `AGENTS.md` is the real agent/human context (stack, layout, conventions,
+"what NOT to do"); `CLAUDE.md` just imports it (`@AGENTS.md`) so Claude Code picks it up
+without the two drifting; `PROJECTLOG.md` is the single source of truth for status +
+decisions + history (STATUS: current/ongoing/pending/blocked/done/decisions/verification,
+then REFERENCE: what-it-is/stack/data-model/loop/env/commands/conventions). Templates live
+in `~/.claude/.agentmaster-cache/agent-master/scripts/templates/`.
+
+User can skip for a session by saying "skip scaffold" — record that and don't re-suggest.
+
+
 ## Per-Session Routing Overrides Load
 
 On **first invocation each session**, check `~/.claude/.agentmaster-cache/routing-overrides.md`:
@@ -79,10 +110,11 @@ Check ARGUMENTS for sub-commands:
 - If ARGUMENTS equals `update`: run update script in **foreground** — `bash ~/.claude/.agentmaster-cache/agent-master/scripts/update.sh`
 - If ARGUMENTS equals `doctor`: run `bash ~/.claude/.agentmaster-cache/agent-master/scripts/doctor.sh` and relay its output verbatim. Do NOT re-derive or summarize the checks yourself — the script is the source of truth.
 - If ARGUMENTS equals `list`: run `bash ~/.claude/.agentmaster-cache/agent-master/scripts/list.sh` and relay its output verbatim.
-- If ARGUMENTS equals `routes`: run `bash ~/.claude/.agentmaster-cache/agent-master/scripts/routes.sh` and relay its output verbatim.
+- If ARGUMENTS starts with `routes`: run `bash ~/.claude/.agentmaster-cache/agent-master/scripts/routes.sh <rest>` and relay its output verbatim. With no arg it shows recent routes, active overrides, and unrouted skills; `routes analyze` ranks repeated misroutes and busiest categories so the routing table can be improved.
 - If ARGUMENTS starts with `profile`: run `bash ~/.claude/.agentmaster-cache/agent-master/scripts/profile.sh <name-if-given>` and relay its output verbatim. With no name it shows the active + available profiles; with a name it switches profile (prunes excluded skills and resyncs).
 - If ARGUMENTS starts with `rollback`: run `bash ~/.claude/.agentmaster-cache/agent-master/scripts/rollback.sh <repo-if-given>` and relay its output verbatim. With no repo it lists available backups; with a repo it restores the pre-sync version and pins it locally so auto-updates hold the rollback.
 - If ARGUMENTS starts with `repomix`: forward the remaining args to the `repomix-pack` skill directly (e.g. `repomix refresh`, `repomix include src/**`).
+- If ARGUMENTS starts with `scaffold`: run `bash ~/.claude/.agentmaster-cache/agent-master/scripts/scaffold.sh <rest>` and relay its output verbatim. With no arg it reports which canonical doc files (README, AGENTS.md, CLAUDE.md, PROJECTLOG.md) the current project is missing; `scaffold apply` creates the missing ones from templates (never overwrites); `scaffold apply --with-rules` also adds RULES.md.
 - Otherwise: treat ARGUMENTS as the task to classify and execute.
 
 (On Windows without bash, use the `.ps1` counterparts in the same directory.)
@@ -301,13 +333,37 @@ For the "Last sync" section, read `~/.claude/.agentmaster-cache/last-sync-report
 | **When blocked** | State assumption clearly, return to user with summary |
 
 
+## Extended Skill Clusters (deliberate auto-surface reference)
+
+These installed skills are NOT primary categories, but they are installed and should be
+surfaced when a sub-task fits — reach for them proactively instead of falling back to a
+generic skill. They also live in `unrouted-skills.txt` for the runtime fallback below;
+this table just makes the high-value ones first-class in routing. Prefer the most specific.
+
+| Cluster | Surface within | Representative skills |
+|---------|----------------|-----------------------|
+| **Superpowers discipline (supporting)** | Build / Refactor / Debug / Test / Commit | `investigate-first`, `lean-build`, `safe-refactor`, `surgical-patch`, `verify-and-stop`, `verification-before-completion`, `subagent-driven-development`, `dispatching-parallel-agents`, `executing-plans`, `receiving-code-review`, `using-git-worktrees`, `learn-codebase` |
+| **Python specialist depth** | Build / Refactor / Debug when language is Python | `async-python-patterns`, `python-code-style`, `python-configuration`, `python-observability`, `python-packaging`, `python-project-structure`, `python-resource-management`, `python-type-safety`, `python-background-jobs`, `uv-package-manager` |
+| **Event-sourcing / DDD architecture** | Build / Refactor for distributed / event-driven designs | `cqrs-implementation`, `event-store-design`, `projection-patterns`, `saga-orchestration`, `workflow-orchestration-patterns` |
+| **Managed / cloud databases** | Database Design when the target is a specific engine | `database-architect`, `postgres-schema-design`, `supabase-postgres-best-practices`, `neon-instagres`, `using-neon`, `bigquery-basics`, `alloydb-basics`, `cloud-sql-basics` |
+| **AI retrieval + Anthropic SDK** | LLM/AI App Dev | `similarity-search-patterns`, `hybrid-search-implementation`, `claude-api` (model ids, pricing, SDK, tool use — read before answering any Claude/Anthropic API question) |
+| **Security technique depth** | Security | `stride-analysis-patterns`, `attack-tree-construction`, `threat-mitigation-mapping`, `security-requirement-extraction`, `sast-configuration` |
+| **Docs / design / artifacts** | Documentation / UI-UX by output format | `doc-coauthoring`, `internal-comms`, `design-is`, `frontend-design`, `theme-factory`, `web-artifacts-builder`, `canvas-design`, `algorithmic-art`, `wowerpoint`, `slack-gif-creator`, `star-history-chart` |
+| **Session memory (claude-mem)** | Memory/History | `how-it-works`, `mode-creator`, `weekly-digests`, `cloud-sync`, `git-context-controller` |
+| **Skill authoring / meta** | Creating or editing skills in this repo | `skill-creator`, `writing-skills` |
+| **PR / workflow utility** | On explicit match | `babysit`, `standup`, `oh-my-issues`, `pathfinder`, `commit-smart`, `version-bump`, `loop-library`, `what-the`, `discernment-nudge`, `academy-guide` |
+| **Caveman Cloud (opt-in LLM-spend observability)** | Only when the user works on LLM cost/observability | `caveman-setup`, `caveman-discover`, `caveman-optimize`, `caveman-learn`, `caveman-evidence-review`, `caveman-manage`, `caveman-stats`, `caveman-explore` |
+
+These clusters extend the 26 primary categories; they do not add new top-level categories.
+
+
 ## Fallback Behavior
 
 When no classification matches:
 
 1. **Specific skill mentioned?** → Invoke that skill directly
 2. **Conversational?** (greeting, meta-question) → Respond directly
-3. **Check unrouted skills** → read `~/.claude/.agentmaster-cache/unrouted-skills.txt` (skills installed but absent from the routing table above, one per line with description). If one clearly matches the task, invoke it and log the route as category `unrouted-match`.
+3. **Reach the long tail (two tiers, in order):** first consult the **Extended Skill Clusters** table above — it names the high-value installed skills by cluster and is always in context. If nothing there fits, read `~/.claude/.agentmaster-cache/unrouted-skills.txt` (the exhaustive catch-all: every installed skill absent from this file's routing text, one per line with description). If one clearly matches, invoke it and log the route as category `unrouted-match`. The cluster table is curated and primary; the file is the complete fallback.
 4. **Ambiguous?** → Ask ONE question: "Is this a code, marketing, strategy, or other task?"
 5. **Never guess** with more than 2 skills. When uncertain, ask.
 

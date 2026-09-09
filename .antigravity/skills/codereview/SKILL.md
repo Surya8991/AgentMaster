@@ -3,7 +3,7 @@ name: "codereview"
 description: "Blunt, factual code review. No sugar coating. Finds bugs, security issues, performance problems, and architecture flaws. Use when user says /codereview or asks to review code."
 risk: low
 source: community
-date_added: 2026-07-14
+date_added: 2026-09-09
 ---
 
 # Code Review — Blunt Mode

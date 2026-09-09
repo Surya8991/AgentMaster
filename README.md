@@ -9,7 +9,7 @@
 
 <p align="center">
   <img src="https://img.shields.io/badge/Skills-125+-10B981?style=for-the-badge" alt="125+ Skills">
-  <img src="https://img.shields.io/badge/Categories-25-F59E0B?style=for-the-badge" alt="25 Categories">
+  <img src="https://img.shields.io/badge/Categories-26-F59E0B?style=for-the-badge" alt="26 Categories">
   <img src="https://img.shields.io/badge/Platforms-11-6366F1?style=for-the-badge" alt="11 Platforms">
   <img src="https://img.shields.io/badge/Token_Savings-~75%25-EF4444?style=for-the-badge" alt="75% Token Savings">
 </p>
@@ -132,6 +132,8 @@ No manual skill selection. No guessing. No loading 5 skills when you need 1.
 | `/agent-master doctor` | Health-check installed skills, caches, and pins (PASS/WARN/FAIL) |
 | `/agent-master list` | List installed skills grouped by source repo |
 | `/agent-master routes` | Routing log, learned overrides, and unrouted skills |
+| `/agent-master routes analyze` | Rank repeated misroutes and busiest categories |
+| `/agent-master scaffold [apply]` | Report (or create) the canonical project-doc spine — README/AGENTS.md/CLAUDE.md/PROJECTLOG.md |
 | `/agent-master profile [name]` | Show or switch the install profile (full/dev/business/minimal) |
 | `/agent-master rollback [repo]` | Restore a repo's skills to the pre-sync version and pin it |
 | `/caveman` | Enable token compression (~75% savings on all output) |
@@ -201,7 +203,7 @@ Three layers that **stack, never compete**:
 
 ## Routing Table
 
-### 25 Categories
+### 26 Categories
 
 | Category | Signal Words | Routes To |
 |----------|-------------|-----------|
@@ -326,7 +328,7 @@ When `/caveman` is active, AgentMaster automatically:
 ```
 AgentMaster/
 ├── skills/                          # Source of truth (Claude Code format)
-│   ├── agent-master/SKILL.md        #   Meta-orchestrator (25 categories)
+│   ├── agent-master/SKILL.md        #   Meta-orchestrator (26 categories)
 │   ├── codereview/SKILL.md          #   Blunt code review (/codereview)
 │   ├── devops/SKILL.md              #   CI/CD, Docker, Terraform, deployment
 │   ├── repomix-pack/SKILL.md        #   Whole-codebase snapshot via repomix
@@ -411,9 +413,26 @@ See [`RULES.example.md`](RULES.example.md) for the full annotated template.
 ## Contributing
 
 1. Edit SKILL.md files in `skills/` (source of truth)
-2. Run `bash scripts/convert.sh --tool all` to regenerate platform files
+2. Run `bash scripts/convert.sh --tool all` (or `powershell -File scripts\convert.ps1 -All`) to regenerate platform files
 3. Test with `/agent-master route <your task>` (dry-run mode)
-4. Commit and PR
+4. Run `bash tests/smoke.sh` (CI runs this + `shellcheck --severity=error`)
+5. Commit and PR
+
+### Local development (fast loop)
+
+The runtime loads skills from `~/.claude/skills/`, and the `/agent-master` subcommands run
+from the self-update cache — both are normally populated by `git pull` from the remote, so a
+local edit has no effect until you commit, push, and let the auto-updater sync. To iterate
+without that round-trip:
+
+```bash
+bash scripts/dev-sync.sh          # push your working tree straight to the live install
+# ...edit skills/scripts, re-run dev-sync.sh, test in a new session...
+bash scripts/dev-sync.sh --off    # resume normal auto-update from remote
+```
+
+`dev-sync` writes a `.dev` marker that stops the auto-updater from overwriting your local
+edits. `/agent-master doctor` reports when dev mode is on. (Windows: `scripts\dev-sync.ps1`.)
 
 ## Credits
 

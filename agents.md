@@ -19,9 +19,18 @@ skills/                        ← SOURCE OF TRUTH — edit skills here only
   task-viewer/SKILL.md         ← Launches claude-task-viewer dashboard (app path in ~/.claude/.agentmaster-cache/task-viewer.path)
 
 scripts/
-  convert.sh                   ← Regenerates ALL platform files from skills/
-  update.sh                    ← Pulls latest dependency repos to ~/.claude/skills/
-  install-platform.sh          ← Installs to a specific platform dir
+  convert.sh / convert.ps1     ← Regenerates ALL platform files from skills/
+  update.sh                    ← Pulls latest dependency repos to ~/.claude/skills/ (honors .dev marker)
+  install-platform.sh / .ps1   ← Installs to a specific platform dir
+  dev-sync.sh / dev-sync.ps1   ← Push local working tree → live install (bypass git); writes .dev marker
+  scaffold.sh / scaffold.ps1   ← Report/create the canonical project-doc spine (templates in scripts/templates/)
+  routes.sh                    ← Routing log/overrides/unrouted; `routes analyze` ranks misroutes
+  doctor.sh                    ← Health check (skills, caches, pins, convert drift, dev mode)
+tests/
+  smoke.sh                     ← No-network CI checks: frontmatter, convert determinism, scaffold, syntax
+.github/workflows/
+  ci.yml                       ← shellcheck (error severity) + smoke tests
+  check-git-identity.yml       ← Blocks edstellarmarketing identity on non-owned repos
 
 Tool-Stack-Reference/
   hub/                         ← 62 markdown files: 1524 tools + 1767 tech (committed)
@@ -42,6 +51,13 @@ vim skills/agent-master/SKILL.md
 
 # Regenerate all platform files after skill changes
 bash scripts/convert.sh --all
+
+# Fast local dev loop (skip commit+push+update; writes a .dev marker)
+bash scripts/dev-sync.sh          # push working tree -> live install
+bash scripts/dev-sync.sh --off    # resume normal auto-update
+
+# Run tests (CI runs this + shellcheck --severity=error)
+bash tests/smoke.sh
 
 # Install to Claude Code
 bash install.sh
@@ -76,8 +92,33 @@ None. No `.env` file required.
 ### Domain-layer note (important)
 The `claude-skills` repo (alirezarezvani/claude-skills) is a **plugin-of-plugins**: its domain dirs (`engineering-team`, `marketing-skill`, `c-level-advisor`, `finance`, `product-team`, `project-management`, `ra-qm-team`, `business-growth`) are bundles nested 2-3 levels deep (`<dir>/skills/<skill>/SKILL.md` or `<dir>/<subplugin>/skills/<skill>/SKILL.md`) — the flat, one-level installer can't consume them, so `skill_source=.` only ever installed `loop-library`. The routing table used to point business-domain categories at these bundle names, which never resolved to an installed skill. **Fixed by repointing the business-domain layer to the loaded `anthropic-skills:*` plugin** (marketing→running-marketing, sales/growth→executing-sales, product→building-product, strategy→gtm-foundations, finance→setting-pricing+xlsx, compliance→compliance-handling). Coverage is honest-but-thin for finance (no valuation/DCF skill), project-management (no Jira/scrum skill), and regulated compliance (no FDA/ISO/MDR skill) — the routing rows say so. To get deeper business skills later, wire the flat claude-skills subsets (e.g. `marketing-skill/skills`, `ra-qm-team/skills`) as curated manifest lines — but they overlap heavily with anthropic-skills.
 
-### Routing categories (25 total)
-Build/Create, Refactor, Debug/Fix, Code Review, Commit/Ship, Test, Marketing, Strategy/Business, Product, Finance, Business Growth, Project Mgmt, Compliance, DevOps/Deploy, Database Design, Security, UI/UX Design, Documentation, Research, Memory/History, Explore Codebase, Whole-Codebase Analysis, LLM/AI App Dev, Task Dashboard, Simple Question
+### Routing categories (26 total)
+Build/Create, Refactor, Debug/Fix, Code Review, Commit/Ship, Test, Marketing, Strategy/Business, Product, Finance, Business Growth, Project Mgmt, Compliance, DevOps/Deploy, Database Design, Security, UI/UX Design, Documentation, Research, Memory/History, Explore Codebase, Whole-Codebase Analysis, LLM/AI App Dev, Task Dashboard, Meta/Skill Discovery, Simple Question
+
+Beyond the 26 primary categories, `SKILL.md` has an **Extended Skill Clusters** table that
+maps the ~86 installed-but-non-primary skills (Python depth, event-sourcing/DDD, managed
+databases, security technique, docs/design, claude-mem, skill authoring, caveman-cloud, PR
+utilities) to the category they surface within. Update that table when new skills are wired.
+
+### Project doc spine + scaffolding
+Mature repos in this workspace share a 4-file spine: `README.md` + `AGENTS.md` +
+`CLAUDE.md`(`@AGENTS.md`) + `PROJECTLOG.md`. `PROJECTLOG.md` is the canonical name
+(4 repos vs 2 with `PROJECT_LOG.md`) and follows a fixed template: STATUS
+(current/ongoing/pending/blocked/done/decisions/verification) then REFERENCE
+(what-it-is/stack/data-model/loop/env/commands/conventions).
+
+`/agent-master scaffold` reports which spine files the current project is missing;
+`scaffold apply` creates them from `scripts/templates/*.tmpl` (never overwrites,
+substitutes project name + date). The orchestrator also runs a report-only scaffold
+check once per session and *suggests* (never auto-writes) the missing files. Scripts:
+`scripts/scaffold.sh` + `scripts/scaffold.ps1`; templates in `scripts/templates/`.
+
+### Context files across the workspace
+`AGENTS.md` (dup: lowercase `agents.md`) is the real context; `CLAUDE.md` is a one-line
+`@AGENTS.md` import that never drifts. `convert.sh` does NOT manage any of these three —
+they are hand-maintained. Backfilled `CLAUDE.md` pointers into AgentMaster, Content-Wiz,
+Email-Automator, cybersecurity-academy (2026-09-09); a global `~/.claude/CLAUDE.md` and
+project memory under `~/.claude/projects/.../memory/` were also seeded.
 
 ### Dependency repo survey (repos.manifest)
 
