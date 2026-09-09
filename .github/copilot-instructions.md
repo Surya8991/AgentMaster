@@ -125,7 +125,7 @@ Check ARGUMENTS for sub-commands:
 |-------|--------|------|-------------|
 | **Output** | caveman | Token compression (~75% savings) | Only when user has enabled caveman mode (`/caveman`) |
 | **Workflow** | superpowers | Process discipline: brainstorm → plan → TDD → review → finish | Code/engineering tasks ONLY |
-| **Domain** | anthropic-skills (business: marketing, sales, product, strategy) + wshobson/davila7/impeccable/anthropic-official (technical tactical) + custom (devops, security-audit) | Subject-matter expertise, ~125 installed skills + the anthropic-skills plugin | When task needs domain knowledge |
+| **Domain** | anthropic-skills (business: marketing, sales, product, strategy) + wshobson/davila7/impeccable/anthropic-official (technical tactical) + custom (devops, security-audit) | Subject-matter expertise, ~195 installed skills + the anthropic-skills plugin | When task needs domain knowledge |
 
 **Rule:** Layers stack. Caveman compresses output of ANY skill. Superpowers enforces workflow for code tasks. Domain skills provide expertise. All three can be active simultaneously.
 
@@ -307,8 +307,10 @@ Last routed to: [skill name or "none yet"]
 Active workflow: [superpowers stage or "none"]
 Business domains:  anthropic-skills:running-marketing, executing-sales, building-product,
                    gtm-foundations, setting-pricing, compliance-handling, deep-research
-Code/tactical:     wshobson (backend-development, python-development, kubernetes-operations,
-                   cicd-automation, security-scanning, llm-application-dev),
+Code/tactical:     wshobson 15 subsets (backend-development, python-development, kubernetes-operations,
+                   cicd-automation, security-scanning, llm-application-dev, javascript-typescript,
+                   frontend-mobile-development, ui-design, cloud-infrastructure, observability-monitoring,
+                   incident-response, developer-essentials, data-engineering, documentation-generation),
                    davila7 (database, git), impeccable, anthropic-official
 Custom skills:     codereview, devops, security-audit, repomix-pack, task-viewer
 Memory/Explore:    mem-search, smart-explore, knowledge-agent, timeline-report, make-plan

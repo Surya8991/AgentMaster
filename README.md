@@ -147,7 +147,7 @@ Dependency repos are declared in `repos.manifest` (one line per repo: `name|url|
 
 ### Install Profiles
 
-Don't want all ~125 skills? Install a subset: `bash install.sh --profile dev` (or `.\install.ps1 -Profile dev`). Shipped profiles in `profiles.manifest`: **dev** (compression + superpowers workflow + session memory + frontend design + wshobson/davila7 tactical + all custom skills), **business** (compression + orchestrator + repo packing), **minimal** (orchestrator + compression), and the default **full** (everything). Switch anytime with `/agent-master profile <name>` — excluded skills are pruned (only ones AgentMaster installed; your own skills are never touched) and the subset resyncs. Profiles persist across auto-updates; define your own in `~/.claude/.agentmaster-cache/profiles.local`. The orchestrator skill itself is always installed, and an unknown profile name falls back to full rather than uninstalling anything.
+Don't want all ~195 skills? Install a subset: `bash install.sh --profile dev` (or `.\install.ps1 -Profile dev`). Shipped profiles in `profiles.manifest`: **dev** (compression + superpowers workflow + session memory + frontend design + wshobson/davila7 tactical + all custom skills), **business** (compression + orchestrator + repo packing), **minimal** (orchestrator + compression), and the default **full** (everything). Switch anytime with `/agent-master profile <name>` — excluded skills are pruned (only ones AgentMaster installed; your own skills are never touched) and the subset resyncs. Profiles persist across auto-updates; define your own in `~/.claude/.agentmaster-cache/profiles.local`. The orchestrator skill itself is always installed, and an unknown profile name falls back to full rather than uninstalling anything.
 
 ### Skill Rollback
 
@@ -195,7 +195,7 @@ Three layers that **stack, never compete**:
 │  DOMAIN LAYER: anthropic-skills (business)  │
 │  + wshobson/davila7/impeccable (technical)  │
 │  + custom (devops, security-audit).         │
-│  ~125 installed skills provide expertise.   │
+│  ~195 installed skills provide expertise.   │
 └─────────────────────────────────────────────┘
 ```
 
@@ -275,10 +275,10 @@ When words match multiple categories, AgentMaster resolves automatically:
 | [claude-mem](https://github.com/thedotmack/claude-mem) | Session memory | `mem-search`, `smart-explore`, `knowledge-agent`, `make-plan`, `do`, `timeline-report`, `version-bump` |
 | [impeccable](https://github.com/pbakaus/impeccable) | Frontend design | `impeccable` (design/polish/audit + 23 commands) |
 | [anthropics/skills](https://github.com/anthropics/skills) | Official Anthropic skills | `docx`, `pdf`, `pptx`, `xlsx`, `frontend-design`, `mcp-builder`, `skill-creator`, `webapp-testing`, +9 more |
-| [wshobson/agents](https://github.com/wshobson/agents) | Technical tactical (6 curated subsets) | `backend-development`, `python-development`, `kubernetes-operations`, `cicd-automation`, `security-scanning`, `llm-application-dev` — 46 skills |
+| [wshobson/agents](https://github.com/wshobson/agents) | Technical tactical (15 curated subsets) | `backend-development`, `python-development`, `kubernetes-operations`, `cicd-automation`, `security-scanning`, `llm-application-dev`, `javascript-typescript`, `frontend-mobile-development`, `ui-design`, `cloud-infrastructure`, `observability-monitoring`, `incident-response`, `developer-essentials`, `data-engineering`, `documentation-generation` — 96 skills |
 | [davila7/claude-code-templates](https://github.com/davila7/claude-code-templates) | DB + git tactical (2 curated subsets) | `database`, `git` — 16 skills |
 | [AgentMaster](https://github.com/Surya8991/AgentMaster) *(self-update)* | Keeps orchestrator current | auto-synced via `~/.claude/.agentmaster-cache/agent-master` |
-| **Total** | | **~125 skills** (full profile) |
+| **Total** | | **~195 skills** (full profile) |
 
 ### Whole-Codebase Snapshots (Repomix)
 
