@@ -348,6 +348,12 @@ this table just makes the high-value ones first-class in routing. Prefer the mos
 | **Skill authoring / meta** | Creating or editing skills in this repo | `skill-creator`, `writing-skills` |
 | **PR / workflow utility** | On explicit match | `babysit`, `standup`, `oh-my-issues`, `pathfinder`, `commit-smart`, `version-bump`, `loop-library`, `what-the`, `discernment-nudge`, `academy-guide` |
 | **Caveman Cloud (opt-in LLM-spend observability)** | Only when the user works on LLM cost/observability | `caveman-setup`, `caveman-discover`, `caveman-optimize`, `caveman-learn`, `caveman-evidence-review`, `caveman-manage`, `caveman-stats`, `caveman-explore` |
+| **Frontend / JS-TS (wshobson)** | Build / Refactor when the stack is Node/Next/React | `nodejs-backend-patterns`, `typescript-advanced-types`, `modern-javascript-patterns`, `javascript-testing-patterns`, `responsive-design`, `react-native-design`, `mobile-ios-design`, `mobile-android-design`, `web-component-design` |
+| **UI design tactical (wshobson)** | UI/UX alongside `impeccable` | `design-system-patterns`, `interaction-design`, `visual-design-foundations`, `accessibility-compliance` |
+| **Cloud infra & observability (wshobson)** | DevOps / Deploy | `terraform-module-library`, `multi-cloud-architecture`, `service-mesh-observability`, `istio-traffic-management`, `cost-optimization`, `prometheus-configuration`, `grafana-dashboards`, `distributed-tracing`, `slo-implementation`, `incident-runbook-templates`, `postmortem-writing`, `on-call-handoff-patterns` |
+| **Developer essentials (wshobson)** | Build / Debug / Code Review | `debugging-strategies`, `error-handling-patterns`, `auth-implementation-patterns`, `code-review-excellence`, `git-advanced-workflows`, `monorepo-management`, `sql-optimization-patterns`, `e2e-testing-patterns` |
+| **Data engineering (wshobson)** | Build for data pipelines | `airflow-dag-patterns`, `dbt-transformation-patterns`, `spark-optimization`, `data-quality-frameworks` |
+| **Code-doc generation (wshobson)** | Documentation of code (distinct from doc-format skills) | `architecture-decision-records`, `openapi-spec-generation`, `changelog-automation` |
 
 These clusters extend the 26 primary categories; they do not add new top-level categories.
 

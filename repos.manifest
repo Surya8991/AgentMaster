@@ -25,5 +25,16 @@ wshobson|https://github.com/wshobson/agents.git|plugins/llm-application-dev/skil
 wshobson|https://github.com/wshobson/agents.git|plugins/cicd-automation/skills
 wshobson|https://github.com/wshobson/agents.git|plugins/kubernetes-operations/skills
 wshobson|https://github.com/wshobson/agents.git|plugins/python-development/skills
+# Second wave (2026-09-09) — 9 collision-free subsets filling frontend/JS-TS, cloud,
+# observability, and general-dev gaps (50 skills). Verified no collisions with installed.
+wshobson|https://github.com/wshobson/agents.git|plugins/javascript-typescript/skills
+wshobson|https://github.com/wshobson/agents.git|plugins/frontend-mobile-development/skills
+wshobson|https://github.com/wshobson/agents.git|plugins/ui-design/skills
+wshobson|https://github.com/wshobson/agents.git|plugins/cloud-infrastructure/skills
+wshobson|https://github.com/wshobson/agents.git|plugins/observability-monitoring/skills
+wshobson|https://github.com/wshobson/agents.git|plugins/incident-response/skills
+wshobson|https://github.com/wshobson/agents.git|plugins/developer-essentials/skills
+wshobson|https://github.com/wshobson/agents.git|plugins/data-engineering/skills
+wshobson|https://github.com/wshobson/agents.git|plugins/documentation-generation/skills
 davila7|https://github.com/davila7/claude-code-templates.git|cli-tool/components/skills/git
 davila7|https://github.com/davila7/claude-code-templates.git|cli-tool/components/skills/database
