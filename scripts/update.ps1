@@ -20,6 +20,7 @@ $ReportFile = "$CacheDir\last-sync-report.txt"
 
 $script:Report = @()
 $script:Collisions = @()
+$script:ExcludeGlob = ""   # per-repo skill-name glob to skip; set in the manifest loop below
 
 function Log($msg) { if (-not $Quiet) { Write-Host $msg } }
 function Add-Report($line) { Log "  $line"; $script:Report += $line }
@@ -169,6 +170,15 @@ try {
         $count = 0
         if (Test-Path $Src) {
             Get-ChildItem $Src -Directory | ForEach-Object {
+                # Skip skills the manifest's exclude-glob names (e.g. a repo's contributor skills).
+                # ExcludeGlob is one or more space-separated globs; match any -> skip this skill.
+                if ($script:ExcludeGlob) {
+                    $skip = $false
+                    foreach ($pat in ($script:ExcludeGlob -split '\s+')) {
+                        if ($pat -and ($_.Name -like $pat)) { $skip = $true; break }
+                    }
+                    if ($skip) { return }
+                }
                 if ((Test-Path "$($_.FullName)\SKILL.md") -or ($SkillSource -eq "skills")) {
                     if (Test-SkillInProfile $Name $_.Name) {
                         Copy-Item -Path $_.FullName -Destination "$SkillsDir\$($_.Name)" -Recurse -Force
@@ -321,7 +331,9 @@ try {
             Add-Report "${repoName}: skipped (profile: $($script:ActiveProfile))"
             continue
         }
+        $script:ExcludeGlob = if ($parts.Count -ge 4) { $parts[3].Trim() } else { "" }
         Update-Repo -Name $repoName -RepoUrl $parts[1].Trim() -SkillSource $parts[2].Trim()
+        $script:ExcludeGlob = ""
     }
 
     # Regenerate unrouted-skills.txt: installed skills never mentioned in the routing table

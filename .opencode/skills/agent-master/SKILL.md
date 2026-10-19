@@ -1,6 +1,6 @@
 ---
 name: "agent-master"
-description: "Meta-orchestrator that classifies tasks and routes to the right combination of installed skills across caveman (output compression), superpowers (dev workflow), anthropic-skills (business/domain expertise), and wired tactical libraries (wshobson, davila7, impeccable, anthropic-official). 26 routing categories including whole-codebase analysis via repomix-pack, LLM/AI app dev, a live task dashboard, meta skill discovery, and curated tactical skill libraries (wshobson, davila7) for backend/security/CI-CD/database depth. Also scaffolds the canonical project-doc spine (README/AGENTS.md/CLAUDE.md/PROJECTLOG.md) in new projects via `/agent-master scaffold`. Invoke with /agent-master. Use as default entry point for ambiguous or multi-domain requests."
+description: "Meta-orchestrator that classifies tasks and routes to the right combination of installed skills across caveman (output compression), superpowers (dev workflow), anthropic-skills (business/domain expertise), and wired tactical libraries (wshobson, davila7, impeccable, anthropic-official, rea). 27 routing categories including whole-codebase analysis via repomix-pack, LLM/AI app dev, reverse-engineering/binary analysis via REA + ida-pro-mcp, live DAP debugging (debug-skill), a scientific-skills library (K-Dense, bio/chem/med), a live task dashboard, meta skill discovery, and curated tactical skill libraries (wshobson, davila7) for backend/security/CI-CD/database depth. Also scaffolds the canonical project-doc spine (README/AGENTS.md/CLAUDE.md/PROJECTLOG.md) in new projects via `/agent-master scaffold`. Invoke with /agent-master. Use as default entry point for ambiguous or multi-domain requests."
 compatibility: opencode
 ---
 
@@ -126,7 +126,7 @@ Check ARGUMENTS for sub-commands:
 |-------|--------|------|-------------|
 | **Output** | caveman | Token compression (~75% savings) | Only when user has enabled caveman mode (`/caveman`) |
 | **Workflow** | superpowers | Process discipline: brainstorm → plan → TDD → review → finish | Code/engineering tasks ONLY |
-| **Domain** | anthropic-skills (business: marketing, sales, product, strategy) + wshobson/davila7/impeccable/anthropic-official (technical tactical) + custom (devops, security-audit) | Subject-matter expertise, ~195 installed skills + the anthropic-skills plugin | When task needs domain knowledge |
+| **Domain** | anthropic-skills (business: marketing, sales, product, strategy) + wshobson/davila7/impeccable/anthropic-official (technical tactical) + rea (reverse-engineering) + custom (devops, security-audit) | Subject-matter expertise, ~195 installed skills + the anthropic-skills plugin | When task needs domain knowledge |
 
 **Rule:** Layers stack. Caveman compresses output of ANY skill. Superpowers enforces workflow for code tasks. Domain skills provide expertise. All three can be active simultaneously.
 
@@ -139,7 +139,7 @@ Read the user's input. Match to ONE primary category:
 |----------|-------------|----------------|--------------|-------------|
 | **Build/Create** | build, create, implement, add feature, scaffold, new component | superpowers: `brainstorming` | wshobson `backend-development` (api-design-principles, architecture-patterns, microservices-patterns) + `python-development` (16 skills) + davila7 `database` — all auto-surface by description | Invoke `brainstorming` FIRST (hard gate). Tactical skills surface during implementation; no separate invoke. |
 | **Refactor** | refactor, restructure, reorganize, clean up code, extract, decouple | superpowers: `brainstorming` | wshobson `python-anti-patterns`, `python-design-patterns`, `architecture-patterns` (auto-surface) | Invoke `brainstorming` FIRST (design before refactor). |
-| **Debug/Fix** | bug, crash, error, failing, broken, fix, not working, exception, traceback | superpowers: `systematic-debugging` | wshobson `python-error-handling`, `python-resilience`, `python-performance-optimization` (auto-surface) | Invoke `systematic-debugging`. |
+| **Debug/Fix** | bug, crash, error, failing, broken, fix, not working, exception, traceback | superpowers: `systematic-debugging` | wshobson `python-error-handling`, `python-resilience`, `python-performance-optimization` (auto-surface) | Invoke `systematic-debugging` for method. When print-debugging isn't enough and you need LIVE runtime inspection (breakpoints, stepping, variable/stack inspection) → `debugging-code` (REA-style two-part: needs the `dap` CLI; if its tools are missing, tell the user to install `dap`, don't auto-install). Languages: Python/Go/Node/Rust/C++. |
 | **Code Review** | review code, review this code, review PR, review my changes, check this diff, code review, /codereview | — | `codereview` | Invoke `codereview` (blunt mode). For PR workflow reviews → `requesting-code-review` (superpowers). |
 | **Commit/Ship** | commit, merge, finish branch, ship, ready to merge, push | superpowers: `finishing-a-development-branch` | — | Invoke `finishing-a-development-branch` |
 | **Test** | write tests, add tests, TDD, test coverage, unit test, integration test | superpowers: `test-driven-development` | wshobson `python-testing-patterns`, `temporal-python-testing`; anthropic-skills `webapp-testing` for browser/Playwright (auto-surface) | Invoke `test-driven-development`. |
@@ -153,6 +153,7 @@ Read the user's input. Match to ONE primary category:
 | **DevOps/Deploy** | deploy, CI/CD, Docker, Dockerfile, container, Kubernetes, k8s, Terraform, pipeline, GitHub Actions, nginx, production, staging, infrastructure, cloud, AWS, GCP, Azure, monitoring, uptime | superpowers: `writing-plans` (for complex infra only) | `devops` | Invoke `devops`. For multi-step infra (Terraform + CI/CD + monitoring), invoke `writing-plans` first. Pipeline-config specifics (github-actions-templates, gitlab-ci-patterns, secrets-management) from wshobson `cicd-automation`; Kubernetes specifics (k8s-manifest-generator, helm-chart-scaffolding, k8s-security-policies, gitops-workflow) from wshobson `kubernetes-operations` — all auto-surface, no separate invoke. |
 | **Database Design** | schema design, database migration, query optimization, SQL, Postgres, indexing strategy, ORM modeling | — | `davila7` `database` skills (sql-pro, database-optimizer, postgresql-optimization, database-migration) | These tactical skills surface by description — no entry skill to invoke first. For app architecture spanning DB + backend, combine with Build/Create. |
 | **Security** | security scan, vulnerability, pen test, OWASP, XSS, CSRF, injection, CVE, dependency audit, secrets scanning, threat model, hardening | — | `security-audit` | Invoke `security-audit`. For infra security → combine with `devops`. For compliance → combine with Compliance category (`anthropic-skills:compliance-handling`). For deep threat-modeling technique (STRIDE, attack trees, SAST config) → the wshobson `security-scanning` tactical skills surface automatically by description. |
+| **Reverse Engineering / Binary Analysis** | reverse engineer, decompile, disassemble, binary analysis, analyze this binary/APK/firmware/.exe/.dll/.so, pseudocode, what does this compiled program do, inspect .NET assembly, WebAssembly/wasm, EVM bytecode, Go/Rust binary, ELF layout, APK/Android app internals, firmware extraction, packet/signal capture, crash core | — | `reverse-engineer-anything` (REA) | Invoke `reverse-engineer-anything` (REA) when the question depends on a **shipped artifact or runtime evidence** (not source you can read). PREREQUISITE: REA's MCP tools exist only after a one-time `npx rea-agents setup` — if a REA tool call fails as unregistered, tell the user to run setup (+ a native provider like Ghidra/IDA/Hopper for native binaries); do NOT auto-install. For IDA-Pro-specific scripting/decompilation (IDAPython), `idapython` (ida-pro-mcp) is an alternative — needs IDA Pro + its own `ida-pro-mcp` server; prompt, don't auto-install. For source-repo understanding use **Explore Codebase** instead. For finding *vulnerabilities* (not behavior) → combine with **Security** (`security-audit`). |
 | **UI/UX Design** | design/redesign UI, improve UX, polish, critique, audit design, animate, micro-interactions, color palette, typography, wireframe, layout, responsive design, accessibility, design system, component library, anti-patterns, live browser iteration | — | `impeccable` (frontend craft) or `anthropic-skills:ui-ux-pro-max` (design-system reference) | Invoke `impeccable` for building/polishing/auditing real frontend code and browser iteration. Use `anthropic-skills:ui-ux-pro-max` when the ask is style/palette/font-pairing reference or planning without touching code. |
 | **Documentation** | write docs, generate PDF, create DOCX, technical spec, Word document, spreadsheet, presentation, slides | — | Anthropic built-in skills | Route by format: `.docx`/Word → `anthropic-skills:docx`, `.pdf` → `anthropic-skills:pdf`, slides/`.pptx` → `anthropic-skills:pptx`, spreadsheet/`.xlsx` → `anthropic-skills:xlsx`. If no format specified, default to `anthropic-skills:docx`. |
 | **Research** | research, investigate, analyze market, competitor analysis, deep dive, explore topic | — | `anthropic-skills:deep-research` | Invoke `anthropic-skills:deep-research` |
@@ -188,6 +189,8 @@ When a signal word matches multiple categories, use these rules:
 | **"explore"** | Explore Codebase | User mentions "explore options", "explore ideas" → Brainstorming. "explore the code", "explore this repo" → Explore Codebase |
 | **"plan"** | Build/Create (brainstorming) | User mentions "make a plan", "create implementation plan" → `make-plan` (claude-mem). "plan the sprint" → Project Mgmt |
 | **"history"** | Memory/History | User mentions "git history", "commit history" → Code Review. "session history", "what we did" → Memory/History |
+| **"analyze"** | depends on target | "analyze this binary/APK/.exe/firmware", a shipped/compiled artifact → Reverse Engineering. "analyze the codebase/this repo" → Explore Codebase / Whole-Codebase. "analyze market/competitor" → Research. |
+| **"decompile" / "disassemble"** | Reverse Engineering (`reverse-engineer-anything`) | Always RE — these only apply to compiled artifacts. |
 
 **General tiebreaker:** If context contains code/files/repos → code category wins. If context is purely business/text → domain category wins. If still ambiguous → ask ONE question.
 
@@ -314,6 +317,9 @@ Code/tactical:     wshobson 15 subsets (backend-development, python-development,
                    incident-response, developer-essentials, data-engineering, documentation-generation),
                    davila7 (database, git), impeccable, anthropic-official
 Custom skills:     codereview, devops, security-audit, repomix-pack, task-viewer
+Reverse-eng:       reverse-engineer-anything (REA — needs `npx rea-agents setup`), idapython (ida-pro-mcp — needs IDA + server)
+External tools:    debugging-code (DAP debugger — needs `dap` CLI), core (agent-browser — needs Rust CLI), crowdcast (sim; no license)
+Scientific:        177 K-Dense scientific-agent-skills (bio/chem/med/drug-discovery — heaviest dep, auto-surface by description)
 Memory/Explore:    mem-search, smart-explore, knowledge-agent, timeline-report, make-plan
 Built-in skills:   anthropic-skills:docx, pdf, pptx, xlsx, deep-research, ui-ux-pro-max, mcp-builder,
                    find-skills
@@ -361,8 +367,13 @@ this table just makes the high-value ones first-class in routing. Prefer the mos
 | **Developer essentials (wshobson)** | Build / Debug / Code Review | `debugging-strategies`, `error-handling-patterns`, `auth-implementation-patterns`, `code-review-excellence`, `git-advanced-workflows`, `monorepo-management`, `sql-optimization-patterns`, `e2e-testing-patterns` |
 | **Data engineering (wshobson)** | Build for data pipelines | `airflow-dag-patterns`, `dbt-transformation-patterns`, `spark-optimization`, `data-quality-frameworks` |
 | **Code-doc generation (wshobson)** | Documentation of code (distinct from doc-format skills) | `architecture-decision-records`, `openapi-spec-generation`, `changelog-automation` |
+| **Live debugging (DAP)** | Debug/Fix when a running program must be inspected | `debugging-code` (breakpoints/stepping/variable+stack inspection; needs the `dap` CLI — prompt the user, don't auto-install) |
+| **IDA reverse engineering** | Reverse Engineering when the target is driven through IDA Pro | `idapython` (IDAPython scripting via ida-pro-mcp; needs IDA Pro + its MCP server) |
+| **Multi-agent simulation (novel)** | Research / standalone forecasting | `crowdcast` (`/crowdcast simulate` — predict reactions, simulate opinions with spawned agents; no license declared upstream) |
+| **Headless browser automation (Vercel CLI)** | Test / browser tasks, alongside `webapp-testing` | `core` (agent-browser) — needs the agent-browser Rust CLI; overlaps `anthropic-skills:webapp-testing`, TinyFish, and the Claude browser pane, so PREFER those unless the CLI is set up |
+| **Scientific research (bio/chem/med)** | Research for life-science / drug-discovery sub-tasks | 177 K-Dense `scientific-agent-skills` (e.g. `alphagenome`, `anndata`, `13c-metabolic-flux`) — surface individually by description; HEAVY dependency, most land in `unrouted-skills.txt` |
 
-These clusters extend the 26 primary categories; they do not add new top-level categories.
+These clusters extend the primary categories; they do not add new top-level categories.
 
 
 ## Fallback Behavior

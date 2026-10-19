@@ -29,6 +29,7 @@ QUIET="${1:-}"
 
 REPORT=""
 COLLISIONS=""
+EXCLUDE_GLOB=""   # per-repo skill-name glob to skip; set in the manifest loop below
 
 log() { [ "$QUIET" != "--quiet" ] && echo "$@" || true; }
 report() { log "  $1"; REPORT="$REPORT$1
@@ -166,6 +167,13 @@ sync_skills() {
     [ ! -d "$skill_dir" ] && continue
     local skill_name
     skill_name=$(basename "$skill_dir")
+    # Skip skills the manifest's exclude-glob names (e.g. a repo's contributor skills).
+    # EXCLUDE_GLOB is one or more space-separated globs; match any -> skip this skill.
+    if [ -n "$EXCLUDE_GLOB" ]; then
+      for _ex in $EXCLUDE_GLOB; do
+        case "$skill_name" in $_ex) continue 2 ;; esac
+      done
+    fi
     # Only real skills (must carry a SKILL.md). The old `|| skill_source=skills`
     # clause copied every child dir, dragging in non-skill output folders like
     # caveman's `generated/` (which has no SKILL.md) and leaving a permanent doctor FAIL.
@@ -326,13 +334,15 @@ fi
 if [ ! -f "$MANIFEST" ]; then
   report "manifest missing: $MANIFEST — no dependency repos synced"
 fi
-while IFS='|' read -r name url source; do
+while IFS='|' read -r name url source exclude; do
   [ -z "$name" ] && continue
   if ! repo_in_profile "$name"; then
     report "$name: skipped (profile: $ACTIVE_PROFILE)"
     continue
   fi
+  EXCLUDE_GLOB="$exclude"
   update_repo "$name" "$url" "$source"
+  EXCLUDE_GLOB=""
 done < <(read_manifest)
 
 # Regenerate unrouted-skills.txt: installed skills never mentioned in the routing table

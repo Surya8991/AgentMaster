@@ -104,7 +104,7 @@ install_from_cache() {
   # install_from_cache <name> <url> <skill_source>
   # Clone into the auto-update cache (if needed) and copy skills from there, so the
   # installer and updater share one clone per repo and the first update is instant.
-  local name="$1" url="$2" skill_source="$3"
+  local name="$1" url="$2" skill_source="$3" exclude="$4"
   local cache_path="$CACHE_DIR/$name"
 
   if [ ! -d "$cache_path/.git" ]; then
@@ -122,6 +122,13 @@ install_from_cache() {
     [ ! -d "$skill_dir" ] && continue
     local skill_name
     skill_name=$(basename "$skill_dir")
+    # Skip skills the manifest's exclude-glob names (e.g. a repo's contributor skills).
+    # $exclude is one or more space-separated globs; match any -> skip this skill.
+    if [ -n "$exclude" ]; then
+      for _ex in $exclude; do
+        case "$skill_name" in $_ex) continue 2 ;; esac
+      done
+    fi
     # Only real skills (must carry a SKILL.md) — the old `|| skill_source=skills`
     # clause dragged in non-skill folders like caveman's `generated/`.
     if [ -f "$skill_dir/SKILL.md" ] || [ -f "$skill_dir/skill.md" ]; then
@@ -149,13 +156,13 @@ done
 # 2. Install dependency repos from the manifest
 echo ""
 echo "[2/4] Installing dependency repos (repos.manifest)..."
-while IFS='|' read -r name url source; do
+while IFS='|' read -r name url source exclude; do
   [ -z "$name" ] && continue
   if ! repo_in_profile "$name"; then
     echo "  ~ $name: skipped (profile: $ACTIVE_PROFILE)"
     continue
   fi
-  install_from_cache "$name" "$url" "$source"
+  install_from_cache "$name" "$url" "$source" "$exclude"
 done < <(read_manifest)
 
 # 3. Repomix CLI (for repomix-pack skill)
