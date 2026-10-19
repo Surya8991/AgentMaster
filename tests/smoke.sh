@@ -22,7 +22,9 @@ for d in "$REPO"/skills/*/; do
 done
 
 # 2. convert.sh --all is deterministic (no drift vs committed files).
-#    .antigravity is excluded: it embeds today's date, so it changes every day by design.
+#    (.antigravity used to embed today's date; it no longer does — renderers in
+#    scripts/lib/skill-render.sh are timestamp-free — but it stays out of the path list
+#    below to keep this check independent of commit timing after a local regen.)
 echo "convert.sh determinism:"
 if bash "$REPO/scripts/convert.sh" --all >/dev/null 2>&1; then
   if command -v git >/dev/null && git -C "$REPO" rev-parse >/dev/null 2>&1; then
@@ -64,7 +66,7 @@ rm -rf "$tmp"
 
 # 4. Every script parses (bash -n).
 echo "Script syntax:"
-for s in "$REPO"/scripts/*.sh "$REPO"/tests/*.sh; do
+for s in "$REPO"/*.sh "$REPO"/scripts/*.sh "$REPO"/scripts/lib/*.sh "$REPO"/tests/*.sh; do
   if bash -n "$s" 2>/dev/null; then pass "$(basename "$s")"; else bad "$(basename "$s"): syntax error"; fi
 done
 

@@ -3,7 +3,6 @@ name: "task-viewer"
 description: "Use when the user wants to open, launch, start, or view the Claude Code task dashboard / Kanban board — a live web UI showing tasks across sessions (pending / in-progress / completed), dependencies, timeline, and activity. Wraps the standalone claude-task-viewer Express app. Not for creating or editing tasks (Claude Code owns task state); this only observes."
 risk: low
 source: community
-date_added: 2026-10-19
 ---
 
 Launches and manages the **claude-task-viewer** dashboard — a real-time Kanban board that reads `~/.claude` task JSON and serves it in the browser. Observation only: Claude Code controls task state, this just visualizes it.

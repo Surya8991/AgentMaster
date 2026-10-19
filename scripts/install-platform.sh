@@ -14,6 +14,10 @@ SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 REPO_DIR="$(dirname "$SCRIPT_DIR")"
 SKILLS_DIR="$REPO_DIR/skills"
 
+# Shared frontmatter extraction + per-platform renderers (also used by convert.sh).
+# shellcheck source=lib/skill-render.sh
+. "$SCRIPT_DIR/lib/skill-render.sh"
+
 PLATFORM="${1#--platform=}"
 PLATFORM="${PLATFORM#--platform }"
 [ "$1" = "--platform" ] && PLATFORM="$2"
@@ -91,52 +95,36 @@ install_skills() {
   for skill_dir in "$SKILLS_DIR"/*/; do
     [ ! -f "$skill_dir/SKILL.md" ] && continue
     skill_name=$(basename "$skill_dir")
+    local sf="$skill_dir/SKILL.md" name desc body
+    name=$(skill_field "$sf" name)
+    desc=$(skill_field "$sf" description)
+    body=$(skill_body "$sf")
 
     case "$format" in
       copy)
         mkdir -p "$target_dir/$skill_name"
-        cp "$skill_dir/SKILL.md" "$target_dir/$skill_name/SKILL.md"
+        cp "$sf" "$target_dir/$skill_name/SKILL.md"
         ;;
       cursor)
-        # Extract body, wrap with Cursor frontmatter
-        local desc
-        desc=$(sed -n '/^---$/,/^---$/p' "$skill_dir/SKILL.md" | grep "^description:" | sed 's/^description:[[:space:]]*//' | sed 's/^"\(.*\)"$/\1/' | head -1)
-        local body
-        body=$(awk 'BEGIN{c=0} /^---$/{c++; next} c>=2{print}' "$skill_dir/SKILL.md")
-        printf -- '---\ndescription: "%s"\nglobs:\nalwaysApply: false\n---\n%s\n' "$desc" "$body" > "$target_dir/${skill_name}.mdc"
+        render_cursor "$desc" "$body" > "$target_dir/${skill_name}.mdc"
         ;;
       windsurf)
         mkdir -p "$target_dir/$skill_name"
-        local name desc body
-        name=$(sed -n '/^---$/,/^---$/p' "$skill_dir/SKILL.md" | grep "^name:" | sed 's/^name:[[:space:]]*//' | sed 's/^"\(.*\)"$/\1/' | head -1)
-        desc=$(sed -n '/^---$/,/^---$/p' "$skill_dir/SKILL.md" | grep "^description:" | sed 's/^description:[[:space:]]*//' | sed 's/^"\(.*\)"$/\1/' | head -1)
-        body=$(awk 'BEGIN{c=0} /^---$/{c++; next} c>=2{print}' "$skill_dir/SKILL.md")
-        printf -- '---\nname: "%s"\ndescription: "%s"\ntrigger: always_on\n---\n%s\n' "$name" "$desc" "$body" > "$target_dir/$skill_name/SKILL.md"
+        render_windsurf "$name" "$desc" "$body" > "$target_dir/$skill_name/SKILL.md"
         ;;
       cline)
-        awk 'BEGIN{c=0} /^---$/{c++; next} c>=2{print}' "$skill_dir/SKILL.md" > "$target_dir/${skill_name}.md"
+        render_cline "$body" > "$target_dir/${skill_name}.md"
         ;;
       antigravity)
         mkdir -p "$target_dir/$skill_name"
-        local name desc body
-        name=$(sed -n '/^---$/,/^---$/p' "$skill_dir/SKILL.md" | grep "^name:" | sed 's/^name:[[:space:]]*//' | sed 's/^"\(.*\)"$/\1/' | head -1)
-        desc=$(sed -n '/^---$/,/^---$/p' "$skill_dir/SKILL.md" | grep "^description:" | sed 's/^description:[[:space:]]*//' | sed 's/^"\(.*\)"$/\1/' | head -1)
-        body=$(awk 'BEGIN{c=0} /^---$/{c++; next} c>=2{print}' "$skill_dir/SKILL.md")
-        printf -- '---\nname: "%s"\ndescription: "%s"\nrisk: low\nsource: community\ndate_added: %s\n---\n%s\n' "$name" "$desc" "$(date +%Y-%m-%d)" "$body" > "$target_dir/$skill_name/SKILL.md"
+        render_antigravity "$name" "$desc" "$body" > "$target_dir/$skill_name/SKILL.md"
         ;;
       opencode)
         mkdir -p "$target_dir/$skill_name"
-        local name desc body
-        name=$(sed -n '/^---$/,/^---$/p' "$skill_dir/SKILL.md" | grep "^name:" | sed 's/^name:[[:space:]]*//' | sed 's/^"\(.*\)"$/\1/' | head -1)
-        desc=$(sed -n '/^---$/,/^---$/p' "$skill_dir/SKILL.md" | grep "^description:" | sed 's/^description:[[:space:]]*//' | sed 's/^"\(.*\)"$/\1/' | head -1)
-        body=$(awk 'BEGIN{c=0} /^---$/{c++; next} c>=2{print}' "$skill_dir/SKILL.md")
-        printf -- '---\nname: "%s"\ndescription: "%s"\ncompatibility: opencode\n---\n%s\n' "$name" "$desc" "$body" > "$target_dir/$skill_name/SKILL.md"
+        render_opencode "$name" "$desc" "$body" > "$target_dir/$skill_name/SKILL.md"
         ;;
       augment)
-        local desc body
-        desc=$(sed -n '/^---$/,/^---$/p' "$skill_dir/SKILL.md" | grep "^description:" | sed 's/^description:[[:space:]]*//' | sed 's/^"\(.*\)"$/\1/' | head -1)
-        body=$(awk 'BEGIN{c=0} /^---$/{c++; next} c>=2{print}' "$skill_dir/SKILL.md")
-        printf -- '---\ntype: auto\ndescription: "%s"\n---\n%s\n' "$desc" "$body" > "$target_dir/${skill_name}.md"
+        render_augment "$desc" "$body" > "$target_dir/${skill_name}.md"
         ;;
     esac
 

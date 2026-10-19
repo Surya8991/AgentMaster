@@ -62,7 +62,7 @@ echo "Caches:"
 if [ ! -f "$MANIFEST" ]; then
   warn "manifest not cached yet: $MANIFEST — run /agent-master update"
 else
-  while IFS='|' read -r name url source; do
+  while IFS='|' read -r name url source exclude; do
     [ -z "$name" ] && continue
     if [ -d "$CACHE_DIR/$name/.git" ]; then
       pass "$name cached ($(git -C "$CACHE_DIR/$name" rev-parse --short HEAD 2>/dev/null || echo '?'))"

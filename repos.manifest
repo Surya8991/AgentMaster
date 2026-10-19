@@ -71,13 +71,16 @@ ida-pro-mcp|https://github.com/mrexodia/ida-pro-mcp.git|skills
 agent-browser|https://github.com/vercel-labs/agent-browser.git|skill-data|agentcore derive-client dogfood electron protected-vercel-deployments slack vercel-sandbox webmcp-gen
 
 # crowdcast — multi-agent social simulation skill (`/crowdcast simulate`), zero deps.
-# WARNING: NO LICENSE declared upstream (all-rights-reserved by default) — wired for personal
-# use at the maintainer's request; reconsider before redistributing. Novel/niche capability.
-crowdcast|https://github.com/TheQmaks/crowdcast.git|skills
+# OPT-IN / NOT WIRED BY DEFAULT: NO LICENSE declared upstream (all-rights-reserved by
+# default), so it is deliberately NOT in the committed set — shipping AgentMaster must not
+# redistribute all-rights-reserved code. To use it personally, add this line (uncommented)
+# to ~/.claude/.agentmaster-cache/repos.local, which is machine-local and never committed.
+# crowdcast|https://github.com/TheQmaks/crowdcast.git|skills
 
 # scientific-agent-skills — 177 science skills + 100+ DBs (MIT): biology, chemistry,
-# medicine, drug discovery. HEAVIEST dependency by far — a `full` install balloons from
-# ~200 to ~380 skills and the unrouted fallback grows by 177 entries. Wired at the
-# maintainer's request; gate behind a profile (profiles.manifest) if the default flood is
-# unwanted. No name collisions with installed skills (verified 2026-10-19).
-scientific-agent-skills|https://github.com/K-Dense-AI/scientific-agent-skills.git|skills
+# medicine, drug discovery. OPT-IN / NOT WIRED BY DEFAULT: it is the heaviest dependency by
+# far — a `full` install would balloon from ~200 to ~380 skills and grow the unrouted
+# fallback by 177 entries, diluting routing for a domain most repos here never touch.
+# No name collisions with installed skills (verified 2026-10-19). To enable, UNCOMMENT the
+# line below and run `/agent-master update` (or add it to repos.local for machine-local use).
+# scientific-agent-skills|https://github.com/K-Dense-AI/scientific-agent-skills.git|skills

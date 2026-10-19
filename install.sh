@@ -165,6 +165,31 @@ while IFS='|' read -r name url source exclude; do
   install_from_cache "$name" "$url" "$source" "$exclude"
 done < <(read_manifest)
 
+# 2b. Build the routing fallback now (parity with update.sh) so a fresh install has
+# unrouted-skills.txt before the first auto-update. "Routed" = named in backticks, or a
+# bare word match when the name is >=6 chars (short names must be backticked).
+ROUTING_TABLE="$SKILLS_DIR/agent-master/SKILL.md"
+UNROUTED_FILE="$CACHE_DIR/unrouted-skills.txt"
+if [ -f "$ROUTING_TABLE" ]; then
+  : > "$UNROUTED_FILE"
+  for skill_dir in "$SKILLS_DIR"/*/; do
+    [ ! -d "$skill_dir" ] && continue
+    sname=$(basename "$skill_dir")
+    if grep -qF "\`$sname\`" "$ROUTING_TABLE" || { [ "${#sname}" -ge 6 ] && grep -qwF "$sname" "$ROUTING_TABLE"; }; then
+      continue
+    fi
+    sdesc=$(grep -m1 '^description:' "$skill_dir/SKILL.md" 2>/dev/null | sed 's/^description:[[:space:]]*//; s/^["'\'']//; s/["'\'']$//')
+    case "$sdesc" in
+      ">"|"|"|">-"|"|-"|">+"|"|+")
+        sdesc=$(awk '/^description:/{f=1; next} f && NF {print; exit}' "$skill_dir/SKILL.md" 2>/dev/null | sed 's/^[[:space:]]*//')
+        ;;
+    esac
+    [ ${#sdesc} -gt 100 ] && sdesc="${sdesc:0:97}..."
+    echo "$sname — $sdesc" >> "$UNROUTED_FILE"
+  done
+  echo "  + routing fallback: $(grep -c . "$UNROUTED_FILE" 2>/dev/null || echo 0) unrouted skills"
+fi
+
 # 3. Repomix CLI (for repomix-pack skill)
 echo ""
 echo "[3/4] Installing repomix CLI..."

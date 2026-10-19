@@ -179,7 +179,10 @@ try {
                     }
                     if ($skip) { return }
                 }
-                if ((Test-Path "$($_.FullName)\SKILL.md") -or ($SkillSource -eq "skills")) {
+                # Only real skills (must carry a SKILL.md). The legacy `-or $SkillSource -eq "skills"`
+                # clause was removed to match update.sh — it dragged in non-skill dirs like
+                # caveman's `generated/` (no SKILL.md), leaving a permanent doctor FAIL on Windows.
+                if ((Test-Path "$($_.FullName)\SKILL.md") -or (Test-Path "$($_.FullName)\skill.md")) {
                     if (Test-SkillInProfile $Name $_.Name) {
                         Copy-Item -Path $_.FullName -Destination "$SkillsDir\$($_.Name)" -Recurse -Force
                         Record-Owner $_.Name $Name
@@ -342,8 +345,14 @@ try {
     if (Test-Path $routingTable) {
         $tableText = Get-Content $routingTable -Raw
         $unroutedLines = @()
+        $bt = [char]96  # backtick, to match a skill named `in-backticks` in the table
         foreach ($dir in Get-ChildItem $SkillsDir -Directory) {
-            if ($tableText -match "\b$([regex]::Escape($dir.Name))\b") { continue }
+            # Parity with update.sh: "routed" = named in backticks, OR (name >= 6 chars AND
+            # a bare word match). Short names must be backticked so prose words don't hide them.
+            $esc = [regex]::Escape($dir.Name)
+            $routed = ($tableText -match ($bt + $esc + $bt)) -or `
+                      ($dir.Name.Length -ge 6 -and $tableText -match ("\b" + $esc + "\b"))
+            if ($routed) { continue }
             $desc = ""
             $md = "$($dir.FullName)\SKILL.md"
             if (Test-Path $md) {

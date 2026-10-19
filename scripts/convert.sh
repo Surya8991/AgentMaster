@@ -18,6 +18,10 @@ SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 REPO_DIR="$(dirname "$SCRIPT_DIR")"
 SKILLS_DIR="$REPO_DIR/skills"
 
+# Shared per-platform renderers (also used by install-platform.sh).
+# shellcheck source=lib/skill-render.sh
+. "$SCRIPT_DIR/lib/skill-render.sh"
+
 # Parse arguments
 TOOL="${1#--tool=}"
 TOOL="${TOOL#--tool }"
@@ -35,17 +39,8 @@ case "$TOOL" in
     ;;
 esac
 
-# Extract YAML frontmatter field
-extract_field() {
-  local file="$1" field="$2"
-  sed -n '/^---$/,/^---$/p' "$file" | grep "^${field}:" | sed "s/^${field}:[[:space:]]*//" | sed 's/^"\(.*\)"$/\1/' | head -1
-}
-
-# Extract body (everything after second ---)
-extract_body() {
-  local file="$1"
-  awk 'BEGIN{c=0} /^---$/{c++; next} c>=2{print}' "$file"
-}
+# Frontmatter extraction + per-platform renderers now live in lib/skill-render.sh
+# (skill_field / skill_body / render_*), shared with install-platform.sh.
 
 # Initialize aggregate format files (always regenerate — prevents stale content)
 if [ "$TOOL" = "aider" ] || [ "$TOOL" = "all" ]; then
@@ -62,9 +57,9 @@ for skill_dir in "$SKILLS_DIR"/*/; do
   skill_name=$(basename "$skill_dir")
   skill_file="$skill_dir/SKILL.md"
 
-  name=$(extract_field "$skill_file" "name")
-  desc=$(extract_field "$skill_file" "description")
-  body=$(extract_body "$skill_file")
+  name=$(skill_field "$skill_file" "name")
+  desc=$(skill_field "$skill_file" "description")
+  body=$(skill_body "$skill_file")
 
   echo "Converting: $skill_name"
 
@@ -73,35 +68,21 @@ for skill_dir in "$SKILLS_DIR"/*/; do
   # ---- Cursor (.mdc rules) ----
   if [ "$TOOL" = "cursor" ] || [ "$TOOL" = "all" ]; then
     mkdir -p "$REPO_DIR/.cursor/rules"
-    cat > "$REPO_DIR/.cursor/rules/${skill_name}.mdc" <<CURSOR_EOF
----
-description: "${desc}"
-globs:
-alwaysApply: false
----
-$body
-CURSOR_EOF
+    render_cursor "$desc" "$body" > "$REPO_DIR/.cursor/rules/${skill_name}.mdc"
     echo "  + .cursor/rules/${skill_name}.mdc"
   fi
 
   # ---- Windsurf ----
   if [ "$TOOL" = "windsurf" ] || [ "$TOOL" = "all" ]; then
     mkdir -p "$REPO_DIR/.windsurf/skills/${skill_name}"
-    cat > "$REPO_DIR/.windsurf/skills/${skill_name}/SKILL.md" <<WINDSURF_EOF
----
-name: "${name}"
-description: "${desc}"
-trigger: always_on
----
-$body
-WINDSURF_EOF
+    render_windsurf "$name" "$desc" "$body" > "$REPO_DIR/.windsurf/skills/${skill_name}/SKILL.md"
     echo "  + .windsurf/skills/${skill_name}/SKILL.md"
   fi
 
   # ---- Cline (.clinerules) ----
   if [ "$TOOL" = "cline" ] || [ "$TOOL" = "all" ]; then
     mkdir -p "$REPO_DIR/.clinerules"
-    echo "$body" > "$REPO_DIR/.clinerules/${skill_name}.md"
+    render_cline "$body" > "$REPO_DIR/.clinerules/${skill_name}.md"
     echo "  + .clinerules/${skill_name}.md"
   fi
 
@@ -122,69 +103,33 @@ WINDSURF_EOF
   # ---- Antigravity ----
   if [ "$TOOL" = "antigravity" ] || [ "$TOOL" = "all" ]; then
     mkdir -p "$REPO_DIR/.antigravity/skills/${skill_name}"
-    cat > "$REPO_DIR/.antigravity/skills/${skill_name}/SKILL.md" <<ANTI_EOF
----
-name: "${name}"
-description: "${desc}"
-risk: low
-source: community
-date_added: $(date +%Y-%m-%d)
----
-$body
-ANTI_EOF
+    render_antigravity "$name" "$desc" "$body" > "$REPO_DIR/.antigravity/skills/${skill_name}/SKILL.md"
     echo "  + .antigravity/skills/${skill_name}/SKILL.md"
   fi
 
   # ---- OpenCode ----
   if [ "$TOOL" = "opencode" ] || [ "$TOOL" = "all" ]; then
     mkdir -p "$REPO_DIR/.opencode/skills/${skill_name}"
-    cat > "$REPO_DIR/.opencode/skills/${skill_name}/SKILL.md" <<OC_EOF
----
-name: "${name}"
-description: "${desc}"
-compatibility: opencode
----
-$body
-OC_EOF
+    render_opencode "$name" "$desc" "$body" > "$REPO_DIR/.opencode/skills/${skill_name}/SKILL.md"
     echo "  + .opencode/skills/${skill_name}/SKILL.md"
   fi
 
   # ---- Augment ----
   if [ "$TOOL" = "augment" ] || [ "$TOOL" = "all" ]; then
     mkdir -p "$REPO_DIR/.augment/rules"
-    cat > "$REPO_DIR/.augment/rules/${skill_name}.md" <<AUG_EOF
----
-type: auto
-description: "${desc}"
----
-$body
-AUG_EOF
+    render_augment "$desc" "$body" > "$REPO_DIR/.augment/rules/${skill_name}.md"
     echo "  + .augment/rules/${skill_name}.md"
   fi
 
   # ---- Aider (appends to CONVENTIONS.md) ----
   if [ "$TOOL" = "aider" ] || [ "$TOOL" = "all" ]; then
-    cat >> "$REPO_DIR/CONVENTIONS.md" <<AIDER_EOF
-
----
-
-## ${name}
-> ${desc}
-
-$body
-AIDER_EOF
+    render_aider "$name" "$desc" "$body" >> "$REPO_DIR/CONVENTIONS.md"
     echo "  + CONVENTIONS.md (appended ${skill_name})"
   fi
 
   # ---- GitHub Copilot (appends to copilot-instructions.md) ----
   if [ "$TOOL" = "copilot" ] || [ "$TOOL" = "all" ]; then
-    cat >> "$REPO_DIR/.github/copilot-instructions.md" <<COPILOT_EOF
-
-## ${name}
-${desc}
-
-$body
-COPILOT_EOF
+    render_copilot "$name" "$desc" "$body" >> "$REPO_DIR/.github/copilot-instructions.md"
     echo "  + .github/copilot-instructions.md (appended ${skill_name})"
   fi
 

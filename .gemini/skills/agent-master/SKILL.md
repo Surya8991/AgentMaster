@@ -1,6 +1,6 @@
 ---
 name: agent-master
-description: "Meta-orchestrator that classifies tasks and routes to the right combination of installed skills across caveman (output compression), superpowers (dev workflow), anthropic-skills (business/domain expertise), and wired tactical libraries (wshobson, davila7, impeccable, anthropic-official, rea). 27 routing categories including whole-codebase analysis via repomix-pack, LLM/AI app dev, reverse-engineering/binary analysis via REA + ida-pro-mcp, live DAP debugging (debug-skill), a scientific-skills library (K-Dense, bio/chem/med), a live task dashboard, meta skill discovery, and curated tactical skill libraries (wshobson, davila7) for backend/security/CI-CD/database depth. Also scaffolds the canonical project-doc spine (README/AGENTS.md/CLAUDE.md/PROJECTLOG.md) in new projects via `/agent-master scaffold`. Invoke with /agent-master. Use as default entry point for ambiguous or multi-domain requests."
+description: "Meta-orchestrator that classifies tasks and routes to the right combination of installed skills across caveman (output compression), superpowers (dev workflow), anthropic-skills (business/domain expertise), and wired tactical libraries (wshobson, davila7, impeccable, anthropic-official, rea). 27 routing categories including whole-codebase analysis via repomix-pack, LLM/AI app dev, reverse-engineering/binary analysis via REA + ida-pro-mcp, live DAP debugging (debug-skill), an optional opt-in scientific-skills library (K-Dense, bio/chem/med), a live task dashboard, meta skill discovery, and curated tactical skill libraries (wshobson, davila7) for backend/security/CI-CD/database depth. Also scaffolds the canonical project-doc spine (README/AGENTS.md/CLAUDE.md/PROJECTLOG.md) in new projects via `/agent-master scaffold`. Invoke with /agent-master. Use as default entry point for ambiguous or multi-domain requests."
 ---
 
 # AgentMaster — Meta-Orchestrator
@@ -330,8 +330,8 @@ Code/tactical:     wshobson 15 subsets (backend-development, python-development,
                    davila7 (database, git), impeccable, anthropic-official
 Custom skills:     codereview, devops, security-audit, repomix-pack, task-viewer
 Reverse-eng:       reverse-engineer-anything (REA — needs `npx rea-agents setup`), idapython (ida-pro-mcp — needs IDA + server)
-External tools:    debugging-code (DAP debugger — needs `dap` CLI), core (agent-browser — needs Rust CLI), crowdcast (sim; no license)
-Scientific:        177 K-Dense scientific-agent-skills (bio/chem/med/drug-discovery — heaviest dep, auto-surface by description)
+External tools:    debugging-code (DAP debugger — needs `dap` CLI), core (agent-browser — needs Rust CLI)
+Opt-in (not default): crowdcast (sim; unlicensed), 177 K-Dense scientific-agent-skills (bio/chem/med) — wire via repos.manifest/repos.local
 Memory/Explore:    mem-search, smart-explore, knowledge-agent, timeline-report, make-plan
 Built-in skills:   anthropic-skills:docx, pdf, pptx, xlsx, deep-research, ui-ux-pro-max, mcp-builder,
                    find-skills
@@ -383,9 +383,9 @@ this table just makes the high-value ones first-class in routing. Prefer the mos
 | **Code-doc generation (wshobson)** | Documentation of code (distinct from doc-format skills) | `architecture-decision-records`, `openapi-spec-generation`, `changelog-automation` |
 | **Live debugging (DAP)** | Debug/Fix when a running program must be inspected | `debugging-code` (breakpoints/stepping/variable+stack inspection; needs the `dap` CLI — prompt the user, don't auto-install) |
 | **IDA reverse engineering** | Reverse Engineering when the target is driven through IDA Pro | `idapython` (IDAPython scripting via ida-pro-mcp; needs IDA Pro + its MCP server) |
-| **Multi-agent simulation (novel)** | Research / standalone forecasting | `crowdcast` (`/crowdcast simulate` — predict reactions, simulate opinions with spawned agents; no license declared upstream) |
+| **Multi-agent simulation (novel)** | Research / standalone forecasting | `crowdcast` (`/crowdcast simulate`) — OPT-IN, not installed by default (unlicensed upstream); only route here if it is actually installed |
 | **Headless browser automation (Vercel CLI)** | Test / browser tasks, alongside `webapp-testing` | `core` (agent-browser) — needs the agent-browser Rust CLI; overlaps `anthropic-skills:webapp-testing`, TinyFish, and the Claude browser pane, so PREFER those unless the CLI is set up |
-| **Scientific research (bio/chem/med)** | Research for life-science / drug-discovery sub-tasks | 177 K-Dense `scientific-agent-skills` (e.g. `alphagenome`, `anndata`, `13c-metabolic-flux`) — surface individually by description; HEAVY dependency, most land in `unrouted-skills.txt` |
+| **Scientific research (bio/chem/med)** | Research for life-science / drug-discovery sub-tasks | 177 K-Dense `scientific-agent-skills` (e.g. `alphagenome`, `anndata`, `13c-metabolic-flux`) — OPT-IN, not installed by default (heavy); only present if the maintainer wired it. Skills surface individually by description. |
 
 These clusters extend the primary categories; they do not add new top-level categories.
 
