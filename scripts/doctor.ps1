@@ -220,6 +220,20 @@ if (Test-Path $LastUpdateFile) {
     Test-Warn "never synced - run /agent-master update"
 }
 
+# --- Routing availability: optional diagnostics, no tool installation ---
+Write-Host ""
+Write-Host "Routing targets:"
+if (Get-Command node -ErrorAction SilentlyContinue) {
+    & node (Join-Path $PSScriptRoot 'routing.js') availability --skills-dir $SkillsDir
+    if ($LASTEXITCODE -ne 0) {
+        Test-Warn "routing targets or prerequisites are missing (some may be excluded by your profile)"
+    } else {
+        Test-Note "route files checked; plugin inventory and MCP runtime status may remain unknown"
+    }
+} else {
+    Test-Warn "Node.js unavailable; routing availability check skipped"
+}
+
 # --- Summary ---
 Write-Host ""
 Write-Host "=================="

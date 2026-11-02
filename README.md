@@ -149,6 +149,12 @@ Sync copy failures are recorded in the report and return a nonzero exit status w
 
 ### Install Profiles
 
+For read-only update previews, reviewed revision locks, collision overrides,
+provenance and safe removed-skill cleanup, see
+[dependency management](docs/dependency-management.md). Installs and updates stage
+each skill before replacement and block cross-owner/unowned overwrites by default.
+
+
 Want a smaller skill collection? Install a subset: `bash install.sh --profile dev` (or `.\install.ps1 -Profile dev`). Shipped profiles in `profiles.manifest`: **dev** (compression + superpowers workflow + session memory + frontend design + wshobson/davila7 tactical + all custom skills), **business** (compression + orchestrator + repo packing), **minimal** (orchestrator + compression), and the default **full** (everything). Switch anytime with `/agent-master profile <name>` — excluded skills are pruned (only ones AgentMaster installed; your own skills are never touched) and the subset resyncs. Profiles persist across auto-updates; define your own in `~/.claude/.agentmaster-cache/profiles.local`. The orchestrator skill itself is always installed, and an unknown profile name falls back to full rather than uninstalling anything.
 
 ### Skill Rollback

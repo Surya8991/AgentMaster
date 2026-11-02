@@ -29,11 +29,22 @@ jobs:
         run: bash tests/smoke.sh
       - name: Check documentation counts
         run: python tests/docs.py
+      - name: Check routing behavior
+        run: node tests/routing.js
+      - name: Check locked install and update
+        run: python tests/locked-deps.py
+      - name: Check dependency planning and locks
+        run: python tests/dependencies.py
       - name: Check Bash updater safety
         run: bash tests/update-safety.sh
       - name: Check PowerShell updater safety
         shell: pwsh
         run: ./tests/update-safety.ps1
+      - name: Check Bash skill lifecycle
+        run: bash tests/update-lifecycle.sh
+      - name: Check PowerShell skill lifecycle
+        shell: pwsh
+        run: ./tests/update-lifecycle.ps1
       - name: Compare Bash and PowerShell rendering
         shell: pwsh
         run: ./tests/rendering.ps1
@@ -50,3 +61,24 @@ jobs:
           $findings = Invoke-ScriptAnalyzer -Path scripts -Recurse -Severity Error
           if ($findings) { $findings | Format-Table -AutoSize; exit 1 }
           Write-Host "No error-level findings."
+
+  windows-powershell:
+    name: Windows PowerShell 5.1
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v5
+      - name: Execute Windows PowerShell regressions
+        shell: powershell
+        run: ./tests/windows-powershell.ps1
+      - name: Compare rendering on Windows PowerShell
+        shell: powershell
+        run: ./tests/rendering.ps1 -Bash "C:\Program Files\Git\bin\bash.exe"
+      - name: Check updater safety on Windows PowerShell
+        shell: powershell
+        run: ./tests/update-safety.ps1
+      - name: Check skill lifecycle on Windows PowerShell
+        shell: powershell
+        run: ./tests/update-lifecycle.ps1
+      - name: Check locked install and update on Windows
+        shell: powershell
+        run: python tests/locked-deps.py --bash "C:\Program Files\Git\bin\bash.exe" --powershell powershell

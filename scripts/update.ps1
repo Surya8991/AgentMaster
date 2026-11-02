@@ -6,7 +6,7 @@
 #   .\scripts\update.ps1              # foreground
 #   .\scripts\update.ps1 -Quiet       # suppress output (background mode)
 
-param([switch]$Quiet)
+param([switch]$Quiet, [switch]$Prune)
 
 $ErrorActionPreference = "Stop"
 $SkillsDir = "$env:USERPROFILE\.claude\skills"
@@ -15,6 +15,13 @@ $LockFile = "$CacheDir\.update-lock"
 $LastUpdateFile = "$CacheDir\.last-update"
 $PinsFile = "$CacheDir\agent-master\repos.pins"
 $Manifest = "$CacheDir\agent-master\repos.manifest"
+$SourceRoot = Split-Path -Parent $PSScriptRoot
+$ProfilesManifest = "$CacheDir\agent-master\profiles.manifest"
+if ($env:AGENTMASTER_LOCKED -eq '1') {
+    $Manifest = Join-Path $SourceRoot 'repos.manifest'
+    $ProfilesManifest = Join-Path $SourceRoot 'profiles.manifest'
+    . (Join-Path $PSScriptRoot 'lib/locked-deps.ps1')
+}
 $OwnersFile = "$CacheDir\.skill-owners"
 $ReportFile = "$CacheDir\last-sync-report.txt"
 
@@ -61,13 +68,14 @@ function Get-UpdateLock {
 }
 if (-not (Get-UpdateLock)) {
     Log "Update lock is held (or has an unknown owner). Skipping."
+    if ($env:AGENTMASTER_LOCKED -eq '1') { exit 1 }
     exit 0
 }
 $script:SyncFailures = 0
 
 try {
     # Skip if updated within last 6 hours
-    if (Test-Path $LastUpdateFile) {
+    if ($env:AGENTMASTER_LOCKED -ne "1" -and -not $Prune -and (Test-Path $LastUpdateFile)) {
         $last = [int](Get-Content $LastUpdateFile -ErrorAction SilentlyContinue)
         $now = [int](Get-Date -UFormat %s)
         if (($now - $last) -lt 21600) {
@@ -81,12 +89,28 @@ try {
     # Read an optional commit pin for a repo (name=sha lines).
     # pins.local (machine-local, written by rollback) wins over repos.pins.
     function Get-Pin($Name) {
+        if ($env:AGENTMASTER_LOCKED -eq "1") { return (Get-LockedPin $Name) }
         foreach ($f in @("$CacheDir\pins.local", $PinsFile)) {
             if (-not (Test-Path $f)) { continue }
             $line = Select-String -Path $f -Pattern "^$Name=" | Select-Object -First 1
             if ($line) { return ($line.Line -split '=', 2)[1].Trim() }
         }
         return $null
+    }
+
+    function Set-PinnedCheckout($Path, $Pin) {
+        $previous = $ErrorActionPreference
+        try {
+            $ErrorActionPreference = 'Continue'
+            git -C $Path fetch --depth 1 --quiet origin $Pin 2>&1 | Out-Null
+            if ($LASTEXITCODE -ne 0) { return $false }
+            git -C $Path checkout --quiet $Pin 2>&1 | Out-Null
+            if ($LASTEXITCODE -ne 0) { return $false }
+            $expected = git -C $Path rev-parse "$Pin^{commit}" 2>$null
+            if ($LASTEXITCODE -ne 0) { return $false }
+            $actual = git -C $Path rev-parse HEAD 2>$null
+            return ($LASTEXITCODE -eq 0 -and $expected -eq $actual)
+        } finally { $ErrorActionPreference = $previous }
     }
 
     function Restore-DefaultBranch($CachePath) {
@@ -163,7 +187,7 @@ try {
     function Get-ProfileLines {
         # "profile|repo|glob" lines for the active profile (manifest + profiles.local)
         $lines = @()
-        foreach ($f in @("$CacheDir\agent-master\profiles.manifest", "$CacheDir\profiles.local")) {
+        foreach ($f in @($ProfilesManifest, "$CacheDir\profiles.local")) {
             if (Test-Path $f) {
                 $lines += Get-Content $f | Where-Object { $_ -notmatch '^\s*(#|$)' }
             }
@@ -190,20 +214,10 @@ try {
         return $false
     }
 
+    . (Join-Path $PSScriptRoot 'lib/skill-lifecycle.ps1')
     function Copy-Skill($Source, $Skill, $Repo) {
-        try {
-            $destination = Join-Path $SkillsDir $Skill
-            if ((Test-Path -LiteralPath $destination) -and -not (Test-Path -LiteralPath $destination -PathType Container)) {
-                throw "Destination is not a directory: $destination"
-            }
-            New-Item -ItemType Directory -Path $destination -Force -ErrorAction Stop | Out-Null
-            # Copy children explicitly so an existing target never becomes skill/skill.
-            Get-ChildItem -LiteralPath $Source -Force -ErrorAction Stop | ForEach-Object {
-                Copy-Item -LiteralPath $_.FullName -Destination $destination -Recurse -Force -ErrorAction Stop
-            }
-            Record-Owner $Skill $Repo
-            return $true
-        } catch {
+        try { Install-LifecycleSkill $Source $Skill $Repo; return $true }
+        catch {
             $script:SyncFailures++
             Add-Report "${Repo}: FAILED copying ${Skill}; ownership unchanged: $($_.Exception.Message)"
             return $false
@@ -213,7 +227,9 @@ try {
     function Sync-Skills($Name, $Src, $SkillSource) {
         $count = 0
         if (Test-Path $Src) {
+            Add-LifecycleRepo $Name
             Get-ChildItem $Src -Directory | ForEach-Object {
+                if ((Test-Path "$($_.FullName)/SKILL.md") -or (Test-Path "$($_.FullName)/skill.md")) { Add-LifecycleSeen $Name $_.Name }
                 # Skip skills the manifest's exclude-glob names (e.g. a repo's contributor skills).
                 # ExcludeGlob is one or more space-separated globs; match any -> skip this skill.
                 if ($script:ExcludeGlob) {
@@ -233,6 +249,7 @@ try {
                 }
             }
         }
+        if (-not (Test-Path $Src)) { $script:SyncFailures++; Add-Report "${Name}: missing skill source $Src" }
         return $count
     }
 
@@ -240,15 +257,19 @@ try {
         param($Name, $RepoUrl, $SkillSource)
         $cachePath = "$CacheDir\$Name"
         $pin = Get-Pin $Name
+        if ($env:AGENTMASTER_LOCKED -eq '1') {
+            Assert-LockedCheckout $Name $cachePath
+            $n = Sync-Skills $Name "$cachePath\$SkillSource" $SkillSource
+            Add-Report "${Name}: locked to $pin ($n skills)"
+            return
+        }
 
         if (Test-Path "$cachePath\.git") {
             $beforeFull = git -C $cachePath rev-parse HEAD 2>$null
             if ($pin) {
                 # Pinned: fetch and check out the exact commit, never track HEAD
-                git -C $cachePath fetch --depth 1 --quiet origin $pin 2>&1 | Out-Null
-                git -C $cachePath checkout --quiet $pin 2>&1 | Out-Null
-                if ($LASTEXITCODE -ne 0) {
-                    Add-Report "${Name}: pin $pin not found, keeping current"
+                if (-not (Set-PinnedCheckout $cachePath $pin)) {
+                    $script:SyncFailures++; Add-Report "${Name}: pin $pin not found, keeping current"
                 } else {
                     $afterFull = git -C $cachePath rev-parse HEAD 2>$null
                     if ($beforeFull -and $afterFull -and $beforeFull -ne $afterFull) {
@@ -266,7 +287,7 @@ try {
             git -C $cachePath clean -fdq 2>&1 | Out-Null
             Restore-DefaultBranch $cachePath
             git -C $cachePath pull --ff-only --quiet 2>&1 | Out-Null
-            if ($LASTEXITCODE -ne 0) { Add-Report "${Name}: pull failed, keeping current ($before)"; return }
+            if ($LASTEXITCODE -ne 0) { $script:SyncFailures++; Add-Report "${Name}: pull failed, keeping current ($before)"; return }
             $after = git -C $cachePath rev-parse --short HEAD 2>$null
             if ($before -eq $after) {
                 # Still sync: copies are idempotent and this keeps ownership
@@ -286,10 +307,11 @@ try {
         Log "  ${Name}: cloning..."
         if (Test-Path $cachePath) { Remove-Item $cachePath -Recurse -Force }
         git clone --depth 1 --quiet $RepoUrl $cachePath 2>&1 | Out-Null
-        if ($LASTEXITCODE -ne 0) { Add-Report "${Name}: clone failed, skipping"; return }
+        if ($LASTEXITCODE -ne 0) { $script:SyncFailures++; Add-Report "${Name}: clone failed, skipping"; return }
         if ($pin) {
-            git -C $cachePath fetch --depth 1 --quiet origin $pin 2>&1 | Out-Null
-            git -C $cachePath checkout --quiet $pin 2>&1 | Out-Null
+            if (-not (Set-PinnedCheckout $cachePath $pin)) {
+                $script:SyncFailures++; Add-Report "${Name}: pin $pin unavailable; not synced"; return
+            }
         }
         $n = Sync-Skills $Name "$cachePath\$SkillSource" $SkillSource
         if ($pin) {
@@ -303,12 +325,15 @@ try {
 
     # Self-update first so a freshly pushed repos.manifest/repos.pins takes effect this run
     $amCache = "$CacheDir\agent-master"
-    if (-not (Test-Path "$amCache\.git")) {
+    if ($env:AGENTMASTER_LOCKED -eq '1') {
+        $amCache = $SourceRoot
+        Add-Report 'agent-master: locked apply uses validated invocation source; self-update skipped'
+    } elseif (-not (Test-Path "$amCache\.git")) {
         # A cache dir without .git (e.g. from an old zip-based install) can't be
         # pulled — and git refuses to clone into a non-empty dir — so reset it.
         if (Test-Path $amCache) { Remove-Item $amCache -Recurse -Force }
         git clone --depth 1 --quiet "https://github.com/Surya8991/AgentMaster.git" $amCache 2>&1 | Out-Null
-        if ($LASTEXITCODE -ne 0) { Add-Report "agent-master: clone failed, skipping self-update" }
+        if ($LASTEXITCODE -ne 0) { $script:SyncFailures++; Add-Report "agent-master: clone failed, skipping self-update" }
         else { Add-Report "agent-master: installed from remote" }
     } else {
         $amBefore = git -C $amCache rev-parse --short HEAD 2>$null
@@ -320,10 +345,8 @@ try {
         $amPin = Get-Pin "agent-master"
         if ($amPin) {
             # Self-rollback support: honor an agent-master pin instead of pulling
-            git -C $amCache fetch --depth 1 --quiet origin $amPin 2>&1 | Out-Null
-            git -C $amCache checkout --quiet $amPin 2>&1 | Out-Null
-            if ($LASTEXITCODE -ne 0) {
-                Add-Report "agent-master: pin $amPin not found, keeping current ($amBefore)"
+            if (-not (Set-PinnedCheckout $amCache $amPin)) {
+                $script:SyncFailures++; Add-Report "agent-master: pin $amPin not found, keeping current ($amBefore)"
             } else {
                 $amAfterFull = git -C $amCache rev-parse HEAD 2>$null
                 if ($amBeforeFull -and $amAfterFull -and $amBeforeFull -ne $amAfterFull) {
@@ -335,7 +358,7 @@ try {
             Restore-DefaultBranch $amCache
             git -C $amCache pull --ff-only --quiet 2>&1 | Out-Null
             if ($LASTEXITCODE -ne 0) {
-                Add-Report "agent-master: pull failed, keeping current ($amBefore)"
+                $script:SyncFailures++; Add-Report "agent-master: pull failed, keeping current ($amBefore)"
             } else {
                 $amAfter = git -C $amCache rev-parse --short HEAD 2>$null
                 if ($amBefore -eq $amAfter) { Add-Report "agent-master: up to date ($amAfter)" }
@@ -350,13 +373,18 @@ try {
     # Unknown-profile guard AFTER self-update so a freshly pushed profiles.manifest counts.
     # A typo in .profile must never mass-uninstall — fall back to full.
     if ($script:ActiveProfile -ne "full" -and (Get-ProfileLines).Count -eq 0) {
+        if ($env:AGENTMASTER_LOCKED -eq "1") { throw "Locked profile missing: $($script:ActiveProfile)" }
         Add-Report "profile '$($script:ActiveProfile)' not found - using full"
         $script:ActiveProfile = "full"
     }
     if ($script:ActiveProfile -ne "full") { Add-Report "profile: $($script:ActiveProfile)" }
 
+    if ($env:AGENTMASTER_LOCKED -eq '1') { Initialize-LockedDependencies }
+
     if (Test-Path "$amCache\skills") {
+        Add-LifecycleRepo 'agent-master'
         Get-ChildItem "$amCache\skills" -Directory | ForEach-Object {
+            if ((Test-Path "$($_.FullName)/SKILL.md") -or (Test-Path "$($_.FullName)/skill.md")) { Add-LifecycleSeen 'agent-master' $_.Name }
             if (Test-SkillInProfile "agent-master" $_.Name) {
                 [void](Copy-Skill $_.FullName $_.Name "agent-master")
             }
@@ -379,6 +407,8 @@ try {
         Update-Repo -Name $repoName -RepoUrl $parts[1].Trim() -SkillSource $parts[2].Trim()
         $script:ExcludeGlob = ""
     }
+
+    if ($script:SyncFailures -eq 0) { Invoke-LifecyclePrune ([bool]$Prune) }
 
     # Regenerate unrouted-skills.txt: installed skills never mentioned in the routing table
     $routingTable = "$amCache\skills\agent-master\SKILL.md"
@@ -428,7 +458,7 @@ try {
     $reportLines = @("AgentMaster sync report - $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')")
     $reportLines += $script:Report
     if ($script:Collisions.Count -gt 0) {
-        $reportLines += "Collisions (last writer wins):"
+        $reportLines += "Authorized ownership transfers:"
         $reportLines += $script:Collisions
     } else {
         $reportLines += "Collisions: none"

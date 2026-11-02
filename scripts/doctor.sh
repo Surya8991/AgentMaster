@@ -226,6 +226,20 @@ if [ ! -f "$CACHE_DIR/.dev" ] && [ -f "$SKILLS_DIR/agent-master/SKILL.md" ] && [
   fi
 fi
 
+# --- Routing availability (optional Node diagnostics; never installs tools) ---
+echo ""
+echo "Routing targets:"
+ROUTING_CHECK="$(cd "$(dirname "$0")" && pwd)/routing.js"
+if command -v node >/dev/null 2>&1; then
+  if node "$ROUTING_CHECK" availability --skills-dir "$SKILLS_DIR"; then
+    note "route files checked; plugin inventory and MCP runtime status may remain unknown"
+  else
+    warn "routing targets or prerequisites are missing (some may be excluded by your profile)"
+  fi
+else
+  warn "Node.js unavailable; routing availability check skipped"
+fi
+
 # --- Summary ---
 echo ""
 echo "=================="

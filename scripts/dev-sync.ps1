@@ -1,22 +1,26 @@
-# AgentMaster Dev Sync (PowerShell) — push the LOCAL working tree straight to the
+# AgentMaster Dev Sync (PowerShell) - push the LOCAL working tree straight to the
 # live install, bypassing git, while iterating on skills/scripts.
 #
 # Usage:
 #   powershell -File scripts\dev-sync.ps1          # sync working tree -> live, dev mode on
 #   powershell -File scripts\dev-sync.ps1 -Off     # remove the .dev marker (resume auto-update)
-param([switch]$Off)
+#   powershell -File scripts\dev-sync.ps1 -InstallRoot <path> # isolated installation
+param(
+  [switch]$Off,
+  [string]$InstallRoot = (Join-Path $HOME ".claude")
+)
 $ErrorActionPreference = "Stop"
 
 $ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
 $RepoDir   = Split-Path -Parent $ScriptDir
-$SkillsDir = Join-Path $HOME ".claude\skills"
-$CacheDir  = Join-Path $HOME ".claude\.agentmaster-cache"
+$SkillsDir = Join-Path $InstallRoot "skills"
+$CacheDir  = Join-Path $InstallRoot ".agentmaster-cache"
 $AmCache   = Join-Path $CacheDir "agent-master"
 $DevMarker = Join-Path $CacheDir ".dev"
 
 if ($Off) {
   Remove-Item -Force -ErrorAction SilentlyContinue $DevMarker
-  Write-Output "Dev mode OFF — the auto-updater will resume pulling remote on the next session."
+  Write-Output "Dev mode OFF - the auto-updater will resume pulling remote on the next session."
   exit 0
 }
 
@@ -47,5 +51,5 @@ Write-Output "Synced working tree -> $AmCache"
 
 # 3. Enable dev mode
 [string][int][double]::Parse((Get-Date -UFormat %s)) | Set-Content -Path $DevMarker -Encoding utf8
-Write-Output "Dev mode ON (.dev marker written) — the auto-updater will NOT overwrite local edits."
+Write-Output "Dev mode ON (.dev marker written) - the auto-updater will NOT overwrite local edits."
 Write-Output "Run 'powershell -File scripts\dev-sync.ps1 -Off' to resume normal auto-update."

@@ -47,7 +47,8 @@ Every command has a script backing it in `scripts/` (`.sh` and `.ps1` variants) 
 ## Key behaviors worth knowing
 
 - **Sync reports**: every update writes `~/.claude/.agentmaster-cache/last-sync-report.txt` — per-repo before→after commits, skill counts, failures, and cross-repo skill-name collisions. `/agent-master status` shows it.
-- **Ownership tracking**: `.skill-owners` records which repo installed each skill. Collisions (two repos shipping the same skill name) are last-writer-wins but always reported.
+- **Ownership tracking**: `.skill-owners` records which repo installed each skill. Cross-owner and unowned collisions are blocked unless `collisions.local` explicitly selects the new owner. Successful installs write per-skill revision and content provenance.
+- **Reviewed updates**: `python scripts/dependencies.py preview --write-lock reviewed-lock.json` previews upstream changes; `apply --lock reviewed-lock.json --mode update` uses the reviewed revisions. See [dependency management](docs/dependency-management.md) for profiles, cleanup and prerequisites.
 - **Routing learns**: correct a misroute in-session ("no, use X") and the rule persists in `routing-overrides.md`, which loads every session and beats the static routing table. Newly synced skills not yet in the routing table are consulted as a fallback before AgentMaster asks you.
 - **Profiles are safe**: switching prunes only skills AgentMaster installed (per ownership records) — your own skills are never touched. An unknown profile name falls back to `full` rather than uninstalling anything. The orchestrator skill itself always installs.
 - **Rollback = restore + pin**: syncs that change a repo back up the outgoing versions first (`backups/<repo>/`, one generation). `rollback <repo>` restores them and pins the repo in `pins.local` so the next auto-sync holds the rollback. Undo by deleting the repo's line from `pins.local`. Works for `agent-master` itself.

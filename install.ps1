@@ -104,6 +104,14 @@ function Record-Owner($Skill, $Repo) {
     }
 }
 
+. (Join-Path $ScriptDir 'scripts/lib/skill-lifecycle.ps1')
+$script:SyncFailures = 0
+function Add-Report($Line) { Write-Host "  $Line" }
+function Install-Skill($Source, $Skill, $Repo) {
+    try { Install-LifecycleSkill $Source $Skill $Repo; return $true }
+    catch { $script:SyncFailures++; Add-Report "${Repo}: FAILED installing ${Skill}: $($_.Exception.Message)"; return $false }
+}
+
 # Emit name|url|source entries from the manifest plus personal repos.local
 function Read-Manifest {
     $entries = @()
@@ -117,9 +125,11 @@ function Read-Manifest {
 
 # Clone into the auto-update cache (if needed) and copy skills from there, so the
 # installer and updater share one clone per repo and the first update is instant.
-function Install-FromCache($Name, $Url, $SkillSource) {
+function Install-FromCache($Name, $Url, $SkillSource, $Exclude) {
     $cachePath = "$CacheDir\$Name"
-    if (-not (Test-Path "$cachePath\.git")) {
+    if ($env:AGENTMASTER_LOCKED -eq "1") {
+        Assert-LockedCheckout $Name $cachePath
+    } elseif (-not (Test-Path "$cachePath\.git")) {
         if (Test-Path $cachePath) { Remove-Item $cachePath -Recurse -Force }
         if (-not (Invoke-Clone $Url $cachePath)) { return }
     }
@@ -130,15 +140,20 @@ function Install-FromCache($Name, $Url, $SkillSource) {
     }
     $count = 0
     Get-ChildItem $src -Directory | ForEach-Object {
-        if ((Test-Path "$($_.FullName)\SKILL.md") -or ($SkillSource -eq "skills")) {
+        foreach ($pattern in ($Exclude -split '\s+')) { if ($pattern -and $_.Name -like $pattern) { return } }
+        if ((Test-Path "$($_.FullName)\SKILL.md") -or (Test-Path "$($_.FullName)\skill.md")) {
             if (Test-SkillInProfile $Name $_.Name) {
-                Copy-Item -Path $_.FullName -Destination "$SkillsDir\$($_.Name)" -Recurse -Force
-                Record-Owner $_.Name $Name
-                $count++
+                if (Install-Skill $_.FullName $_.Name $Name) { $count++ }
             }
         }
     }
     Write-Host "  + ${Name}: $count skills" -ForegroundColor Green
+}
+
+# Resolve all locked dependencies before writing any skill.
+if ($env:AGENTMASTER_LOCKED -eq '1') {
+    . (Join-Path $ScriptDir 'scripts/lib/locked-deps.ps1')
+    Initialize-LockedDependencies
 }
 
 # 1. Install custom skills
@@ -146,9 +161,7 @@ Write-Host "[1/4] Installing custom skills..." -ForegroundColor Yellow
 Get-ChildItem "$ScriptDir\skills" -Directory | ForEach-Object {
     if (Test-Path "$($_.FullName)\SKILL.md") {
         if (Test-SkillInProfile "agent-master" $_.Name) {
-            Copy-Item -Path $_.FullName -Destination "$SkillsDir\$($_.Name)" -Recurse -Force
-            Record-Owner $_.Name "agent-master"
-            Write-Host "  + $($_.Name)" -ForegroundColor Green
+            if (Install-Skill $_.FullName $_.Name 'agent-master') { Write-Host "  + $($_.Name)" -ForegroundColor Green }
         }
     }
 }
@@ -164,7 +177,8 @@ foreach ($entry in Read-Manifest) {
         Write-Host "  ~ ${repoName}: skipped (profile: $($script:ActiveProfile))" -ForegroundColor DarkGray
         continue
     }
-    Install-FromCache $repoName $parts[1].Trim() $parts[2].Trim()
+    $exclude = if ($parts.Count -gt 3) { $parts[3].Trim() } else { '' }
+    Install-FromCache $repoName $parts[1].Trim() $parts[2].Trim() $exclude
 }
 
 # 3. Repomix CLI (for repomix-pack skill)
@@ -172,7 +186,9 @@ Write-Host ""
 Write-Host "[3/4] Installing repomix CLI..." -ForegroundColor Yellow
 $repomixOk = $false
 try { & repomix --version 2>$null | Out-Null; if ($LASTEXITCODE -eq 0) { $repomixOk = $true } } catch {}
-if ($repomixOk) {
+if ($env:AGENTMASTER_LOCKED -eq "1") {
+    Write-Host "  ~ locked apply: skipping unpinned repomix installation"
+} elseif ($repomixOk) {
     Write-Host "  ~ repomix already installed" -ForegroundColor DarkGray
 } else {
     try {
@@ -191,7 +207,9 @@ if ($repomixOk) {
 Write-Host ""
 Write-Host "[4/4] Setting up auto-update cache..." -ForegroundColor Yellow
 $amCache = "$CacheDir\agent-master"
-if (Test-Path "$amCache\.git") {
+if ($env:AGENTMASTER_LOCKED -eq "1") {
+    Write-Host "  ~ locked apply: using validated local AgentMaster source; self-cache unchanged"
+} elseif (Test-Path "$amCache\.git") {
     Write-Host "  ~ cache already exists" -ForegroundColor DarkGray
 } else {
     if (Test-Path $amCache) { Remove-Item $amCache -Recurse -Force }
@@ -229,3 +247,5 @@ Write-Host "Auto-update: skills sync from repos every 6 hours on first invoke."
 Write-Host "Add repos via repos.manifest (or ~/.claude/.agentmaster-cache/repos.local)."
 Write-Host "Pin repos to exact commits via repos.pins."
 Write-Host "Start a new Claude Code session to load all skills."
+
+if ($script:SyncFailures -gt 0) { Write-Error "Installation incomplete: $($script:SyncFailures) failed skills"; exit 1 }

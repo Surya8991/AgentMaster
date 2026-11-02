@@ -4,8 +4,9 @@
 > and how the system fits together. Update this file with every meaningful change.
 
 **Last updated:** 2026-11-02. Reliability maintenance: updater copy-failure
-reporting and process-owned locks, shared PowerShell rendering, cross-platform
-regression coverage, and documentation reconciliation.
+reporting and process-owned locks, shared PowerShell rendering, staged installs,
+reviewed dependency locks, collision/provenance controls, safe cleanup, routing
+diagnostics, and Windows PowerShell regression coverage.
 
 ## Table of contents
 - **STATUS** — S1 Current plan · S2 Ongoing · S3 Pending · S4 Blocked · S5 Done · S6 Decisions log · S7 Verification status
@@ -30,6 +31,7 @@ regression coverage, and documentation reconciliation.
 
 ## S5. Done
 Newest first.
+- **2026-11-02 follow-up** - Added staged validated skill replacement with rollback, explicit collision overrides, per-skill revision/content provenance, and opt-in cleanup for unchanged removed skills. Added temporary-clone previews and reviewed-lock apply mode with exact commit verification. Added 43 offline routing cases spanning 27 categories, captured-prediction scoring, and availability diagnostics. Fixed Windows PowerShell 5.1 encoding/parser issues and added isolated scaffold/dev-sync execution tests plus Windows CI.
 - **2026-11-02** - Fixed sync accounting for failed copies and replaced age-only lock expiry with owner checks. Unified PowerShell rendering, removed date-dependent output, added output-parity and updater regression checks, and included Antigravity in drift detection. Reconciled documentation with 27 routing categories and 12 active dependency repositories; added a count consistency check.
 - **2026-10-19** - `9c34232`: shared Bash platform renderers and installer/updater parity fixes. `7552b73`: reverse-engineering routing, niche dependency integrations, optional science/social-simulation repositories, and multi-pattern manifest exclusions.
 - **2026-09-09 §1** —
@@ -52,7 +54,8 @@ Newest first.
 
 ## S7. Verification status
 - Passed: full Bash smoke suite, Bash/PowerShell byte parity across 58 generated files, repeat rendering and project-local installer parity, updater regression tests in both shells, and documentation count checks.
-- Changed PowerShell files parse under Windows PowerShell. ShellCheck and PSScriptAnalyzer are unavailable locally; CI runs those linters. A broader Windows PowerShell 5.1 parse pass exposed pre-existing encoding-related parse errors in `dev-sync.ps1` and `scaffold.ps1`; these are outside this change.
+- Follow-up passed: 6 dependency preview/lock tests, 18 locked/ordinary pin integration cases, staged lifecycle/rollback/pruning suites in both shells, 43 routing baseline cases and captured-prediction scoring, and Windows PowerShell 5.1 parsing of 19 source scripts plus isolated scaffold/dev-sync execution. No live dependency installation or pruning was run.
+- Changed PowerShell files parse under Windows PowerShell. ShellCheck and PSScriptAnalyzer are unavailable locally; CI runs those linters. The follow-up fixes Windows PowerShell 5.1 encoding-related parse errors in `dev-sync.ps1` and `scaffold.ps1` and adds execution coverage.
 - Historical September verification: CI and smoke passed at `7c2c5ab`; installed inventory was 203 directories with 32 unrouted skills. These are historical measurements, not current guarantees.
 
 ---
@@ -105,6 +108,6 @@ bash scripts/update.sh
 - Edit skills in `skills/` only; never hand-edit generated platform files (`convert.sh` overwrites them). `convert.sh` does NOT manage `AGENTS.md`/`CLAUDE.md`/`agents.md`.
 - Shell scripts must be LF (`.gitattributes` enforces it) — CRLF fails Linux CI with SC1017.
 - The runtime loads from `~/.claude/skills` and subcommands run from the cache; local edits aren't live until `dev-sync.sh` or a commit+push+update. Turn `.dev` off before relying on remote.
-- Wiring is last-writer-wins — always collision-check (`comm -12`) before adding a subset.
+- Wiring blocks cross-owner/unowned collisions unless explicitly overridden — always collision-check (`comm -12`) before adding a subset.
 - Every skill needs a `SKILL.md`, or the installer skips it (previously it dragged in caveman's `generated/`).
 - `agents.md` and `AGENTS.md` are the same file on this case-insensitive filesystem.

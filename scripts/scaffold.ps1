@@ -1,6 +1,6 @@
-# AgentMaster Scaffold (PowerShell) — detect and offer the canonical project-doc spine.
+# AgentMaster Scaffold (PowerShell) - detect and offer the canonical project-doc spine.
 #
-# Spine: README.md · AGENTS.md · CLAUDE.md(@AGENTS.md) · PROJECTLOG.md
+# Spine: README.md | AGENTS.md | CLAUDE.md(@AGENTS.md) | PROJECTLOG.md
 #
 # Usage:
 #   powershell -File scripts\scaffold.ps1                  # detect + report (no writes)
@@ -14,6 +14,9 @@ param(
   [switch]$WithRules
 )
 
+$ErrorActionPreference = "Stop"
+$Utf8 = New-Object System.Text.UTF8Encoding $false
+
 $ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
 $TmplDir   = Join-Path $ScriptDir "templates"
 $Target    = (Get-Location).Path
@@ -22,7 +25,7 @@ $Date      = (Get-Date -Format "yyyy-MM-dd")
 
 $pkg = Join-Path $Target "package.json"
 if (Test-Path $pkg) {
-  $m = Select-String -Path $pkg -Pattern '"name"\s*:\s*"([^"]+)"' | Select-Object -First 1
+  $m = Select-String -Path $pkg -Encoding utf8 -Pattern '"name"\s*:\s*"([^"]+)"' | Select-Object -First 1
   if ($m) { $Name = $m.Matches[0].Groups[1].Value }
 }
 
@@ -47,7 +50,7 @@ function Row([string]$label, [string]$found) {
   else        { "  [ ] {0,-14} (missing)" -f $label }
 }
 
-Write-Output "AgentMaster Scaffold — $Name"
+Write-Output "AgentMaster Scaffold - $Name"
 Write-Output "==============================================="
 Write-Output "Directory: $Target   (code repo: $isRepo)"
 Write-Output ""
@@ -66,8 +69,8 @@ function WriteTmpl([string]$tmpl, [string]$out) {
   $dst = Join-Path $Target $out
   if (Test-Path $dst) { Write-Output "  skip $out (exists)"; return }
   if (-not (Test-Path $src)) { Write-Output "  ERR  template $tmpl not found"; return }
-  (Get-Content $src -Raw).Replace("{{PROJECT_NAME}}", $Name).Replace("{{DATE}}", $Date) |
-    Set-Content -Path $dst -Encoding utf8
+  $content = (Get-Content -LiteralPath $src -Raw -Encoding utf8).Replace("{{PROJECT_NAME}}", $Name).Replace("{{DATE}}", $Date)
+  [System.IO.File]::WriteAllText($dst, $content, $Utf8)
   Write-Output "  +    $out"
 }
 
@@ -81,7 +84,7 @@ if ($Mode -ne "apply") {
 function Detect-Stack {
   $pj = Join-Path $Target "package.json"
   if (Test-Path $pj) {
-    $s = "Node.js"; $c = Get-Content $pj -Raw
+    $s = "Node.js"; $c = Get-Content -LiteralPath $pj -Raw -Encoding utf8
     if ($c -match '"next"')    { $s += " / Next.js" }
     if ($c -match '"react"')   { $s += " / React" }
     if ($c -match '"express"') { $s += " / Express" }
@@ -105,14 +108,14 @@ $agentsPath = Join-Path $Target "AGENTS.md"
 if (-not $R_AGENTS -and (Test-Path $agentsPath)) {
   $stack = Detect-Stack
   if ($stack) {
-    $lines = Get-Content $agentsPath
+    $lines = Get-Content -LiteralPath $agentsPath -Encoding utf8
     $out = foreach ($l in $lines) {
       $l
       if ($l -eq "## Stack") { "- **Detected**: $stack  <!-- auto-detected from project files; verify & complete -->" }
     }
-    Set-Content -Path $agentsPath -Value $out -Encoding utf8
+    [System.IO.File]::WriteAllText($agentsPath, (($out -join "`n") + "`n"), $Utf8)
     Write-Output "  ~    AGENTS.md Stack pre-filled: $stack"
   }
 }
 Write-Output ""
-Write-Output "Done. Fill in the TODO sections — start with AGENTS.md and PROJECTLOG.md."
+Write-Output "Done. Fill in the TODO sections - start with AGENTS.md and PROJECTLOG.md."

@@ -1,0 +1,37 @@
+{
+  "routes": {
+    "Build/Create": ["brainstorming"],
+    "Refactor": ["brainstorming"],
+    "Debug/Fix": ["systematic-debugging", "debugging-code"],
+    "Code Review": ["codereview", "requesting-code-review"],
+    "Commit/Ship": ["finishing-a-development-branch"],
+    "Test": ["test-driven-development"],
+    "Marketing": ["anthropic-skills:running-marketing"],
+    "Strategy/Business": ["anthropic-skills:gtm-foundations"],
+    "Product": ["anthropic-skills:building-product"],
+    "Finance": ["anthropic-skills:setting-pricing", "anthropic-skills:xlsx"],
+    "Business Growth": ["anthropic-skills:executing-sales"],
+    "Project Mgmt": ["anthropic-skills:schedule", "writing-plans"],
+    "Compliance": ["anthropic-skills:compliance-handling", "security-audit"],
+    "DevOps/Deploy": ["devops", "writing-plans"],
+    "Database Design": ["sql-pro", "database-optimizer", "postgresql-optimization", "database-migration"],
+    "Security": ["security-audit"],
+    "Reverse Engineering / Binary Analysis": ["reverse-engineer-anything", "idapython"],
+    "UI/UX Design": ["impeccable", "anthropic-skills:ui-ux-pro-max"],
+    "Documentation": ["anthropic-skills:docx", "anthropic-skills:pdf", "anthropic-skills:pptx", "anthropic-skills:xlsx"],
+    "Research": ["anthropic-skills:deep-research"],
+    "Memory/History": ["mem-search", "timeline-report", "knowledge-agent"],
+    "Explore Codebase": ["smart-explore"],
+    "Whole-Codebase Analysis": ["repomix-pack"],
+    "LLM/AI App Dev": ["brainstorming", "anthropic-skills:mcp-builder"],
+    "Task Dashboard": ["task-viewer"],
+    "Meta/Skill Discovery": ["anthropic-skills:find-skills"],
+    "Simple Question": []
+  },
+  "tools": [
+    {"skill": "debugging-code", "command": "dap"},
+    {"skill": "core", "command": "agent-browser"},
+    {"skill": "reverse-engineer-anything", "serverNames": ["rea", "reverse-engineer-anything"]},
+    {"skill": "idapython", "serverNames": ["ida-pro-mcp", "ida"]}
+  ]
+}

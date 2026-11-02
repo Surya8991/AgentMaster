@@ -7,6 +7,11 @@ trap 'rm -rf "$task_tmp"' EXIT
 # Load only the pure helpers, never the updater entry point.
 eval "$(sed -n '/^release_lock()/,/^if ! acquire_lock;/p' "$REPO/scripts/update.sh" | sed '$d')"
 eval "$(sed -n '/^copy_skill()/,/^sync_skills()/p' "$REPO/scripts/update.sh" | sed '$d')"
+. "$REPO/scripts/lib/skill-lifecycle.sh"
+CACHE_DIR="$task_tmp/cache"
+mkdir -p "$CACHE_DIR"
+OWNERS_FILE="$CACHE_DIR/.skill-owners"
+: > "$OWNERS_FILE"
 LOCK_FILE="$task_tmp/lock"
 LOCK_OWNER="bash:$$"
 acquire_lock
@@ -28,15 +33,15 @@ if acquire_lock; then echo 'FAIL: took legacy lock'; exit 1; fi
 rm "$LOCK_FILE"
 mkdir -p "$task_tmp/source/scripts" "$task_tmp/installed"
 printf helper > "$task_tmp/source/scripts/helper"
-printf 'new\n' > "$task_tmp/source/SKILL.md"
+printf '%s\n' '---' 'name: sample' 'description: test' '---' 'new' > "$task_tmp/source/SKILL.md"
 printf 'hidden\n' > "$task_tmp/source/.hidden"
 SKILLS_DIR="$task_tmp/installed"
 SYNC_FAILURES=0
 owners=""
 report() { printf '%s\n' "$*"; }
-record_owner() { owners="$owners $1=$2"; }
+record_owner() { owners="$owners $1=$2"; printf "%s=%s\n" "$1" "$2" >> "$OWNERS_FILE"; }
 copy_skill "$task_tmp/source" sample repo
-printf 'changed\n' > "$task_tmp/source/SKILL.md"
+printf '%s\n' '---' 'name: sample' 'description: test' '---' 'changed' > "$task_tmp/source/SKILL.md"
 copy_skill "$task_tmp/source" sample repo
 cmp "$task_tmp/source/SKILL.md" "$SKILLS_DIR/sample/SKILL.md"
 test -f "$SKILLS_DIR/sample/.hidden"
@@ -52,10 +57,11 @@ echo 'PASS: updater locks, repeat copies, and failed-copy ownership'
 
 # Exercise the complete failure-report/exit/cooldown path with a local dev cache.
 fixture="$task_tmp/full"
-mkdir -p "$fixture/cache/agent-master/skills/broken" "$fixture/skills"
+mkdir -p "$fixture/cache/agent-master/skills/broken" "$fixture/skills" "$fixture/lib"
+cp "$REPO/scripts/lib/skill-lifecycle.sh" "$fixture/lib/"
 : > "$fixture/cache/.dev"
 : > "$fixture/cache/agent-master/repos.manifest"
-printf 'skill body\n' > "$fixture/cache/agent-master/skills/broken/SKILL.md"
+printf '%s\n' '---' 'name: broken' 'description: test' '---' 'skill body' > "$fixture/cache/agent-master/skills/broken/SKILL.md"
 printf 'blocked\n' > "$fixture/skills/broken"
 awk -v skills="$fixture/skills" -v cache="$fixture/cache" '
   /^SKILLS_DIR=/ { print "SKILLS_DIR=\"" skills "\""; next }

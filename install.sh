@@ -92,6 +92,16 @@ record_owner() {
   fi
 }
 
+# The installer uses the same staged writes and collision rules as the updater.
+# shellcheck source=scripts/lib/skill-lifecycle.sh
+. "$SCRIPT_DIR/scripts/lib/skill-lifecycle.sh"
+SYNC_FAILURES=0
+report() { echo "  $*"; }
+install_skill() {
+  if lifecycle_install "$1" "$2" "$3"; then return 0; fi
+  SYNC_FAILURES=$((SYNC_FAILURES + 1)); report "$3: FAILED installing $2"; return 1
+}
+
 read_manifest() {
   # Emit "name|url|source" lines from the manifest plus personal repos.local
   local f
@@ -107,7 +117,9 @@ install_from_cache() {
   local name="$1" url="$2" skill_source="$3" exclude="$4"
   local cache_path="$CACHE_DIR/$name"
 
-  if [ ! -d "$cache_path/.git" ]; then
+  if [ "${AGENTMASTER_LOCKED:-}" = "1" ]; then
+    locked_verify "$name" "$cache_path" || return 1
+  elif [ ! -d "$cache_path/.git" ]; then
     rm -rf "$cache_path"
     clone_repo "$url" "$cache_path" || return 0
   fi
@@ -133,13 +145,18 @@ install_from_cache() {
     # clause dragged in non-skill folders like caveman's `generated/`.
     if [ -f "$skill_dir/SKILL.md" ] || [ -f "$skill_dir/skill.md" ]; then
       skill_in_profile "$name" "$skill_name" || continue
-      cp -r "$skill_dir" "$SKILLS_DIR/$skill_name"
-      record_owner "$skill_name" "$name"
-      count=$((count + 1))
+      if install_skill "$skill_dir" "$skill_name" "$name"; then count=$((count + 1)); fi
     fi
   done
   echo "  + $name: $count skills"
 }
+
+# Locked applies resolve every selected dependency before writing any skill.
+if [ "${AGENTMASTER_LOCKED:-}" = "1" ]; then
+  # shellcheck source=scripts/lib/locked-deps.sh
+  . "$SCRIPT_DIR/scripts/lib/locked-deps.sh"
+  locked_preflight || { echo "Locked install preflight failed" >&2; exit 1; }
+fi
 
 # 1. Install custom skills (agent-master, codereview, devops, security-audit, repomix-pack)
 echo "[1/4] Installing custom skills..."
@@ -147,9 +164,7 @@ for skill_dir in "$SCRIPT_DIR/skills/"*/; do
   skill_name=$(basename "$skill_dir")
   if [ -f "$skill_dir/SKILL.md" ]; then
     skill_in_profile "agent-master" "$skill_name" || continue
-    cp -r "$skill_dir" "$SKILLS_DIR/$skill_name"
-    record_owner "$skill_name" "agent-master"
-    echo "  + $skill_name"
+    if install_skill "$skill_dir" "$skill_name" agent-master; then echo "  + $skill_name"; fi
   fi
 done
 
@@ -193,7 +208,9 @@ fi
 # 3. Repomix CLI (for repomix-pack skill)
 echo ""
 echo "[3/4] Installing repomix CLI..."
-if command -v repomix >/dev/null 2>&1; then
+if [ "${AGENTMASTER_LOCKED:-}" = "1" ]; then
+  echo "  ~ locked apply: skipping unpinned repomix installation"
+elif command -v repomix >/dev/null 2>&1; then
   echo "  ~ repomix already installed"
 elif command -v npm >/dev/null 2>&1; then
   npm install -g repomix >/dev/null 2>&1 && echo "  + repomix installed globally" || echo "  ! repomix install failed — run manually: npm install -g repomix"
@@ -205,7 +222,9 @@ fi
 echo ""
 echo "[4/4] Setting up auto-update cache..."
 AM_CACHE="$CACHE_DIR/agent-master"
-if [ -d "$AM_CACHE/.git" ]; then
+if [ "${AGENTMASTER_LOCKED:-}" = "1" ]; then
+  echo "  ~ locked apply: using validated local AgentMaster source; self-cache unchanged"
+elif [ -d "$AM_CACHE/.git" ]; then
   echo "  ~ cache already exists"
 else
   rm -rf "$AM_CACHE"
@@ -242,3 +261,5 @@ echo "Auto-update: skills sync from repos every 6 hours on first invoke."
 echo "Add repos via repos.manifest (or ~/.claude/.agentmaster-cache/repos.local)."
 echo "Pin repos to exact commits via repos.pins."
 echo "Start a new Claude Code session to load all skills."
+
+if [ "$SYNC_FAILURES" -gt 0 ]; then echo "Installation incomplete: $SYNC_FAILURES failed skills" >&2; exit 1; fi

@@ -11,6 +11,11 @@ try {
         $functionAst = $ast.FindAll({param($item) $item -is [Management.Automation.Language.FunctionDefinitionAst]}, $true) | Where-Object Name -eq $name
         Invoke-Expression $functionAst.Extent.Text
     }
+    . (Join-Path $repo 'scripts/lib/skill-lifecycle.ps1')
+    $CacheDir = Join-Path $taskRoot 'cache'
+    New-Item -ItemType Directory -Path $CacheDir | Out-Null
+    $OwnersFile = Join-Path $CacheDir '.skill-owners'
+    [IO.File]::WriteAllText($OwnersFile, '')
     $LockFile = Join-Path $taskRoot 'lock'
     $LockOwner = "powershell:$PID"
     if (-not (Get-UpdateLock)) { throw 'Cannot acquire empty lock' }
@@ -35,16 +40,16 @@ try {
     New-Item -ItemType Directory -Path $source, $SkillsDir | Out-Null
     New-Item -ItemType Directory -Path (Join-Path $source 'scripts') | Out-Null
     [IO.File]::WriteAllText((Join-Path $source 'scripts/helper'), 'helper')
-    [IO.File]::WriteAllText((Join-Path $source 'SKILL.md'), 'new')
+    [IO.File]::WriteAllText((Join-Path $source 'SKILL.md'), "---`nname: sample`ndescription: test`n---`nnew")
     [IO.File]::WriteAllText((Join-Path $source '.hidden'), 'hidden')
     $script:SyncFailures = 0
     $script:owners = @()
-    function Record-Owner($Skill, $Repo) { $script:owners += "$Skill=$Repo" }
+    function Record-Owner($Skill, $Repo) { $script:owners += "$Skill=$Repo"; Add-Content -LiteralPath $OwnersFile -Value "$Skill=$Repo" }
     function Add-Report($Line) { Write-Host $Line }
     if (-not (Copy-Skill $source sample repo)) { throw 'Initial copy failed' }
-    [IO.File]::WriteAllText((Join-Path $source 'SKILL.md'), 'changed')
+    [IO.File]::WriteAllText((Join-Path $source 'SKILL.md'), "---`nname: sample`ndescription: test`n---`nchanged")
     if (-not (Copy-Skill $source sample repo)) { throw 'Repeat copy failed' }
-    if ([IO.File]::ReadAllText((Join-Path $SkillsDir 'sample/SKILL.md')) -ne 'changed') { throw 'Repeat copy did not update root' }
+    if ([IO.File]::ReadAllText((Join-Path $SkillsDir 'sample/SKILL.md')) -notmatch 'changed$') { throw 'Repeat copy did not update root' }
     if (-not (Test-Path (Join-Path $SkillsDir 'sample/.hidden'))) { throw 'Lost hidden file' }
     if (Test-Path (Join-Path $SkillsDir 'sample/source')) { throw 'Nested copy' }
     if ([IO.File]::ReadAllText((Join-Path $SkillsDir 'sample/scripts/helper')) -ne 'helper') { throw 'Lost support file' }
@@ -60,7 +65,7 @@ try {
     $fixtureSkills = Join-Path $fixture 'skills'
     $brokenSource = Join-Path $fixtureCache 'agent-master/skills/broken'
     New-Item -ItemType Directory -Path $brokenSource, $fixtureSkills -Force | Out-Null
-    [IO.File]::WriteAllText((Join-Path $brokenSource 'SKILL.md'), 'skill body')
+    [IO.File]::WriteAllText((Join-Path $brokenSource 'SKILL.md'), "---`nname: broken`ndescription: test`n---`nskill body")
     [IO.File]::WriteAllText((Join-Path $fixtureSkills 'broken'), 'blocked')
     [IO.File]::WriteAllText((Join-Path $fixtureCache 'agent-master/repos.manifest'), '')
     $entry = [IO.File]::ReadAllText((Join-Path $repo 'scripts/update.ps1'))
@@ -69,6 +74,8 @@ try {
     $networkStart = $entry.IndexOf('    # Self-update first')
     $networkEnd = $entry.IndexOf('    # Unknown-profile guard', $networkStart)
     $entry = $entry.Substring(0, $networkStart) + '    $amCache = Join-Path $CacheDir "agent-master"' + "`n" + $entry.Substring($networkEnd)
+    New-Item -ItemType Directory -Path (Join-Path $fixture 'lib') | Out-Null
+    Copy-Item -LiteralPath (Join-Path $repo 'scripts/lib/skill-lifecycle.ps1') -Destination (Join-Path $fixture 'lib')
     $entryPath = Join-Path $fixture 'update.ps1'
     [IO.File]::WriteAllText($entryPath, $entry)
     $engine = (Get-Process -Id $PID).Path

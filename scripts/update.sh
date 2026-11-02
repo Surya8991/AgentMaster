@@ -11,7 +11,7 @@
 set -e
 
 if [ "$1" = "--help" ] || [ "$1" = "-h" ]; then
-  echo "Usage: bash scripts/update.sh [--quiet]"
+  echo "Usage: bash scripts/update.sh [--quiet] [--prune]"
   echo "Pulls latest from all dependency repos and syncs skills to ~/.claude/skills/"
   echo "  --quiet   Suppress output (for background mode)"
   exit 0
@@ -23,9 +23,25 @@ LOCK_FILE="$CACHE_DIR/.update-lock"
 LAST_UPDATE_FILE="$CACHE_DIR/.last-update"
 PINS_FILE="$CACHE_DIR/agent-master/repos.pins"
 MANIFEST="$CACHE_DIR/agent-master/repos.manifest"
+SOURCE_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+PROFILES_MANIFEST="$CACHE_DIR/agent-master/profiles.manifest"
+if [ "${AGENTMASTER_LOCKED:-}" = "1" ]; then
+  MANIFEST="$SOURCE_ROOT/repos.manifest"
+  PROFILES_MANIFEST="$SOURCE_ROOT/profiles.manifest"
+  # shellcheck source=lib/locked-deps.sh
+  . "$SOURCE_ROOT/scripts/lib/locked-deps.sh"
+fi
 OWNERS_FILE="$CACHE_DIR/.skill-owners"
 REPORT_FILE="$CACHE_DIR/last-sync-report.txt"
-QUIET="${1:-}"
+QUIET=""
+PRUNE=0
+for option in "$@"; do
+  case "$option" in
+    --quiet) QUIET=--quiet ;;
+    --prune) PRUNE=1 ;;
+    *) echo "Unknown option: $option" >&2; exit 1 ;;
+  esac
+done
 
 REPORT=""
 COLLISIONS=""
@@ -66,13 +82,14 @@ acquire_lock() {
 }
 if ! acquire_lock; then
   log "Update lock is held (or has an unknown owner). Skipping."
+  [ "${AGENTMASTER_LOCKED:-}" != "1" ] || exit 1
   exit 0
 fi
 trap release_lock EXIT
 SYNC_FAILURES=0
 
 # Skip if updated within last 6 hours
-if [ -f "$LAST_UPDATE_FILE" ]; then
+if [ "${AGENTMASTER_LOCKED:-}" != "1" ] && [ "$PRUNE" -eq 0 ] && [ -f "$LAST_UPDATE_FILE" ]; then
   last=$(cat "$LAST_UPDATE_FILE" 2>/dev/null || echo 0)
   now=$(date +%s)
   diff=$(( now - last ))
@@ -87,12 +104,22 @@ log "AgentMaster: Checking for skill updates..."
 # Read an optional commit pin for a repo (name=sha lines).
 # pins.local (machine-local, written by rollback) wins over repos.pins.
 get_pin() {
+  if [ "${AGENTMASTER_LOCKED:-}" = "1" ]; then locked_pin "$1"; return; fi
   local f v
   for f in "$CACHE_DIR/pins.local" "$PINS_FILE"; do
     [ -f "$f" ] || continue
     v=$(grep -E "^$1=" "$f" 2>/dev/null | head -1 | cut -d= -f2)
     if [ -n "$v" ]; then echo "$v"; return 0; fi
   done
+}
+
+checkout_pin() {
+  local path="$1" pin="$2" expected actual
+  git -C "$path" fetch --depth 1 --quiet origin "$pin" 2>/dev/null || return 1
+  git -C "$path" checkout --quiet "$pin" 2>/dev/null || return 1
+  expected=$(git -C "$path" rev-parse "$pin^{commit}") || return 1
+  actual=$(git -C "$path" rev-parse HEAD) || return 1
+  [ "$actual" = "$expected" ]
 }
 
 reattach_head() {
@@ -155,7 +182,7 @@ ACTIVE_PROFILE=$(cat "$CACHE_DIR/.profile" 2>/dev/null || echo full)
 profile_lines() {
   # "profile|repo|glob" lines for the active profile (manifest + profiles.local)
   local f
-  for f in "$CACHE_DIR/agent-master/profiles.manifest" "$CACHE_DIR/profiles.local"; do
+  for f in "$PROFILES_MANIFEST" "$CACHE_DIR/profiles.local"; do
     [ -f "$f" ] && grep -Ev '^[[:space:]]*(#|$)' "$f" || true
   done | awk -F'|' -v p="$ACTIVE_PROFILE" '$1==p'
 }
@@ -177,15 +204,13 @@ skill_in_profile() {
   return 1
 }
 
-# Copy contents into the existing destination, not a nested skill/skill directory.
+# Shared staged installs, collision protection, and provenance.
+# shellcheck source=lib/skill-lifecycle.sh
+. "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/lib/skill-lifecycle.sh"
 copy_skill() {
-  local source="$1" skill="$2" repo="$3"
-  if mkdir -p "$SKILLS_DIR/$skill" && cp -R "$source/." "$SKILLS_DIR/$skill/"; then
-    record_owner "$skill" "$repo"
-    return 0
-  fi
+  if lifecycle_install "$1" "$2" "$3"; then return 0; fi
   SYNC_FAILURES=$((SYNC_FAILURES + 1))
-  report "$repo: FAILED copying $skill; ownership unchanged"
+  report "$3: FAILED copying $2; ownership unchanged"
   return 1
 }
 
@@ -195,11 +220,15 @@ sync_skills() {
   # the COLLISIONS accumulated by record_owner).
   local name="$1" src="$2" skill_source="$3" count=0
   SYNCED_COUNT=0
-  [ -d "$src" ] || return 0
+  if [ ! -d "$src" ]; then
+    SYNC_FAILURES=$((SYNC_FAILURES + 1)); report "$name: missing skill source $src"; return 0
+  fi
+  lifecycle_repo "$name"
   for skill_dir in "$src"/*/; do
     [ ! -d "$skill_dir" ] && continue
     local skill_name
     skill_name=$(basename "$skill_dir")
+    if [ -f "$skill_dir/SKILL.md" ] || [ -f "$skill_dir/skill.md" ]; then lifecycle_seen "$name" "$skill_name"; fi
     # Skip skills the manifest's exclude-glob names (e.g. a repo's contributor skills).
     # EXCLUDE_GLOB is one or more space-separated globs; match any -> skip this skill.
     if [ -n "$EXCLUDE_GLOB" ]; then
@@ -225,14 +254,19 @@ update_repo() {
   local cache_path="$CACHE_DIR/$name"
   local pin
   pin=$(get_pin "$name")
+  if [ "${AGENTMASTER_LOCKED:-}" = "1" ]; then
+    locked_verify "$name" "$cache_path" || return 1
+    sync_skills "$name" "$cache_path/$skill_source" "$skill_source"
+    report "$name: locked to $pin ($SYNCED_COUNT skills)"
+    return 0
+  fi
 
   if [ -d "$cache_path/.git" ]; then
     local before_full
     before_full=$(git -C "$cache_path" rev-parse HEAD 2>/dev/null || echo "none")
     if [ -n "$pin" ]; then
       # Pinned: fetch and check out the exact commit, never track HEAD
-      git -C "$cache_path" fetch --depth 1 --quiet origin "$pin" 2>/dev/null || true
-      if git -C "$cache_path" checkout --quiet "$pin" 2>/dev/null; then
+      if checkout_pin "$cache_path" "$pin"; then
         local after_full
         after_full=$(git -C "$cache_path" rev-parse HEAD 2>/dev/null || echo "none")
         if [ "$before_full" != "$after_full" ] && [ "$before_full" != "none" ]; then
@@ -241,6 +275,7 @@ update_repo() {
         sync_skills "$name" "$cache_path/$skill_source" "$skill_source"
         report "$name: pinned to ${pin:0:7} ($SYNCED_COUNT skills)"
       else
+        SYNC_FAILURES=$((SYNC_FAILURES + 1))
         report "$name: pin $pin not found, keeping current"
       fi
       return 0
@@ -253,6 +288,7 @@ update_repo() {
       git -C "$cache_path" clean -fdq 2>/dev/null || true
       reattach_head "$cache_path"
       if ! git -C "$cache_path" pull --ff-only --quiet 2>/dev/null; then
+        SYNC_FAILURES=$((SYNC_FAILURES + 1))
         report "$name: pull failed, keeping current ($before)"
         return 0
       fi
@@ -276,12 +312,14 @@ update_repo() {
     log "  $name: cloning..."
     rm -rf "$cache_path"
     if ! git clone --depth 1 --quiet "$repo_url" "$cache_path" 2>/dev/null; then
-      report "$name: clone failed, skipping"
+      SYNC_FAILURES=$((SYNC_FAILURES + 1))
+        report "$name: clone failed, skipping"
       return 0
     fi
     if [ -n "$pin" ]; then
-      git -C "$cache_path" fetch --depth 1 --quiet origin "$pin" 2>/dev/null || true
-      git -C "$cache_path" checkout --quiet "$pin" 2>/dev/null || true
+      if ! checkout_pin "$cache_path" "$pin"; then
+        SYNC_FAILURES=$((SYNC_FAILURES + 1)); report "$name: pin $pin unavailable; not synced"; return 0
+      fi
     fi
   fi
 
@@ -299,7 +337,10 @@ mkdir -p "$SKILLS_DIR"
 # Update AgentMaster itself first so a freshly pushed repos.manifest/repos.pins
 # takes effect in the same run
 AM_CACHE="$CACHE_DIR/agent-master"
-if [ -f "$CACHE_DIR/.dev" ]; then
+if [ "${AGENTMASTER_LOCKED:-}" = "1" ]; then
+  AM_CACHE="$SOURCE_ROOT"
+  report "agent-master: locked apply uses validated invocation source; self-update skipped"
+elif [ -f "$CACHE_DIR/.dev" ]; then
   # Dev mode (see dev-sync.sh): the cache holds the operator's local working tree.
   # Do NOT reset/pull it — that would discard uncommitted local edits.
   report "agent-master: dev mode (.dev marker) — skipping self-update, using local working tree"
@@ -313,15 +354,15 @@ elif [ -d "$AM_CACHE/.git" ]; then
   am_pin=$(get_pin agent-master)
   if [ -n "$am_pin" ]; then
     # Self-rollback support: honor an agent-master pin instead of pulling
-    git -C "$AM_CACHE" fetch --depth 1 --quiet origin "$am_pin" 2>/dev/null || true
-    if git -C "$AM_CACHE" checkout --quiet "$am_pin" 2>/dev/null; then
+    if checkout_pin "$AM_CACHE" "$am_pin"; then
       am_after_full=$(git -C "$AM_CACHE" rev-parse HEAD 2>/dev/null || echo "none")
       if [ "$am_before_full" != "$am_after_full" ] && [ "$am_before_full" != "none" ]; then
         snapshot_repo "agent-master" "$am_before_full"
       fi
       report "agent-master: pinned to ${am_pin:0:7}"
     else
-      report "agent-master: pin $am_pin not found, keeping current ($am_before)"
+      SYNC_FAILURES=$((SYNC_FAILURES + 1))
+        report "agent-master: pin $am_pin not found, keeping current ($am_before)"
     fi
   elif reattach_head "$AM_CACHE"; git -C "$AM_CACHE" pull --ff-only --quiet 2>/dev/null; then
     am_after=$(git -C "$AM_CACHE" rev-parse --short HEAD 2>/dev/null || echo "none")
@@ -333,7 +374,8 @@ elif [ -d "$AM_CACHE/.git" ]; then
       report "agent-master: updated $am_before -> $am_after"
     fi
   else
-    report "agent-master: pull failed, keeping current ($am_before)"
+    SYNC_FAILURES=$((SYNC_FAILURES + 1))
+        report "agent-master: pull failed, keeping current ($am_before)"
   fi
 else
   # A cache dir without .git (e.g. from an old zip-based install) can't be
@@ -342,21 +384,29 @@ else
   if git clone --depth 1 --quiet "https://github.com/Surya8991/AgentMaster.git" "$AM_CACHE" 2>/dev/null; then
     report "agent-master: installed from remote"
   else
-    report "agent-master: clone failed, skipping self-update"
+    SYNC_FAILURES=$((SYNC_FAILURES + 1))
+        report "agent-master: clone failed, skipping self-update"
   fi
 fi
 # Unknown-profile guard AFTER self-update so a freshly pushed profiles.manifest counts.
 # A typo in .profile must never mass-uninstall — fall back to full.
 if [ "$ACTIVE_PROFILE" != "full" ] && ! profile_lines | grep -q .; then
+  [ "${AGENTMASTER_LOCKED:-}" != "1" ] || { echo "Locked profile missing: $ACTIVE_PROFILE" >&2; exit 1; }
   report "profile '$ACTIVE_PROFILE' not found — using full"
   ACTIVE_PROFILE=full
 fi
 [ "$ACTIVE_PROFILE" != "full" ] && report "profile: $ACTIVE_PROFILE"
 
+if [ "${AGENTMASTER_LOCKED:-}" = "1" ]; then
+  locked_preflight || { echo "Locked update preflight failed" >&2; exit 1; }
+fi
+
 if [ -d "$AM_CACHE/skills" ]; then
+  lifecycle_repo agent-master
   for skill_dir in "$AM_CACHE/skills/"*/; do
     [ ! -d "$skill_dir" ] && continue
     skill_name=$(basename "$skill_dir")
+    if [ -f "$skill_dir/SKILL.md" ] || [ -f "$skill_dir/skill.md" ]; then lifecycle_seen agent-master "$skill_name"; fi
     skill_in_profile "agent-master" "$skill_name" || continue
     copy_skill "$skill_dir" "$skill_name" "agent-master" || true
   done
@@ -376,6 +426,9 @@ while IFS='|' read -r name url source exclude; do
   update_repo "$name" "$url" "$source"
   EXCLUDE_GLOB=""
 done < <(read_manifest)
+
+# Reconcile only after every subset succeeds; seen names include filtered skills.
+if [ "$SYNC_FAILURES" -eq 0 ]; then lifecycle_prune "$PRUNE"; fi
 
 # Regenerate unrouted-skills.txt: installed skills never mentioned in the routing table
 ROUTING_TABLE="$AM_CACHE/skills/agent-master/SKILL.md"
@@ -420,7 +473,7 @@ fi
   echo "AgentMaster sync report — $(date '+%Y-%m-%d %H:%M:%S')"
   echo "$REPORT"
   if [ -n "$COLLISIONS" ]; then
-    echo "Collisions (last writer wins):"
+    echo "Authorized ownership transfers:"
     printf '%s' "$COLLISIONS"
   else
     echo "Collisions: none"
