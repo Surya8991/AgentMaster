@@ -215,6 +215,9 @@ The [2026-11-02 blinded model pilot](docs/routing-evaluation.md) matched 43/43
 primary-category labels. It records dry-run decisions, not production task success;
 the report includes methodology, limitations and prerequisite gaps.
 
+The [core readiness follow-up](docs/runtime-readiness.md) records the verified
+Windows debugger/browser setup and the optional capabilities left unconfigured.
+
 ### 27 Categories
 
 | Category | Signal Words | Routes To |

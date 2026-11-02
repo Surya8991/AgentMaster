@@ -239,6 +239,23 @@ If the task spans multiple categories, apply these combination rules:
 
 ## Step 3: Execute Routing
 
+### Check the selected capability before invocation
+
+Resolve the selected skill against the current host's loaded skill/tool inventory.
+Provider-qualified names in the table are references, not proof that a plugin is
+loaded on every platform. If the named provider is absent, use an explicitly
+available skill with the same capability and disclose the substitution. If no
+equivalent exists, explain the coverage gap and continue only the work supported
+by available tools; do not claim a missing specialist or MCP server was invoked.
+Unknown plugin inventory or MCP health remains unverified. Optional reverse-
+engineering setup is not a prerequisite for ordinary coding tasks.
+
+For Windows Python debugging with DAP v0.4.2, pass the intended interpreter with
+`--python`, run from the target directory, and use relative `--break file.py:line`
+paths: drive-letter colons are misparsed by that version. Use a unique session and
+stop it afterward. See `docs/runtime-readiness.md` for the verified invocation and
+the limits of the current runtime checks.
+
 ```
 1. ANNOUNCE routing decision:
    "Routing: [skill-name] for [purpose]" (+ second skill if combining)
