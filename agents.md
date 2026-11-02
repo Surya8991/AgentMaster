@@ -3,6 +3,13 @@
 ## Overview
 Meta-orchestrator for AI coding agents. One skill (`/agent-master`) routes all tasks to the right combination of installed skills across caveman (output compression), superpowers (dev workflow), claude-skills (domain expertise), and curated tactical libraries (impeccable, anthropic-official, wshobson, davila7). Supports 11 platforms via auto-generated platform files.
 
+## Verified project state (2026-11-02)
+- Core reliability and runtime-readiness fixes are committed and pushed through `75339e5`. [CI passed](https://github.com/Surya8991/AgentMaster/actions/runs/41399428342), including ShellCheck, PSScriptAnalyzer, Linux integration tests, and Windows PowerShell 5.1 regressions.
+- On this Windows development machine, DAP v0.4.2 with debugpy 1.8.22 passed a Python breakpoint/value/continue probe. agent-browser 0.41.1 with managed Chrome 156.0.8078.80 passed an isolated browser probe. Other machines and debugger backends require their own checks.
+- The recorded local availability result is 29 available checks, zero missing checks, and 18 unknown plugin/MCP checks (not unique skill counts). Resolve capabilities against the current host; unknown does not mean verified.
+- The user chose to keep REA/IDA reverse-engineering setup optional. No MCP configuration or native analysis engines were added.
+- Read `PROJECTLOG.md` for status and decisions, `docs/runtime-readiness.md` for setup details and the Windows relative-breakpoint workaround, and `docs/routing-evaluation.md` for the 43/43 blinded category pilot and its limitations.
+
 ## Stack
 - **Language**: Bash (scripts), Node.js (Tool-Stack-Reference generators)
 - **Format**: SKILL.md files with YAML frontmatter + markdown body

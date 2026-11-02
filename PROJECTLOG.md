@@ -6,7 +6,8 @@
 **Last updated:** 2026-11-02. Reliability maintenance: updater copy-failure
 reporting and process-owned locks, shared PowerShell rendering, staged installs,
 reviewed dependency locks, collision/provenance controls, safe cleanup, routing
-diagnostics, and Windows PowerShell regression coverage.
+diagnostics, Windows PowerShell regression coverage, verified browser/Python-debugger
+readiness, and reconciled project context.
 
 ## Table of contents
 - **STATUS** — S1 Current plan · S2 Ongoing · S3 Pending · S4 Blocked · S5 Done · S6 Decisions log · S7 Verification status
@@ -17,7 +18,7 @@ diagnostics, and Windows PowerShell regression coverage.
 # STATUS
 
 ## S1. Current plan
-- Reliability maintenance complete locally. Remote CI status has not been checked in this session.
+- Core reliability and runtime-readiness work is complete and pushed through `75339e5`; [CI passed](https://github.com/Surya8991/AgentMaster/actions/runs/41399428342). No required fixes remain from this maintenance scope.
 
 ## S2. Ongoing
 - (none)
@@ -31,6 +32,7 @@ diagnostics, and Windows PowerShell regression coverage.
 
 ## S5. Done
 Newest first.
+- **2026-11-02 context refresh** - Reconciled current status and verification with the completed CI run; added host-specific runtime readiness and the optional reverse-engineering decision to the agent context.
 - **2026-11-02 core readiness** - Installed checksum-verified Windows DAP v0.4.2, debugpy 1.8.22, agent-browser 0.41.1 and managed Chrome 156.0.8078.80. Verified a real breakpoint/value/continue cycle and an isolated local browser page. Missing CLI checks fell from two to zero; 18 plugin/MCP checks remain unknown. User explicitly kept reverse-engineering setup optional. Added host-capability resolution guidance and the Windows relative-breakpoint workaround. See `docs/runtime-readiness.md`.
 - **2026-11-02 routing evaluation** - Blinded three-batch Codex pilot matched 43/43 category labels; saved predictions, explanations, provenance and limitations. Local prerequisite checks found missing `dap`/`agent-browser` CLIs; plugin/MCP states remain unknown. Pushed CI exposed Linux PowerShell native-path handling; fixed installer/updater paths and strengthened cross-platform integration assertions. See `docs/routing-evaluation.md`.
 - **2026-11-02 follow-up** - Added staged validated skill replacement with rollback, explicit collision overrides, per-skill revision/content provenance, and opt-in cleanup for unchanged removed skills. Added temporary-clone previews and reviewed-lock apply mode with exact commit verification. Added 43 offline routing cases spanning 27 categories, captured-prediction scoring, and availability diagnostics. Fixed Windows PowerShell 5.1 encoding/parser issues and added isolated scaffold/dev-sync execution tests plus Windows CI.
@@ -47,6 +49,7 @@ Newest first.
   - **Context files** — backfilled `CLAUDE.md` (`@AGENTS.md`) into AgentMaster, Content-Wiz, Email-Automator, cybersecurity-academy; created global `~/.claude/CLAUDE.md`; seeded project memory.
 
 ## S6. Decisions log
+- 2026-11-02 - Keep REA/IDA reverse-engineering setup optional until a concrete task requires it. The user selected core readiness only; MCP configuration and native analysis engines remain untouched. Plugin/MCP availability remains unverified.
 - 2026-09-09 — `CLAUDE.md` is a one-line `@AGENTS.md` import, never real content (matches Marketing-Academy). Keeps it from drifting from `AGENTS.md`.
 - 2026-09-09 — Canonical project spine = `README.md` + `AGENTS.md` + `CLAUDE.md` + `PROJECTLOG.md`; `PROJECTLOG.md` is the canonical name (over `PROJECT_LOG.md`).
 - 2026-09-09 — Kept the aggregator/installer model; did **not** convert to a plugin (multi-platform breadth is the differentiator; no native paid marketplace to earn from).
@@ -55,7 +58,9 @@ Newest first.
 - 2026-09-09 — Push auth: repos owned by Surya8991 require `gh auth switch --user Surya8991` (default-active `edstellarmarketing` 403s); switch back after.
 
 ## S7. Verification status
-- Routing follow-up: 43/43 captured model category predictions matched. PowerShell locked-dependency cases passed on Windows and Linux, including ownership/provenance assertions; Linux lifecycle, update-safety and 58-file rendering parity passed. ShellCheck passed in the Linux container. Its older PowerShell could not load the latest PSScriptAnalyzer; current-version lint remains a remote CI check, now explicitly fail-fast on tool errors.
+- Latest verified implementation: `75339e5`, [CI run 41399428342](https://github.com/Surya8991/AgentMaster/actions/runs/41399428342). ShellCheck, PSScriptAnalyzer, Linux smoke/integration checks, and Windows PowerShell 5.1 checks all passed. Local smoke confirmed generated files match their sources; routing and documentation checks passed.
+- Runtime probes: Python debugging and isolated browser operation passed on this Windows machine. Recorded availability: 29 available, zero missing, 18 unknown checks. See `docs/runtime-readiness.md`; other language backends and plugin/MCP health are not verified.
+- Routing follow-up: 43/43 captured model category predictions matched. PowerShell locked-dependency cases passed on Windows and Linux, including ownership/provenance assertions; Linux lifecycle, update-safety and 58-file rendering parity passed. ShellCheck passed in the Linux container. Its older PowerShell could not load the latest PSScriptAnalyzer; the remote CI run above subsequently passed that lint check.
 - Passed: full Bash smoke suite, Bash/PowerShell byte parity across 58 generated files, repeat rendering and project-local installer parity, updater regression tests in both shells, and documentation count checks.
 - Follow-up passed: 6 dependency preview/lock tests, 18 locked/ordinary pin integration cases, staged lifecycle/rollback/pruning suites in both shells, 43 routing baseline cases and captured-prediction scoring, and Windows PowerShell 5.1 parsing of 19 source scripts plus isolated scaffold/dev-sync execution. No live dependency installation or pruning was run.
 - Changed PowerShell files parse under Windows PowerShell. ShellCheck and PSScriptAnalyzer are unavailable locally; CI runs those linters. The follow-up fixes Windows PowerShell 5.1 encoding-related parse errors in `dev-sync.ps1` and `scaffold.ps1` and adds execution coverage.
