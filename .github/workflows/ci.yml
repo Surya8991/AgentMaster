@@ -57,6 +57,7 @@ jobs:
       - name: Lint PowerShell scripts (fail only on error-level findings)
         shell: pwsh
         run: |
+          $ErrorActionPreference = 'Stop'
           Install-Module PSScriptAnalyzer -Force -Scope CurrentUser -ErrorAction Stop
           $findings = Invoke-ScriptAnalyzer -Path scripts -Recurse -Severity Error
           if ($findings) { $findings | Format-Table -AutoSize; exit 1 }

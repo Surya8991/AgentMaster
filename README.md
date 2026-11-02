@@ -211,6 +211,10 @@ Three layers that **stack, never compete**:
 
 ## Routing Table
 
+The [2026-11-02 blinded model pilot](docs/routing-evaluation.md) matched 43/43
+primary-category labels. It records dry-run decisions, not production task success;
+the report includes methodology, limitations and prerequisite gaps.
+
 ### 27 Categories
 
 | Category | Signal Words | Routes To |

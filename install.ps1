@@ -10,16 +10,16 @@ param([string]$Profile)
 
 $ErrorActionPreference = "Stop"
 
-$SkillsDir = "$env:USERPROFILE\.claude\skills"
-$CacheDir = "$env:USERPROFILE\.claude\.agentmaster-cache"
+$SkillsDir = Join-Path $HOME '.claude/skills'
+$CacheDir = Join-Path $HOME '.claude/.agentmaster-cache'
 $ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
-$Manifest = "$ScriptDir\repos.manifest"
-$ProfilesManifest = "$ScriptDir\profiles.manifest"
-$OwnersFile = "$CacheDir\.skill-owners"
+$Manifest = "$ScriptDir/repos.manifest"
+$ProfilesManifest = "$ScriptDir/profiles.manifest"
+$OwnersFile = "$CacheDir/.skill-owners"
 
 function Get-ProfileLines {
     $lines = @()
-    foreach ($f in @($ProfilesManifest, "$CacheDir\profiles.local")) {
+    foreach ($f in @($ProfilesManifest, "$CacheDir/profiles.local")) {
         if (Test-Path $f) {
             $lines += Get-Content $f | Where-Object { $_ -notmatch '^\s*(#|$)' }
         }
@@ -57,8 +57,8 @@ if (-not (Test-Path $OwnersFile)) { New-Item -ItemType File -Path $OwnersFile | 
 # Resolve the install profile: -Profile flag wins, else any previously
 # persisted choice, else full. Explicit flag with an unknown name fails loudly.
 $script:ActiveProfile = "full"
-if (Test-Path "$CacheDir\.profile") {
-    $p = (Get-Content "$CacheDir\.profile" -ErrorAction SilentlyContinue | Select-Object -First 1)
+if (Test-Path "$CacheDir/.profile") {
+    $p = (Get-Content "$CacheDir/.profile" -ErrorAction SilentlyContinue | Select-Object -First 1)
     if ($p) { $script:ActiveProfile = $p.Trim() }
 }
 if ($Profile) {
@@ -73,7 +73,7 @@ if ($Profile) {
         Write-Host "Available: full $($known -join ' ')"
         exit 1
     }
-    Set-Content -Path "$CacheDir\.profile" -Value $script:ActiveProfile
+    Set-Content -Path "$CacheDir/.profile" -Value $script:ActiveProfile
 }
 if ($script:ActiveProfile -ne "full") { Write-Host "Profile: $($script:ActiveProfile)" -ForegroundColor Cyan }
 
@@ -115,7 +115,7 @@ function Install-Skill($Source, $Skill, $Repo) {
 # Emit name|url|source entries from the manifest plus personal repos.local
 function Read-Manifest {
     $entries = @()
-    foreach ($f in @($Manifest, "$CacheDir\repos.local")) {
+    foreach ($f in @($Manifest, "$CacheDir/repos.local")) {
         if (Test-Path $f) {
             $entries += Get-Content $f | Where-Object { $_ -notmatch '^\s*(#|$)' }
         }
@@ -126,14 +126,14 @@ function Read-Manifest {
 # Clone into the auto-update cache (if needed) and copy skills from there, so the
 # installer and updater share one clone per repo and the first update is instant.
 function Install-FromCache($Name, $Url, $SkillSource, $Exclude) {
-    $cachePath = "$CacheDir\$Name"
+    $cachePath = "$CacheDir/$Name"
     if ($env:AGENTMASTER_LOCKED -eq "1") {
         Assert-LockedCheckout $Name $cachePath
-    } elseif (-not (Test-Path "$cachePath\.git")) {
+    } elseif (-not (Test-Path "$cachePath/.git")) {
         if (Test-Path $cachePath) { Remove-Item $cachePath -Recurse -Force }
         if (-not (Invoke-Clone $Url $cachePath)) { return }
     }
-    $src = "$cachePath\$SkillSource"
+    $src = "$cachePath/$SkillSource"
     if (-not (Test-Path $src)) {
         Write-Host "  ! skill source missing: $src" -ForegroundColor Red
         return
@@ -141,7 +141,7 @@ function Install-FromCache($Name, $Url, $SkillSource, $Exclude) {
     $count = 0
     Get-ChildItem $src -Directory | ForEach-Object {
         foreach ($pattern in ($Exclude -split '\s+')) { if ($pattern -and $_.Name -like $pattern) { return } }
-        if ((Test-Path "$($_.FullName)\SKILL.md") -or (Test-Path "$($_.FullName)\skill.md")) {
+        if ((Test-Path "$($_.FullName)/SKILL.md") -or (Test-Path "$($_.FullName)/skill.md")) {
             if (Test-SkillInProfile $Name $_.Name) {
                 if (Install-Skill $_.FullName $_.Name $Name) { $count++ }
             }
@@ -158,8 +158,8 @@ if ($env:AGENTMASTER_LOCKED -eq '1') {
 
 # 1. Install custom skills
 Write-Host "[1/4] Installing custom skills..." -ForegroundColor Yellow
-Get-ChildItem "$ScriptDir\skills" -Directory | ForEach-Object {
-    if (Test-Path "$($_.FullName)\SKILL.md") {
+Get-ChildItem "$ScriptDir/skills" -Directory | ForEach-Object {
+    if (Test-Path "$($_.FullName)/SKILL.md") {
         if (Test-SkillInProfile "agent-master" $_.Name) {
             if (Install-Skill $_.FullName $_.Name 'agent-master') { Write-Host "  + $($_.Name)" -ForegroundColor Green }
         }
@@ -206,16 +206,16 @@ if ($env:AGENTMASTER_LOCKED -eq "1") {
 # 4. Set up self-update cache (agent-master itself; dependency repos were cached in step 2)
 Write-Host ""
 Write-Host "[4/4] Setting up auto-update cache..." -ForegroundColor Yellow
-$amCache = "$CacheDir\agent-master"
+$amCache = "$CacheDir/agent-master"
 if ($env:AGENTMASTER_LOCKED -eq "1") {
     Write-Host "  ~ locked apply: using validated local AgentMaster source; self-cache unchanged"
-} elseif (Test-Path "$amCache\.git") {
+} elseif (Test-Path "$amCache/.git") {
     Write-Host "  ~ cache already exists" -ForegroundColor DarkGray
 } else {
     if (Test-Path $amCache) { Remove-Item $amCache -Recurse -Force }
     if (Invoke-Clone "https://github.com/Surya8991/AgentMaster.git" $amCache) {
         Write-Host "  + auto-update cache initialized" -ForegroundColor Green
-    } elseif (Test-Path "$ScriptDir\.git") {
+    } elseif (Test-Path "$ScriptDir/.git") {
         # Offline fallback: copy the local clone (including .git so the updater can pull)
         Copy-Item -Path $ScriptDir -Destination $amCache -Recurse -Force
         Write-Host "  + auto-update cache copied from local clone" -ForegroundColor Green

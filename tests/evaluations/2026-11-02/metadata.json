@@ -1,0 +1,19 @@
+{
+  "evaluation_date": "2026-11-02",
+  "timezone": "Asia/Calcutta",
+  "source_commit": "42689df1b416676f4e83b6399cb19157b83e3ff5",
+  "source_skill_sha256": "cb838603101769bab8e2e8329890865d8219aa734aaf716591dd143eb56b35f8",
+  "corpus_sha256": "66e4a75ac6796c3e3866fb0d683034d6e75fa952b63f92842dca73e7f72a9708",
+  "agent": "Codex subagents; inherited session model",
+  "model_snapshot": "not exposed; no exact model identifier asserted",
+  "method": "Blinded three-batch model pilot, 15/14/14 cases; fresh agent context per batch, not per prompt",
+  "blinding": "Evaluators read only canonical skill and id/prompt pairs; expected labels and baseline code withheld",
+  "scope": "Primary category agreement. Entry skills and explanations captured but not independently scored. No domain actions, tools, installation or bootstrap executed.",
+  "limitations": [
+    "Single pass on curated in-repository corpus, not an independent held-out benchmark",
+    "Multiple prompts share a batch context",
+    "Does not measure live task success, tool readiness, latency or cost",
+    "Does not measure other models or platforms"
+  ],
+  "hash_encoding": "UTF-8 with LF line endings"
+}

@@ -15,6 +15,12 @@ def run(command, **kwargs):
                           stderr=subprocess.STDOUT, **kwargs)
 
 
+def replace_fixture_path(text, original, replacement):
+    """Fail before execution if an entrypoint no longer matches its sandbox hook."""
+    assert text.count(original) == 1, f'Cannot isolate entrypoint path: {original}'
+    return text.replace(original, replacement)
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--bash', default='bash')
@@ -77,13 +83,13 @@ def main():
                             converted = run([args.bash, '-c', 'cygpath -u "$1"', '--', str(path)])
                             assert converted.returncode == 0, converted.stdout
                             return converted.stdout.strip()
-                        text = text.replace('SKILLS_DIR="$HOME/.claude/skills"', f'SKILLS_DIR="{shell_path(installed)}"')
-                        text = text.replace('CACHE_DIR="$HOME/.claude/.agentmaster-cache"', f'CACHE_DIR="{shell_path(cache)}"')
+                        text = replace_fixture_path(text, 'SKILLS_DIR="$HOME/.claude/skills"', f'SKILLS_DIR="{shell_path(installed)}"')
+                        text = replace_fixture_path(text, 'CACHE_DIR="$HOME/.claude/.agentmaster-cache"', f'CACHE_DIR="{shell_path(cache)}"')
                         (source / 'repos.manifest').write_text(f'dep|file://{shell_path(upstream)}|skills\n', encoding='utf-8')
                         command = [args.bash, str(entry)]
                     else:
-                        text = text.replace('$SkillsDir = "$env:USERPROFILE\\.claude\\skills"', f"$SkillsDir = '{installed.as_posix()}'")
-                        text = text.replace('$CacheDir = "$env:USERPROFILE\\.claude\\.agentmaster-cache"', f"$CacheDir = '{cache.as_posix()}'")
+                        text = replace_fixture_path(text, "$SkillsDir = Join-Path $HOME '.claude/skills'", f"$SkillsDir = '{installed.as_posix()}'")
+                        text = replace_fixture_path(text, "$CacheDir = Join-Path $HOME '.claude/.agentmaster-cache'", f"$CacheDir = '{cache.as_posix()}'")
                         command = [args.powershell, '-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', str(entry)]
                     entry.write_bytes(text.encode('utf-8'))
                     environment = os.environ.copy()
@@ -118,6 +124,17 @@ def main():
                         assert result.returncode == 0, f'{engine} {mode}: {result.stdout}'
                         assert (installed / 'sample' / 'SKILL.md').read_text(encoding='utf-8').endswith('locked\n'), result.stdout
                         assert (installed / 'agent-master' / 'SKILL.md').exists(), result.stdout
+                        # PowerShell providers normalize backslashes on Unix, but
+                        # native Git and .NET do not. Verify the shared paths really
+                        # address the same cache/ownership/provenance files.
+                        owners = (cache / '.skill-owners').read_text(encoding='utf-8-sig')
+                        assert 'sample=dep' in owners.splitlines(), result.stdout
+                        metadata = (cache / '.provenance' / 'sample.txt').read_text(encoding='utf-8-sig')
+                        assert f'commit={pin}' in metadata.splitlines(), result.stdout
+                        assert 'repo=dep' in metadata.splitlines(), result.stdout
+                        checked_out = run(['git', '-C', str(cache / 'dep'), 'rev-parse', 'HEAD'])
+                        assert checked_out.returncode == 0 and checked_out.stdout.strip() == pin, checked_out.stdout
+                        assert not any('\\' in path.name for path in base.rglob('*')), 'Windows separator became a literal Unix filename'
                     elif case == 'ordinary-wrong':
                         assert result.returncode != 0, result.stdout
                         assert not (installed / 'sample').exists(), result.stdout

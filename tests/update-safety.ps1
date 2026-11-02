@@ -83,7 +83,7 @@ try {
     if ($LASTEXITCODE -ne 1) { throw 'Full update must fail on copy failure' }
     if ([IO.File]::ReadAllText((Join-Path $fixtureCache 'last-sync-report.txt')) -notmatch 'Sync incomplete: 1 copy failures') { throw 'Missing failure report' }
     if (Test-Path (Join-Path $fixtureCache '.last-update')) { throw 'Failure advanced cooldown' }
-    if ((Get-Item (Join-Path $fixtureCache '.skill-owners')).Length) { throw 'Failure recorded ownership' }
+    if ((Get-Item -LiteralPath (Join-Path $fixtureCache '.skill-owners') -Force).Length) { throw 'Failure recorded ownership' }
     if (Test-Path (Join-Path $fixtureCache '.update-lock')) { throw 'Failure leaked lock' }
     Remove-Item -LiteralPath (Join-Path $fixtureSkills 'broken')
     & $engine -NoProfile -ExecutionPolicy Bypass -File $entryPath -Quiet

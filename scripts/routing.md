@@ -34,6 +34,10 @@ Missing predictions count as failures; unknown IDs are rejected. Store the agent
 model, skill revision, and run date alongside the captured file for repeatability.
 CI runs only the offline baseline and scorer tests; it makes no model calls.
 
+The [2026-11-02 blinded model pilot](../docs/routing-evaluation.md) records actual
+captured predictions and its limits. Preserve historical predictions separately
+from current regression fixtures; do not relabel them when routing rules change.
+
 Availability checks use `scripts/routing-requirements.json`, whose categories and
 referenced skills are checked against the source table. They report each entry or
 conditional route target individually: missing an optional alternative does not

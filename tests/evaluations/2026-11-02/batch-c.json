@@ -1,0 +1,16 @@
+﻿[
+  {"id":"debug","primary_category":"Debug/Fix","entry_skill":"systematic-debugging","reason":"Fixing an existing crash calls for the debugging workflow."},
+  {"id":"test","primary_category":"Test","entry_skill":"test-driven-development","reason":"The requested deliverable is tests for checkout."},
+  {"id":"product","primary_category":"Product","entry_skill":"anthropic-skills:building-product","reason":"Drafting product requirements is explicitly a Product task."},
+  {"id":"project","primary_category":"Project Mgmt","entry_skill":"anthropic-skills:schedule","reason":"Sprint health is a Project Mgmt signal; the source notes limited scrum-specific coverage."},
+  {"id":"database","primary_category":"Database Design","entry_skill":"none","reason":"Query optimization belongs to Database Design, whose tactical database skills auto-surface without a required entry skill."},
+  {"id":"ui","primary_category":"UI/UX Design","entry_skill":"impeccable","reason":"Improving checkout UX calls for practical frontend improvement rather than a style reference."},
+  {"id":"memory","primary_category":"Memory/History","entry_skill":"mem-search","reason":"The user wants to retrieve work from a previous session."},
+  {"id":"llm","primary_category":"LLM/AI App Dev","entry_skill":"brainstorming","reason":"A RAG pipeline is an AI application task, with brainstorming required first."},
+  {"id":"question","primary_category":"Simple Question","entry_skill":"none","reason":"A definition of boolean is a direct factual answer requiring no skill."},
+  {"id":"company-roadmap","primary_category":"Strategy/Business","entry_skill":"anthropic-skills:gtm-foundations","reason":"A company roadmap is business strategy; the business context outweighs the generic review signal."},
+  {"id":"security-compliance","primary_category":"Compliance","entry_skill":"anthropic-skills:compliance-handling","reason":"The explicit security-compliance tiebreaker selects Compliance."},
+  {"id":"git-history","primary_category":"Code Review","entry_skill":"codereview","reason":"The history tiebreaker explicitly routes git history to Code Review."},
+  {"id":"sprint-features","primary_category":"Product","entry_skill":"anthropic-skills:building-product","reason":"The sprint tiebreaker explicitly assigns what to build next sprint to Product."},
+  {"id":"explore-repo","primary_category":"Explore Codebase","entry_skill":"smart-explore","reason":"Exploring a source repository matches Explore Codebase and its explicit tiebreaker."}
+]

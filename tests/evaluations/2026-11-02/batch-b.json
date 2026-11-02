@@ -1,0 +1,16 @@
+﻿[
+  {"id":"refactor","primary_category":"Refactor","entry_skill":"brainstorming","reason":"Restructuring an existing payment module is a refactor, with design required first."},
+  {"id":"ship","primary_category":"Commit/Ship","entry_skill":"finishing-a-development-branch","reason":"Finishing and merging a branch directly matches the shipping workflow."},
+  {"id":"strategy","primary_category":"Strategy/Business","entry_skill":"anthropic-skills:gtm-foundations","reason":"The requested deliverable is business strategy."},
+  {"id":"growth","primary_category":"Business Growth","entry_skill":"anthropic-skills:executing-sales","reason":"Sales pipeline context overrides the generic review and pipeline signals."},
+  {"id":"devops","primary_category":"DevOps/Deploy","entry_skill":"devops","reason":"Terraform deployment is infrastructure work; no complex multi-step scope is specified."},
+  {"id":"binary","primary_category":"Reverse Engineering / Binary Analysis","entry_skill":"reverse-engineer-anything","reason":"Decompilation targets a compiled artifact and explicitly routes to REA."},
+  {"id":"research","primary_category":"Research","entry_skill":"anthropic-skills:deep-research","reason":"Market competitor analysis is research under the analyze-target tiebreaker."},
+  {"id":"whole","primary_category":"Whole-Codebase Analysis","entry_skill":"repomix-pack","reason":"The whole-repository scope requires a snapshot before the audit."},
+  {"id":"discovery","primary_category":"Meta/Skill Discovery","entry_skill":"anthropic-skills:find-skills","reason":"The user asks to locate a skill rather than perform SEO work."},
+  {"id":"product-roadmap","primary_category":"Product","entry_skill":"anthropic-skills:building-product","reason":"Product roadmap context overrides generic review and strategy signals."},
+  {"id":"security-audit","primary_category":"Security","entry_skill":"security-audit","reason":"Security audit explicitly overrides the general audit-to-compliance default."},
+  {"id":"code-docs","primary_category":"Build/Create","entry_skill":"brainstorming","reason":"The source explicitly routes code comments and documenting code to Build/Create."},
+  {"id":"user-test","primary_category":"Product","entry_skill":"anthropic-skills:building-product","reason":"A user test concerns product validation or UX research rather than software tests."},
+  {"id":"explore-options","primary_category":"Build/Create","entry_skill":"brainstorming","reason":"Exploring architecture options is design brainstorming rather than exploring an existing repository."}
+]

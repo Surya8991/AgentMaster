@@ -9,21 +9,21 @@
 param([switch]$Quiet, [switch]$Prune)
 
 $ErrorActionPreference = "Stop"
-$SkillsDir = "$env:USERPROFILE\.claude\skills"
-$CacheDir = "$env:USERPROFILE\.claude\.agentmaster-cache"
-$LockFile = "$CacheDir\.update-lock"
-$LastUpdateFile = "$CacheDir\.last-update"
-$PinsFile = "$CacheDir\agent-master\repos.pins"
-$Manifest = "$CacheDir\agent-master\repos.manifest"
+$SkillsDir = Join-Path $HOME '.claude/skills'
+$CacheDir = Join-Path $HOME '.claude/.agentmaster-cache'
+$LockFile = "$CacheDir/.update-lock"
+$LastUpdateFile = "$CacheDir/.last-update"
+$PinsFile = "$CacheDir/agent-master/repos.pins"
+$Manifest = "$CacheDir/agent-master/repos.manifest"
 $SourceRoot = Split-Path -Parent $PSScriptRoot
-$ProfilesManifest = "$CacheDir\agent-master\profiles.manifest"
+$ProfilesManifest = "$CacheDir/agent-master/profiles.manifest"
 if ($env:AGENTMASTER_LOCKED -eq '1') {
     $Manifest = Join-Path $SourceRoot 'repos.manifest'
     $ProfilesManifest = Join-Path $SourceRoot 'profiles.manifest'
     . (Join-Path $PSScriptRoot 'lib/locked-deps.ps1')
 }
-$OwnersFile = "$CacheDir\.skill-owners"
-$ReportFile = "$CacheDir\last-sync-report.txt"
+$OwnersFile = "$CacheDir/.skill-owners"
+$ReportFile = "$CacheDir/last-sync-report.txt"
 
 $script:Report = @()
 $script:Collisions = @()
@@ -90,7 +90,7 @@ try {
     # pins.local (machine-local, written by rollback) wins over repos.pins.
     function Get-Pin($Name) {
         if ($env:AGENTMASTER_LOCKED -eq "1") { return (Get-LockedPin $Name) }
-        foreach ($f in @("$CacheDir\pins.local", $PinsFile)) {
+        foreach ($f in @("$CacheDir/pins.local", $PinsFile)) {
             if (-not (Test-Path $f)) { continue }
             $line = Select-String -Path $f -Pattern "^$Name=" | Select-Object -First 1
             if ($line) { return ($line.Line -split '=', 2)[1].Trim() }
@@ -127,20 +127,20 @@ try {
     function Backup-RepoSkills($Repo, $PrevSha) {
         # Back up the currently installed skills owned by $Repo before they
         # are overwritten. One generation.
-        $bdir = "$CacheDir\backups\$Repo"
+        $bdir = "$CacheDir/backups/$Repo"
         if (Test-Path $bdir) { Remove-Item $bdir -Recurse -Force }
         New-Item -ItemType Directory -Path $bdir -Force | Out-Null
         $found = 0
         foreach ($line in @(Get-Content $OwnersFile -ErrorAction SilentlyContinue | Where-Object { $_ -match '=' })) {
             $kv = $line -split '=', 2
             if ($kv[1] -ne $Repo) { continue }
-            if (Test-Path "$SkillsDir\$($kv[0])") {
-                Copy-Item -Path "$SkillsDir\$($kv[0])" -Destination "$bdir\$($kv[0])" -Recurse -Force
+            if (Test-Path "$SkillsDir/$($kv[0])") {
+                Copy-Item -Path "$SkillsDir/$($kv[0])" -Destination "$bdir/$($kv[0])" -Recurse -Force
                 $found++
             }
         }
         if ($found -gt 0) {
-            Set-Content -Path "$bdir\.meta" -Value @(
+            Set-Content -Path "$bdir/.meta" -Value @(
                 "sha=$PrevSha",
                 "date=$(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')",
                 "skills=$found"
@@ -169,7 +169,7 @@ try {
     # Emit name|url|source entries from the manifest plus personal repos.local
     function Read-Manifest {
         $entries = @()
-        foreach ($f in @($Manifest, "$CacheDir\repos.local")) {
+        foreach ($f in @($Manifest, "$CacheDir/repos.local")) {
             if (Test-Path $f) {
                 $entries += Get-Content $f | Where-Object { $_ -notmatch '^\s*(#|$)' }
             }
@@ -179,15 +179,15 @@ try {
 
     # --- Profiles: filter which repos/skills sync (see profiles.manifest) ---
     $script:ActiveProfile = "full"
-    if (Test-Path "$CacheDir\.profile") {
-        $p = (Get-Content "$CacheDir\.profile" -ErrorAction SilentlyContinue | Select-Object -First 1)
+    if (Test-Path "$CacheDir/.profile") {
+        $p = (Get-Content "$CacheDir/.profile" -ErrorAction SilentlyContinue | Select-Object -First 1)
         if ($p) { $script:ActiveProfile = $p.Trim() }
     }
 
     function Get-ProfileLines {
         # "profile|repo|glob" lines for the active profile (manifest + profiles.local)
         $lines = @()
-        foreach ($f in @($ProfilesManifest, "$CacheDir\profiles.local")) {
+        foreach ($f in @($ProfilesManifest, "$CacheDir/profiles.local")) {
             if (Test-Path $f) {
                 $lines += Get-Content $f | Where-Object { $_ -notmatch '^\s*(#|$)' }
             }
@@ -242,7 +242,7 @@ try {
                 # Only real skills (must carry a SKILL.md). The legacy `-or $SkillSource -eq "skills"`
                 # clause was removed to match update.sh — it dragged in non-skill dirs like
                 # caveman's `generated/` (no SKILL.md), leaving a permanent doctor FAIL on Windows.
-                if ((Test-Path "$($_.FullName)\SKILL.md") -or (Test-Path "$($_.FullName)\skill.md")) {
+                if ((Test-Path "$($_.FullName)/SKILL.md") -or (Test-Path "$($_.FullName)/skill.md")) {
                     if (Test-SkillInProfile $Name $_.Name) {
                         if (Copy-Skill $_.FullName $_.Name $Name) { $count++ }
                     }
@@ -255,16 +255,16 @@ try {
 
     function Update-Repo {
         param($Name, $RepoUrl, $SkillSource)
-        $cachePath = "$CacheDir\$Name"
+        $cachePath = "$CacheDir/$Name"
         $pin = Get-Pin $Name
         if ($env:AGENTMASTER_LOCKED -eq '1') {
             Assert-LockedCheckout $Name $cachePath
-            $n = Sync-Skills $Name "$cachePath\$SkillSource" $SkillSource
+            $n = Sync-Skills $Name "$cachePath/$SkillSource" $SkillSource
             Add-Report "${Name}: locked to $pin ($n skills)"
             return
         }
 
-        if (Test-Path "$cachePath\.git") {
+        if (Test-Path "$cachePath/.git") {
             $beforeFull = git -C $cachePath rev-parse HEAD 2>$null
             if ($pin) {
                 # Pinned: fetch and check out the exact commit, never track HEAD
@@ -275,7 +275,7 @@ try {
                     if ($beforeFull -and $afterFull -and $beforeFull -ne $afterFull) {
                         Backup-RepoSkills $Name $beforeFull
                     }
-                    $n = Sync-Skills $Name "$cachePath\$SkillSource" $SkillSource
+                    $n = Sync-Skills $Name "$cachePath/$SkillSource" $SkillSource
                     Add-Report "${Name}: pinned to $($pin.Substring(0,7)) ($n skills)"
                 }
                 return
@@ -292,13 +292,13 @@ try {
             if ($before -eq $after) {
                 # Still sync: copies are idempotent and this keeps ownership
                 # records complete even when nothing changed upstream.
-                Sync-Skills $Name "$cachePath\$SkillSource" $SkillSource | Out-Null
+                Sync-Skills $Name "$cachePath/$SkillSource" $SkillSource | Out-Null
                 Add-Report "${Name}: up to date ($after)"
                 return
             }
             # Back up the outgoing versions before overwriting (enables rollback)
             if ($beforeFull) { Backup-RepoSkills $Name $beforeFull }
-            $n = Sync-Skills $Name "$cachePath\$SkillSource" $SkillSource
+            $n = Sync-Skills $Name "$cachePath/$SkillSource" $SkillSource
             Add-Report "${Name}: updated $before -> $after ($n skills)"
             return
         }
@@ -313,7 +313,7 @@ try {
                 $script:SyncFailures++; Add-Report "${Name}: pin $pin unavailable; not synced"; return
             }
         }
-        $n = Sync-Skills $Name "$cachePath\$SkillSource" $SkillSource
+        $n = Sync-Skills $Name "$cachePath/$SkillSource" $SkillSource
         if ($pin) {
             Add-Report "${Name}: cloned, pinned to $($pin.Substring(0,7)) ($n skills)"
         } else {
@@ -324,11 +324,11 @@ try {
     New-Item -ItemType Directory -Path $SkillsDir -Force | Out-Null
 
     # Self-update first so a freshly pushed repos.manifest/repos.pins takes effect this run
-    $amCache = "$CacheDir\agent-master"
+    $amCache = "$CacheDir/agent-master"
     if ($env:AGENTMASTER_LOCKED -eq '1') {
         $amCache = $SourceRoot
         Add-Report 'agent-master: locked apply uses validated invocation source; self-update skipped'
-    } elseif (-not (Test-Path "$amCache\.git")) {
+    } elseif (-not (Test-Path "$amCache/.git")) {
         # A cache dir without .git (e.g. from an old zip-based install) can't be
         # pulled — and git refuses to clone into a non-empty dir — so reset it.
         if (Test-Path $amCache) { Remove-Item $amCache -Recurse -Force }
@@ -381,9 +381,9 @@ try {
 
     if ($env:AGENTMASTER_LOCKED -eq '1') { Initialize-LockedDependencies }
 
-    if (Test-Path "$amCache\skills") {
+    if (Test-Path "$amCache/skills") {
         Add-LifecycleRepo 'agent-master'
-        Get-ChildItem "$amCache\skills" -Directory | ForEach-Object {
+        Get-ChildItem "$amCache/skills" -Directory | ForEach-Object {
             if ((Test-Path "$($_.FullName)/SKILL.md") -or (Test-Path "$($_.FullName)/skill.md")) { Add-LifecycleSeen 'agent-master' $_.Name }
             if (Test-SkillInProfile "agent-master" $_.Name) {
                 [void](Copy-Skill $_.FullName $_.Name "agent-master")
@@ -411,8 +411,8 @@ try {
     if ($script:SyncFailures -eq 0) { Invoke-LifecyclePrune ([bool]$Prune) }
 
     # Regenerate unrouted-skills.txt: installed skills never mentioned in the routing table
-    $routingTable = "$amCache\skills\agent-master\SKILL.md"
-    $unroutedFile = "$CacheDir\unrouted-skills.txt"
+    $routingTable = "$amCache/skills/agent-master/SKILL.md"
+    $unroutedFile = "$CacheDir/unrouted-skills.txt"
     if (Test-Path $routingTable) {
         $tableText = Get-Content $routingTable -Raw
         $unroutedLines = @()
@@ -425,7 +425,7 @@ try {
                       ($dir.Name.Length -ge 6 -and $tableText -match ("\b" + $esc + "\b"))
             if ($routed) { continue }
             $desc = ""
-            $md = "$($dir.FullName)\SKILL.md"
+            $md = "$($dir.FullName)/SKILL.md"
             if (Test-Path $md) {
                 $content = Get-Content $md -TotalCount 30
                 for ($i = 0; $i -lt $content.Count; $i++) {

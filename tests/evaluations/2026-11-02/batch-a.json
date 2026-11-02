@@ -1,0 +1,17 @@
+[
+  {"id":"build","primary_category":"Build/Create","entry_skill":"brainstorming","reason":"Creating an authentication service is new code; the Build/Create workflow starts with brainstorming."},
+  {"id":"review","primary_category":"Code Review","entry_skill":"codereview","reason":"The request explicitly asks for code review without a PR workflow qualification."},
+  {"id":"marketing","primary_category":"Marketing","entry_skill":"anthropic-skills:running-marketing","reason":"Landing page copy is marketing content."},
+  {"id":"finance","primary_category":"Finance","entry_skill":"anthropic-skills:xlsx","reason":"Financial forecasts route to spreadsheet modeling; the skill explicitly notes limited dedicated finance expertise."},
+  {"id":"compliance","primary_category":"Compliance","entry_skill":"anthropic-skills:compliance-handling","reason":"GDPR is a regulatory compliance request, with specialized regulatory review beyond the loaded coverage."},
+  {"id":"security","primary_category":"Security","entry_skill":"security-audit","reason":"A vulnerability scan explicitly targets security weaknesses."},
+  {"id":"docs","primary_category":"Documentation","entry_skill":"anthropic-skills:pdf","reason":"The requested documentation output format is PDF."},
+  {"id":"explore","primary_category":"Explore Codebase","entry_skill":"smart-explore","reason":"Explaining code structure is source-code exploration without explicit whole-repository analysis scope."},
+  {"id":"dashboard","primary_category":"Task Dashboard","entry_skill":"task-viewer","reason":"Opening the task dashboard directly matches the dashboard category."},
+  {"id":"fix-copy","primary_category":"Marketing","entry_skill":"anthropic-skills:running-marketing","reason":"The explicit fix-copy tiebreaker routes text improvement to Marketing."},
+  {"id":"code-audit","primary_category":"Code Review","entry_skill":"codereview","reason":"The code-audit tiebreaker overrides the generic Compliance audit default."},
+  {"id":"container-component","primary_category":"Build/Create","entry_skill":"brainstorming","reason":"Building a container component matches the component tiebreaker for new code."},
+  {"id":"ab-test","primary_category":"Marketing","entry_skill":"anthropic-skills:running-marketing","reason":"The A/B-test tiebreaker selects Marketing or Product; absent product-research context, marketing experimentation is the best fit."},
+  {"id":"landing-build","primary_category":"Build/Create","entry_skill":"brainstorming","reason":"The build-landing-page tiebreaker selects Build/Create with Marketing as a supporting domain."},
+  {"id":"revenue-pipeline","primary_category":"Business Growth","entry_skill":"anthropic-skills:executing-sales","reason":"The revenue-pipeline tiebreaker explicitly selects Business Growth."}
+]
