@@ -8,8 +8,8 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/Skills-125+-10B981?style=for-the-badge" alt="125+ Skills">
-  <img src="https://img.shields.io/badge/Categories-26-F59E0B?style=for-the-badge" alt="26 Categories">
+  <img src="https://img.shields.io/badge/Skills-profile%20based-10B981?style=for-the-badge" alt="Profile-based skills">
+  <img src="https://img.shields.io/badge/Categories-27-F59E0B?style=for-the-badge" alt="27 Categories">
   <img src="https://img.shields.io/badge/Platforms-11-6366F1?style=for-the-badge" alt="11 Platforms">
   <img src="https://img.shields.io/badge/Token_Savings-~75%25-EF4444?style=for-the-badge" alt="75% Token Savings">
 </p>
@@ -94,7 +94,7 @@ bash scripts/install-platform.sh --platform codex    # or cursor, windsurf, etc.
 bash scripts/install-platform.sh --platform all
 ```
 
-The installer clones 5 dependency repos, converts skills to platform-specific formats, and skips anything already installed.
+The full profile uses 12 dependency repositories declared in `repos.manifest`. Install profiles select subsets; optional repositories stay disabled unless explicitly enabled. Platform installers generate the supported configuration formats.
 
 **Restart your IDE/agent after installation.**
 
@@ -145,9 +145,11 @@ AgentMaster automatically pulls latest versions from all dependency repos on fir
 
 Dependency repos are declared in `repos.manifest` (one line per repo: `name|url|skill_source`). Add personal repos in `~/.claude/.agentmaster-cache/repos.local` (same format) — they survive self-updates. Pin any repo to an exact commit via `repos.pins` (`name=sha`). Every sync writes a report to `~/.claude/.agentmaster-cache/last-sync-report.txt` including before→after commits and skill-name collisions between repos.
 
+Sync copy failures are recorded in the report and return a nonzero exit status without advancing the cooldown timestamp. Only successful copies update ownership and counts. Update locks identify their runtime and process; live owners are never expired by age. Unknown, legacy, or other-runtime locks are preserved conservatively. If such a lock blocks updates, confirm no updater is running before manually removing `~/.claude/.agentmaster-cache/.update-lock` (and any abandoned `.update-lock.reap` directory).
+
 ### Install Profiles
 
-Don't want all ~195 skills? Install a subset: `bash install.sh --profile dev` (or `.\install.ps1 -Profile dev`). Shipped profiles in `profiles.manifest`: **dev** (compression + superpowers workflow + session memory + frontend design + wshobson/davila7 tactical + all custom skills), **business** (compression + orchestrator + repo packing), **minimal** (orchestrator + compression), and the default **full** (everything). Switch anytime with `/agent-master profile <name>` — excluded skills are pruned (only ones AgentMaster installed; your own skills are never touched) and the subset resyncs. Profiles persist across auto-updates; define your own in `~/.claude/.agentmaster-cache/profiles.local`. The orchestrator skill itself is always installed, and an unknown profile name falls back to full rather than uninstalling anything.
+Want a smaller skill collection? Install a subset: `bash install.sh --profile dev` (or `.\install.ps1 -Profile dev`). Shipped profiles in `profiles.manifest`: **dev** (compression + superpowers workflow + session memory + frontend design + wshobson/davila7 tactical + all custom skills), **business** (compression + orchestrator + repo packing), **minimal** (orchestrator + compression), and the default **full** (everything). Switch anytime with `/agent-master profile <name>` — excluded skills are pruned (only ones AgentMaster installed; your own skills are never touched) and the subset resyncs. Profiles persist across auto-updates; define your own in `~/.claude/.agentmaster-cache/profiles.local`. The orchestrator skill itself is always installed, and an unknown profile name falls back to full rather than uninstalling anything.
 
 ### Skill Rollback
 
@@ -195,7 +197,7 @@ Three layers that **stack, never compete**:
 │  DOMAIN LAYER: anthropic-skills (business)  │
 │  + wshobson/davila7/impeccable (technical)  │
 │  + custom (devops, security-audit).         │
-│  ~195 installed skills provide expertise.   │
+│  Installed skills provide expertise.       │
 └─────────────────────────────────────────────┘
 ```
 
@@ -203,7 +205,7 @@ Three layers that **stack, never compete**:
 
 ## Routing Table
 
-### 26 Categories
+### 27 Categories
 
 | Category | Signal Words | Routes To |
 |----------|-------------|-----------|
@@ -223,6 +225,7 @@ Three layers that **stack, never compete**:
 | **Database Design** | schema, migration, query optimization, SQL, Postgres | davila7 `database` (sql-pro, database-optimizer, postgresql-optimization) |
 | **DevOps/Deploy** | Docker, CI/CD, Terraform, AWS, Kubernetes | `devops` + wshobson `cicd-automation`/`kubernetes-operations` |
 | **Security** | OWASP, XSS, vulnerability, pen test | `security-audit` + wshobson `security-scanning` (STRIDE, SAST) |
+| **Reverse Engineering / Binary Analysis** | decompile, binary, firmware, APK, IDA | `reverse-engineer-anything` (REA), or `idapython`; separately configured tools required |
 | **UI/UX Design** | design/polish/audit UI, wireframe, color, layout, animation | `impeccable` (frontend craft) or `anthropic-skills:ui-ux-pro-max` (reference) |
 | **Documentation** | write docs, generate PDF/DOCX | `anthropic-skills:docx/pdf/pptx/xlsx` |
 | **Research** | analyze market, deep dive, investigate | `anthropic-skills:deep-research` |
@@ -231,6 +234,7 @@ Three layers that **stack, never compete**:
 | **Explore Codebase** | code structure, find functions | `smart-explore` |
 | **Whole-Codebase Analysis** | entire repo, full audit, architecture review | `repomix-pack` → analysis skill |
 | **Task Dashboard** | task board, kanban, visualize tasks | `task-viewer` (launches claude-task-viewer) |
+| **Meta/Skill Discovery** | find a skill, which skill covers | `anthropic-skills:find-skills` |
 | **Simple Question** | factual question, no action | direct answer (no routing) |
 
 ### Smart Tiebreakers
@@ -277,8 +281,12 @@ When words match multiple categories, AgentMaster resolves automatically:
 | [anthropics/skills](https://github.com/anthropics/skills) | Official Anthropic skills | `docx`, `pdf`, `pptx`, `xlsx`, `frontend-design`, `mcp-builder`, `skill-creator`, `webapp-testing`, +9 more |
 | [wshobson/agents](https://github.com/wshobson/agents) | Technical tactical (15 curated subsets) | `backend-development`, `python-development`, `kubernetes-operations`, `cicd-automation`, `security-scanning`, `llm-application-dev`, `javascript-typescript`, `frontend-mobile-development`, `ui-design`, `cloud-infrastructure`, `observability-monitoring`, `incident-response`, `developer-essentials`, `data-engineering`, `documentation-generation` — 96 skills |
 | [davila7/claude-code-templates](https://github.com/davila7/claude-code-templates) | DB + git tactical (2 curated subsets) | `database`, `git` — 16 skills |
+| [REA](https://github.com/morluto/rea) | Binary analysis | `reverse-engineer-anything`; separate MCP setup required |
+| [debug-skill](https://github.com/AlmogBaku/debug-skill) | Live debugging | `debugging-code`; separate DAP CLI required |
+| [ida-pro-mcp](https://github.com/mrexodia/ida-pro-mcp) | IDA scripting | `idapython`; IDA Pro and MCP setup required |
+| [agent-browser](https://github.com/vercel-labs/agent-browser) | Browser automation | `core`; separate CLI required |
 | [AgentMaster](https://github.com/Surya8991/AgentMaster) *(self-update)* | Keeps orchestrator current | auto-synced via `~/.claude/.agentmaster-cache/agent-master` |
-| **Total** | | **~195 skills** (full profile) |
+| **Total** | | Depends on profile and upstream revisions; use `/agent-master list` for the installed inventory. |
 
 ### Whole-Codebase Snapshots (Repomix)
 
@@ -328,7 +336,7 @@ When `/caveman` is active, AgentMaster automatically:
 ```
 AgentMaster/
 ├── skills/                          # Source of truth (Claude Code format)
-│   ├── agent-master/SKILL.md        #   Meta-orchestrator (26 categories)
+│   ├── agent-master/SKILL.md        #   Meta-orchestrator (27 categories)
 │   ├── codereview/SKILL.md          #   Blunt code review (/codereview)
 │   ├── devops/SKILL.md              #   CI/CD, Docker, Terraform, deployment
 │   ├── repomix-pack/SKILL.md        #   Whole-codebase snapshot via repomix

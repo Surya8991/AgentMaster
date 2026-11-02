@@ -38,17 +38,38 @@ report() { log "  $1"; REPORT="$REPORT$1
 mkdir -p "$CACHE_DIR"
 touch "$OWNERS_FILE"
 
-# Clear stale locks (crashed runs), then take the lock atomically:
-# noclobber makes the redirect fail if the file already exists.
-if [ -f "$LOCK_FILE" ]; then
-  lock_age=$(( $(date +%s) - $(date -r "$LOCK_FILE" +%s 2>/dev/null || echo 0) ))
-  [ "$lock_age" -ge 300 ] && rm -f "$LOCK_FILE"
-fi
-if ! ( set -o noclobber; : > "$LOCK_FILE" ) 2>/dev/null; then
-  log "Update already running. Skipping."
+# Lock owners include their runtime: Bash and PowerShell PIDs are not interchangeable.
+# Never expire a live owner merely because a download takes more than five minutes.
+LOCK_OWNER="bash:$$"
+release_lock() {
+  [ "$(cat "$LOCK_FILE" 2>/dev/null)" != "$LOCK_OWNER" ] || rm -f "$LOCK_FILE"
+}
+acquire_lock() {
+  local owner pid
+  if [ -f "$LOCK_FILE" ]; then
+    # Serialize dead-owner reclamation. Unknown/legacy owners are left untouched.
+    if mkdir "$LOCK_FILE.reap" 2>/dev/null; then
+      owner=$(cat "$LOCK_FILE" 2>/dev/null || true)
+      case "$owner" in
+        bash:[0-9]*)
+          pid=${owner#bash:}
+          if [[ "$pid" =~ ^[1-9][0-9]*$ ]] && ! kill -0 "$pid" 2>/dev/null && ! ps -p "$pid" >/dev/null 2>&1; then
+            rm -f "$LOCK_FILE"
+          fi ;;
+      esac
+      rmdir "$LOCK_FILE.reap"
+    else
+      return 1
+    fi
+  fi
+  ( set -o noclobber; printf '%s\n' "$LOCK_OWNER" > "$LOCK_FILE" ) 2>/dev/null
+}
+if ! acquire_lock; then
+  log "Update lock is held (or has an unknown owner). Skipping."
   exit 0
 fi
-trap 'rm -f "$LOCK_FILE"' EXIT
+trap release_lock EXIT
+SYNC_FAILURES=0
 
 # Skip if updated within last 6 hours
 if [ -f "$LAST_UPDATE_FILE" ]; then
@@ -156,6 +177,18 @@ skill_in_profile() {
   return 1
 }
 
+# Copy contents into the existing destination, not a nested skill/skill directory.
+copy_skill() {
+  local source="$1" skill="$2" repo="$3"
+  if mkdir -p "$SKILLS_DIR/$skill" && cp -R "$source/." "$SKILLS_DIR/$skill/"; then
+    record_owner "$skill" "$repo"
+    return 0
+  fi
+  SYNC_FAILURES=$((SYNC_FAILURES + 1))
+  report "$repo: FAILED copying $skill; ownership unchanged"
+  return 1
+}
+
 sync_skills() {
   # sync_skills <repo_name> <src_dir> <skill_source_label>
   # Sets SYNCED_COUNT (no command substitution — a subshell would lose
@@ -179,9 +212,9 @@ sync_skills() {
     # caveman's `generated/` (which has no SKILL.md) and leaving a permanent doctor FAIL.
     if [ -f "$skill_dir/SKILL.md" ] || [ -f "$skill_dir/skill.md" ]; then
       skill_in_profile "$name" "$skill_name" || continue
-      cp -r "$skill_dir" "$SKILLS_DIR/$skill_name" 2>/dev/null || true
-      record_owner "$skill_name" "$name"
-      count=$((count + 1))
+      if copy_skill "$skill_dir" "$skill_name" "$name"; then
+        count=$((count + 1))
+      fi
     fi
   done
   SYNCED_COUNT=$count
@@ -325,8 +358,7 @@ if [ -d "$AM_CACHE/skills" ]; then
     [ ! -d "$skill_dir" ] && continue
     skill_name=$(basename "$skill_dir")
     skill_in_profile "agent-master" "$skill_name" || continue
-    cp -r "$skill_dir" "$SKILLS_DIR/$skill_name" 2>/dev/null || true
-    record_owner "$skill_name" "agent-master"
+    copy_skill "$skill_dir" "$skill_name" "agent-master" || true
   done
 fi
 
@@ -377,7 +409,11 @@ if [ -f "$ROUTING_TABLE" ]; then
 fi
 
 # Record update timestamp
-date +%s > "$LAST_UPDATE_FILE"
+if [ "$SYNC_FAILURES" -eq 0 ]; then
+  date +%s > "$LAST_UPDATE_FILE"
+else
+  report "Sync incomplete: $SYNC_FAILURES copy failures; cooldown not advanced"
+fi
 
 # Write sync report
 {
@@ -392,5 +428,9 @@ date +%s > "$LAST_UPDATE_FILE"
 } > "$REPORT_FILE"
 
 log ""
+if [ "$SYNC_FAILURES" -gt 0 ]; then
+  log "Sync failed. Report: $REPORT_FILE"
+  exit 1
+fi
 log "All skills synced. Total: $(ls -d "$SKILLS_DIR/"*/ 2>/dev/null | wc -l) skills"
 log "Report: $REPORT_FILE"

@@ -28,18 +28,42 @@ function Add-Report($line) { Log "  $line"; $script:Report += $line }
 New-Item -ItemType Directory -Path $CacheDir -Force | Out-Null
 if (-not (Test-Path $OwnersFile)) { New-Item -ItemType File -Path $OwnersFile | Out-Null }
 
-# Clear stale locks (crashed runs), then take the lock atomically:
-# New-Item without -Force fails if the file already exists.
-if (Test-Path $LockFile) {
-    $lockAge = ((Get-Date) - (Get-Item $LockFile).LastWriteTime).TotalSeconds
-    if ($lockAge -ge 300) { Remove-Item $LockFile -Force -ErrorAction SilentlyContinue }
+# Runtime-qualified owners prevent mixing Windows and Bash PID namespaces.
+$LockOwner = "powershell:$PID"
+function Remove-OwnedLock {
+    if ((Test-Path -LiteralPath $LockFile) -and
+        ([IO.File]::ReadAllText($LockFile).Trim() -eq $LockOwner)) {
+        Remove-Item -LiteralPath $LockFile -Force
+    }
 }
-try {
-    New-Item -ItemType File -Path $LockFile -ErrorAction Stop | Out-Null
-} catch {
-    Log "Update already running. Skipping."
+function Get-UpdateLock {
+    if (Test-Path -LiteralPath $LockFile) {
+        # Reapers serialize on a separate directory; never expire a live owner.
+        $reaper = "$LockFile.reap"
+        try { New-Item -ItemType Directory -Path $reaper -ErrorAction Stop | Out-Null }
+        catch { return $false }
+        try {
+            $owner = if (Test-Path -LiteralPath $LockFile) { [IO.File]::ReadAllText($LockFile).Trim() } else { "" }
+            if ($owner -match '^powershell:([1-9][0-9]*)$') {
+                $ownerProcess = Get-Process -Id ([int]$matches[1]) -ErrorAction SilentlyContinue
+                if (-not $ownerProcess) { Remove-Item -LiteralPath $LockFile -Force }
+            }
+        } finally { Remove-Item -LiteralPath $reaper -Force }
+    }
+    try {
+        $stream = [IO.File]::Open($LockFile, [IO.FileMode]::CreateNew, [IO.FileAccess]::Write, [IO.FileShare]::Read)
+        try {
+            $bytes = [Text.Encoding]::UTF8.GetBytes($LockOwner + "`n")
+            $stream.Write($bytes, 0, $bytes.Length)
+        } finally { $stream.Dispose() }
+        return $true
+    } catch { return $false }
+}
+if (-not (Get-UpdateLock)) {
+    Log "Update lock is held (or has an unknown owner). Skipping."
     exit 0
 }
+$script:SyncFailures = 0
 
 try {
     # Skip if updated within last 6 hours
@@ -166,6 +190,26 @@ try {
         return $false
     }
 
+    function Copy-Skill($Source, $Skill, $Repo) {
+        try {
+            $destination = Join-Path $SkillsDir $Skill
+            if ((Test-Path -LiteralPath $destination) -and -not (Test-Path -LiteralPath $destination -PathType Container)) {
+                throw "Destination is not a directory: $destination"
+            }
+            New-Item -ItemType Directory -Path $destination -Force -ErrorAction Stop | Out-Null
+            # Copy children explicitly so an existing target never becomes skill/skill.
+            Get-ChildItem -LiteralPath $Source -Force -ErrorAction Stop | ForEach-Object {
+                Copy-Item -LiteralPath $_.FullName -Destination $destination -Recurse -Force -ErrorAction Stop
+            }
+            Record-Owner $Skill $Repo
+            return $true
+        } catch {
+            $script:SyncFailures++
+            Add-Report "${Repo}: FAILED copying ${Skill}; ownership unchanged: $($_.Exception.Message)"
+            return $false
+        }
+    }
+
     function Sync-Skills($Name, $Src, $SkillSource) {
         $count = 0
         if (Test-Path $Src) {
@@ -184,9 +228,7 @@ try {
                 # caveman's `generated/` (no SKILL.md), leaving a permanent doctor FAIL on Windows.
                 if ((Test-Path "$($_.FullName)\SKILL.md") -or (Test-Path "$($_.FullName)\skill.md")) {
                     if (Test-SkillInProfile $Name $_.Name) {
-                        Copy-Item -Path $_.FullName -Destination "$SkillsDir\$($_.Name)" -Recurse -Force
-                        Record-Owner $_.Name $Name
-                        $count++
+                        if (Copy-Skill $_.FullName $_.Name $Name) { $count++ }
                     }
                 }
             }
@@ -316,8 +358,7 @@ try {
     if (Test-Path "$amCache\skills") {
         Get-ChildItem "$amCache\skills" -Directory | ForEach-Object {
             if (Test-SkillInProfile "agent-master" $_.Name) {
-                Copy-Item -Path $_.FullName -Destination "$SkillsDir\$($_.Name)" -Recurse -Force
-                Record-Owner $_.Name "agent-master"
+                [void](Copy-Skill $_.FullName $_.Name "agent-master")
             }
         }
     }
@@ -377,7 +418,11 @@ try {
     }
 
     # Record timestamp
-    [int](Get-Date -UFormat %s) | Out-File $LastUpdateFile -Force
+    if ($script:SyncFailures -eq 0) {
+        [int](Get-Date -UFormat %s) | Out-File $LastUpdateFile -Force
+    } else {
+        Add-Report "Sync incomplete: $($script:SyncFailures) copy failures; cooldown not advanced"
+    }
 
     # Write sync report
     $reportLines = @("AgentMaster sync report - $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')")
@@ -392,8 +437,12 @@ try {
 
     $count = (Get-ChildItem $SkillsDir -Directory).Count
     Log ""
+    if ($script:SyncFailures -gt 0) {
+        Log "Sync failed. Report: $ReportFile"
+        exit 1
+    }
     Log "All skills synced. Total: $count skills"
     Log "Report: $ReportFile"
 } finally {
-    Remove-Item $LockFile -Force -ErrorAction SilentlyContinue
+    Remove-OwnedLock
 }

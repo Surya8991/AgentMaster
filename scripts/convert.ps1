@@ -21,38 +21,15 @@ $ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
 $RepoDir   = Split-Path -Parent $ScriptDir
 $SkillsDir = Join-Path $RepoDir "skills"
 
-function Get-Field([string]$file, [string]$field) {
-  $inFm = $false
-  foreach ($line in Get-Content $file) {
-    if ($line -eq "---") { if ($inFm) { break } else { $inFm = $true; continue } }
-    if ($inFm -and $line -match "^$([regex]::Escape($field)):\s*(.*)$") {
-      return ($matches[1] -replace '^"(.*)"$', '$1')
-    }
-  }
-  return ""
-}
-function Get-Body([string]$file) {
-  $c = 0; $out = New-Object System.Collections.Generic.List[string]
-  foreach ($line in Get-Content $file) {
-    if ($line -eq "---") { $c++; continue }
-    if ($c -ge 2) { $out.Add($line) }
-  }
-  return ($out -join "`n")
-}
+. (Join-Path $ScriptDir "lib/skill-render.ps1")
+
 function Want([string]$t) { return ($Tool -eq $t -or $Tool -eq "all") }
-function WriteFile([string]$path, [string]$content) {
-  $dir = Split-Path -Parent $path
-  if (-not (Test-Path $dir)) { New-Item -ItemType Directory -Force -Path $dir | Out-Null }
-  Set-Content -Path $path -Value $content -Encoding utf8 -NoNewline
-}
 
 # Reset aggregate files
 if (Want "aider")   { WriteFile (Join-Path $RepoDir "CONVENTIONS.md") "" }
 if (Want "copilot") { WriteFile (Join-Path $RepoDir ".github\copilot-instructions.md") "" }
 
-$today = Get-Date -Format "yyyy-MM-dd"
-
-Get-ChildItem -Directory $SkillsDir | ForEach-Object {
+Get-ChildItem -Directory $SkillsDir | Sort-Object Name | ForEach-Object {
   $skillFile = Join-Path $_.FullName "SKILL.md"
   if (-not (Test-Path $skillFile)) { return }
   $sk   = $_.Name
@@ -62,43 +39,43 @@ Get-ChildItem -Directory $SkillsDir | ForEach-Object {
   Write-Output "Converting: $sk"
 
   if (Want "cursor") {
-    WriteFile (Join-Path $RepoDir ".cursor\rules\$sk.mdc") "---`ndescription: `"$desc`"`nglobs:`nalwaysApply: false`n---`n$body`n"
+    WriteFile (Join-Path $RepoDir ".cursor\rules\$sk.mdc") (Render-Skill "cursor" $name $desc $body)
     Write-Output "  + .cursor/rules/$sk.mdc"
   }
   if (Want "windsurf") {
-    WriteFile (Join-Path $RepoDir ".windsurf\skills\$sk\SKILL.md") "---`nname: `"$name`"`ndescription: `"$desc`"`ntrigger: always_on`n---`n$body`n"
+    WriteFile (Join-Path $RepoDir ".windsurf\skills\$sk\SKILL.md") (Render-Skill "windsurf" $name $desc $body)
     Write-Output "  + .windsurf/skills/$sk/SKILL.md"
   }
   if (Want "cline") {
-    WriteFile (Join-Path $RepoDir ".clinerules\$sk.md") "$body`n"
+    WriteFile (Join-Path $RepoDir ".clinerules\$sk.md") (Render-Skill "cline" $name $desc $body)
     Write-Output "  + .clinerules/$sk.md"
   }
   if (Want "codex") {
-    WriteFile (Join-Path $RepoDir ".codex\skills\$sk\SKILL.md") ((Get-Content $skillFile -Raw))
+    WriteFile (Join-Path $RepoDir ".codex\skills\$sk\SKILL.md") ((Get-Content -LiteralPath $skillFile -Raw -Encoding utf8))
     Write-Output "  + .codex/skills/$sk/SKILL.md"
   }
   if (Want "gemini") {
-    WriteFile (Join-Path $RepoDir ".gemini\skills\$sk\SKILL.md") ((Get-Content $skillFile -Raw))
+    WriteFile (Join-Path $RepoDir ".gemini\skills\$sk\SKILL.md") ((Get-Content -LiteralPath $skillFile -Raw -Encoding utf8))
     Write-Output "  + .gemini/skills/$sk/SKILL.md"
   }
   if (Want "antigravity") {
-    WriteFile (Join-Path $RepoDir ".antigravity\skills\$sk\SKILL.md") "---`nname: `"$name`"`ndescription: `"$desc`"`nrisk: low`nsource: community`ndate_added: $today`n---`n$body`n"
+    WriteFile (Join-Path $RepoDir ".antigravity\skills\$sk\SKILL.md") (Render-Skill "antigravity" $name $desc $body)
     Write-Output "  + .antigravity/skills/$sk/SKILL.md"
   }
   if (Want "opencode") {
-    WriteFile (Join-Path $RepoDir ".opencode\skills\$sk\SKILL.md") "---`nname: `"$name`"`ndescription: `"$desc`"`ncompatibility: opencode`n---`n$body`n"
+    WriteFile (Join-Path $RepoDir ".opencode\skills\$sk\SKILL.md") (Render-Skill "opencode" $name $desc $body)
     Write-Output "  + .opencode/skills/$sk/SKILL.md"
   }
   if (Want "augment") {
-    WriteFile (Join-Path $RepoDir ".augment\rules\$sk.md") "---`ntype: auto`ndescription: `"$desc`"`n---`n$body`n"
+    WriteFile (Join-Path $RepoDir ".augment\rules\$sk.md") (Render-Skill "augment" $name $desc $body)
     Write-Output "  + .augment/rules/$sk.md"
   }
   if (Want "aider") {
-    Add-Content -Path (Join-Path $RepoDir "CONVENTIONS.md") -Encoding utf8 -Value "`n---`n`n## $name`n> $desc`n`n$body"
+    WriteFile (Join-Path $RepoDir "CONVENTIONS.md") (Render-Skill "aider" $name $desc $body) -Append
     Write-Output "  + CONVENTIONS.md (appended $sk)"
   }
   if (Want "copilot") {
-    Add-Content -Path (Join-Path $RepoDir ".github\copilot-instructions.md") -Encoding utf8 -Value "`n## $name`n$desc`n`n$body"
+    WriteFile (Join-Path $RepoDir ".github\copilot-instructions.md") (Render-Skill "copilot" $name $desc $body) -Append
     Write-Output "  + .github/copilot-instructions.md (appended $sk)"
   }
 }

@@ -3,14 +3,9 @@
 > Single source of truth for this project. Lists what's built, what's planned,
 > and how the system fits together. Update this file with every meaningful change.
 
-**Last updated:** 2026-09-09. **§1** a large maintenance + capability session: routed the
-long tail of installed skills (Extended Skill Clusters, 86 → 32 unrouted), added a
-project-doc scaffolder (`/agent-master scaffold`), closed the local-dev friction
-(`dev-sync.sh` + `.dev` marker), reached full `.sh`/`.ps1` parity, added tests + CI
-(shellcheck + smoke), wired 9 collision-free wshobson subsets (+50 skills → ~195 total),
-fixed an installer bug that dragged in a non-skill `generated/` folder, codified the
-session's conventions into `RULES.md`, synced all doc counts, and fixed CI line-ending
-failures (CRLF → LF via `.gitattributes`) plus bumped `actions/checkout` to v5.
+**Last updated:** 2026-11-02. Reliability maintenance: updater copy-failure
+reporting and process-owned locks, shared PowerShell rendering, cross-platform
+regression coverage, and documentation reconciliation.
 
 ## Table of contents
 - **STATUS** — S1 Current plan · S2 Ongoing · S3 Pending · S4 Blocked · S5 Done · S6 Decisions log · S7 Verification status
@@ -21,7 +16,7 @@ failures (CRLF → LF via `.gitattributes`) plus bumped `actions/checkout` to v5
 # STATUS
 
 ## S1. Current plan
-- Stable. No active work item. Repo is green on CI; `main` = `origin/main`.
+- Reliability maintenance complete locally. Remote CI status has not been checked in this session.
 
 ## S2. Ongoing
 - (none)
@@ -35,6 +30,8 @@ failures (CRLF → LF via `.gitattributes`) plus bumped `actions/checkout` to v5
 
 ## S5. Done
 Newest first.
+- **2026-11-02** - Fixed sync accounting for failed copies and replaced age-only lock expiry with owner checks. Unified PowerShell rendering, removed date-dependent output, added output-parity and updater regression checks, and included Antigravity in drift detection. Reconciled documentation with 27 routing categories and 12 active dependency repositories; added a count consistency check.
+- **2026-10-19** - `9c34232`: shared Bash platform renderers and installer/updater parity fixes. `7552b73`: reverse-engineering routing, niche dependency integrations, optional science/social-simulation repositories, and multi-pattern manifest exclusions.
 - **2026-09-09 §1** —
   - **CI line endings** — 3 edited scripts (`doctor.sh`, `routes.sh`, `update.sh`) had CRLF blobs that failed shellcheck (SC1017) and `bash -n` on the Linux runner. Added `.gitattributes` (`* text=auto eol=lf`, `*.sh eol=lf`, `*.ps1 eol=crlf`) + `git add --renormalize`. Bumped `actions/checkout` v4 → v5 in both workflows. CI green.
   - **Docs sync** — updated every doc to 15 wshobson subsets / 96 skills / ~195 total (README, ONBOARDING, agents.md survey + unwired list, SKILL.md).
@@ -54,10 +51,9 @@ Newest first.
 - 2026-09-09 — Push auth: repos owned by Surya8991 require `gh auth switch --user Surya8991` (default-active `edstellarmarketing` 403s); switch back after.
 
 ## S7. Verification status
-- CI green on `main` (`Check git identity` + `CI` = shellcheck error-severity + smoke). Last verified commit `7c2c5ab`.
-- `tests/smoke.sh` passes locally (frontmatter, convert determinism, scaffold, script syntax).
-- `doctor.sh`: 0 fail (2 warns — upstream `gcc` name mismatch and sync age — both external/expected).
-- Skill sync: 203 installed dirs, collisions none, unrouted 32.
+- Passed: full Bash smoke suite, Bash/PowerShell byte parity across 58 generated files, repeat rendering and project-local installer parity, updater regression tests in both shells, and documentation count checks.
+- Changed PowerShell files parse under Windows PowerShell. ShellCheck and PSScriptAnalyzer are unavailable locally; CI runs those linters. A broader Windows PowerShell 5.1 parse pass exposed pre-existing encoding-related parse errors in `dev-sync.ps1` and `scaffold.ps1`; these are outside this change.
+- Historical September verification: CI and smoke passed at `7c2c5ab`; installed inventory was 203 directories with 32 unrouted skills. These are historical measurements, not current guarantees.
 
 ---
 
@@ -66,8 +62,8 @@ Newest first.
 ## 1. What this project is
 A meta-orchestrator + multi-platform skill installer for AI coding agents. One skill
 (`/agent-master`) classifies a task and routes it to the right combination of installed
-skills across 26 categories + Extended Skill Clusters. It aggregates ~195 skills from 8
-upstream repos, generates per-platform files for 11 agents, and keeps everything synced.
+skills across 27 categories + Extended Skill Clusters. Its full profile draws from 12
+dependency repositories (installed skill counts vary with upstream revisions), generates per-platform files for 11 agents, and keeps everything synced.
 
 ## 2. Tech stack
 - **Language**: Bash (scripts) + PowerShell (`.ps1` parity), Node.js (Tool-Stack-Reference generators).

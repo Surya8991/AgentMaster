@@ -13,29 +13,7 @@ $ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
 $RepoDir   = Split-Path -Parent $ScriptDir
 $SkillsDir = Join-Path $RepoDir "skills"
 
-function Get-Field([string]$file, [string]$field) {
-  $inFm = $false
-  foreach ($line in Get-Content $file) {
-    if ($line -eq "---") { if ($inFm) { break } else { $inFm = $true; continue } }
-    if ($inFm -and $line -match "^$([regex]::Escape($field)):\s*(.*)$") {
-      return ($matches[1] -replace '^"(.*)"$', '$1')
-    }
-  }
-  return ""
-}
-function Get-Body([string]$file) {
-  $c = 0; $out = New-Object System.Collections.Generic.List[string]
-  foreach ($line in Get-Content $file) {
-    if ($line -eq "---") { $c++; continue }
-    if ($c -ge 2) { $out.Add($line) }
-  }
-  return ($out -join "`n")
-}
-function WriteFile([string]$path, [string]$content) {
-  $dir = Split-Path -Parent $path
-  if (-not (Test-Path $dir)) { New-Item -ItemType Directory -Force -Path $dir | Out-Null }
-  Set-Content -Path $path -Value $content -Encoding utf8 -NoNewline
-}
+. (Join-Path $ScriptDir "lib/skill-render.ps1")
 
 function Detect-Platforms {
   $found = @()
@@ -52,7 +30,6 @@ function Detect-Platforms {
 }
 
 function Install-Skills([string]$platform) {
-  $today = Get-Date -Format "yyyy-MM-dd"
   switch ($platform) {
     "claude-code" { $target = Join-Path $HOME ".claude\skills";      $fmt = "copy" }
     "codex"       { $target = Join-Path $HOME ".codex\skills";       $fmt = "copy" }
@@ -68,7 +45,7 @@ function Install-Skills([string]$platform) {
     default { Write-Output "  ! Unknown platform: $platform"; return }
   }
 
-  Get-ChildItem -Directory $SkillsDir | ForEach-Object {
+  Get-ChildItem -Directory $SkillsDir | Sort-Object Name | ForEach-Object {
     $skillFile = Join-Path $_.FullName "SKILL.md"
     if (-not (Test-Path $skillFile)) { return }
     $sk = $_.Name
@@ -76,13 +53,13 @@ function Install-Skills([string]$platform) {
     $desc = Get-Field $skillFile "description"
     $body = Get-Body  $skillFile
     switch ($fmt) {
-      "copy"        { WriteFile (Join-Path $target "$sk\SKILL.md") ((Get-Content $skillFile -Raw)) }
-      "cursor"      { WriteFile (Join-Path $target "$sk.mdc") "---`ndescription: `"$desc`"`nglobs:`nalwaysApply: false`n---`n$body`n" }
-      "windsurf"    { WriteFile (Join-Path $target "$sk\SKILL.md") "---`nname: `"$name`"`ndescription: `"$desc`"`ntrigger: always_on`n---`n$body`n" }
-      "cline"       { WriteFile (Join-Path $target "$sk.md") "$body`n" }
-      "antigravity" { WriteFile (Join-Path $target "$sk\SKILL.md") "---`nname: `"$name`"`ndescription: `"$desc`"`nrisk: low`nsource: community`ndate_added: $today`n---`n$body`n" }
-      "opencode"    { WriteFile (Join-Path $target "$sk\SKILL.md") "---`nname: `"$name`"`ndescription: `"$desc`"`ncompatibility: opencode`n---`n$body`n" }
-      "augment"     { WriteFile (Join-Path $target "$sk.md") "---`ntype: auto`ndescription: `"$desc`"`n---`n$body`n" }
+      "copy"        { WriteFile (Join-Path $target "$sk\SKILL.md") ((Get-Content -LiteralPath $skillFile -Raw -Encoding utf8)) }
+      "cursor"      { WriteFile (Join-Path $target "$sk.mdc") (Render-Skill "cursor" $name $desc $body) }
+      "windsurf"    { WriteFile (Join-Path $target "$sk\SKILL.md") (Render-Skill "windsurf" $name $desc $body) }
+      "cline"       { WriteFile (Join-Path $target "$sk.md") (Render-Skill "cline" $name $desc $body) }
+      "antigravity" { WriteFile (Join-Path $target "$sk\SKILL.md") (Render-Skill "antigravity" $name $desc $body) }
+      "opencode"    { WriteFile (Join-Path $target "$sk\SKILL.md") (Render-Skill "opencode" $name $desc $body) }
+      "augment"     { WriteFile (Join-Path $target "$sk.md") (Render-Skill "augment" $name $desc $body) }
     }
     Write-Output "  + $sk -> $target"
   }

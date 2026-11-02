@@ -11,7 +11,7 @@ Meta-orchestrator for AI coding agents. One skill (`/agent-master`) routes all t
 ## Key Dirs & Files
 ```
 skills/                        ← SOURCE OF TRUTH — edit skills here only
-  agent-master/SKILL.md        ← Main orchestrator (25 routing categories)
+  agent-master/SKILL.md        ← Main orchestrator (27 routing categories)
   codereview/SKILL.md          ← /codereview skill
   devops/SKILL.md              ← DevOps skill
   repomix-pack/SKILL.md        ← Whole-repo snapshot via repomix
@@ -19,6 +19,7 @@ skills/                        ← SOURCE OF TRUTH — edit skills here only
   task-viewer/SKILL.md         ← Launches claude-task-viewer dashboard (app path in ~/.claude/.agentmaster-cache/task-viewer.path)
 
 scripts/
+  lib/skill-render.ps1         ← Shared PowerShell renderer; byte parity with Bash checked in tests/rendering.ps1
   lib/skill-render.sh          ← SHARED frontmatter extraction + per-platform renderers; sourced by convert.sh AND install-platform.sh so formats never drift (deterministic, no timestamps)
   convert.sh / convert.ps1     ← Regenerates ALL platform files from skills/
   update.sh                    ← Pulls latest dependency repos to ~/.claude/skills/ (honors .dev marker)
@@ -28,7 +29,10 @@ scripts/
   routes.sh                    ← Routing log/overrides/unrouted; `routes analyze` ranks misroutes
   doctor.sh                    ← Health check (skills, caches, pins, convert drift, dev mode)
 tests/
-  smoke.sh                     ← No-network CI checks: frontmatter, convert determinism, scaffold, syntax
+  smoke.sh                     ← No-network CI checks: frontmatter, all-platform drift, scaffold, syntax
+  rendering.ps1                ← Bash/PowerShell output parity and determinism in an isolated fixture
+  docs.py                      ← Published routing/dependency counts checked against source
+  update-safety.sh / .ps1       ← Updater lock and copy-failure regression checks
 .github/workflows/
   ci.yml                       ← shellcheck (error severity) + smoke tests
   check-git-identity.yml       ← Blocks edstellarmarketing identity on non-owned repos
@@ -90,7 +94,7 @@ None. No `.env` file required.
 - `scripts/update.sh` uses `set -e` — any non-subshelled `cd` that fails will silently put subsequent commands in the wrong directory. Fixed to use `git -C` pattern
 - `Tool-Stack-Reference/hub-*.json` are gitignored intermediates — if hub/ looks outdated, regenerate from master-hub.html
 - **Manifest exclude-glob (4th field):** `repos.manifest` lines accept an optional 4th `|exclude-glob` field — one or more SPACE-SEPARATED shell globs of skill-dir names to skip — for repos whose `skill_source` dir mixes end-user and unwanted skills. Used by: `rea` (drops 4 `rea-*` maintainer skills) and `agent-browser` (drops 8 Vercel-internal skills, keeping only `core`). Threaded through all three sync points: `install.sh`, `scripts/update.sh`, `scripts/update.ps1`. `install-platform.sh` is unaffected (it copies the repo's own `skills/`, never the manifest cache). It's EXCLUDE-only (no include) — a newly-added upstream skill is admitted by default until added to the list.
-- **Shared render lib (`scripts/lib/skill-render.sh`):** the per-platform output formats (cursor/windsurf/cline/antigravity/opencode/augment/aider/copilot) and frontmatter extraction (`skill_field`/`skill_body`) live here ONCE. Both `convert.sh` (writes committed files) and `install-platform.sh` (writes live platform dirs) source it, verified byte-identical. Editing a platform format = edit the lib, then `convert.sh --all`. Renderers are timestamp-free so antigravity no longer churns daily.
+- **Shared render lib (`scripts/lib/skill-render.sh`):** the per-platform output formats (cursor/windsurf/cline/antigravity/opencode/augment/aider/copilot) and frontmatter extraction (`skill_field`/`skill_body`) live here ONCE. Both `convert.sh` (writes committed files) and `install-platform.sh` (writes live platform dirs) source it, verified byte-identical. Editing a platform format = edit the lib, then `convert.sh --all`. Bash and PowerShell renderers are timestamp-free so Antigravity no longer churns daily. PowerShell conversion and installation share `scripts/lib/skill-render.ps1`; `tests/rendering.ps1` checks byte parity with Bash, including Unicode, quoting, and newlines.
 - **CI covers bash + PowerShell:** `.github/workflows/ci.yml` runs shellcheck (`--severity=error`) over `install.sh scripts/*.sh scripts/lib/*.sh tests/*.sh`, the smoke suite, and PSScriptAnalyzer (`--severity Error`) over `scripts/*.ps1`. `install.sh` and the `.ps1` scripts were previously unchecked.
 - **REA is skill + MCP server (two-part):** wiring the manifest installs only the `reverse-engineer-anything` skill. Its tools are no-ops until the user runs `npx rea-agents setup` (registers the REA MCP server; native targets also need Ghidra/IDA/Hopper). AgentMaster must NOT auto-run setup — it writes MCP config and installs software. The routing row tells the agent to prompt the user if a REA tool call comes back unregistered.
 
@@ -100,7 +104,7 @@ The `claude-skills` repo (alirezarezvani/claude-skills) is a **plugin-of-plugins
 ### Routing categories (27 total)
 Build/Create, Refactor, Debug/Fix, Code Review, Commit/Ship, Test, Marketing, Strategy/Business, Product, Finance, Business Growth, Project Mgmt, Compliance, DevOps/Deploy, Database Design, Security, Reverse Engineering / Binary Analysis, UI/UX Design, Documentation, Research, Memory/History, Explore Codebase, Whole-Codebase Analysis, LLM/AI App Dev, Task Dashboard, Meta/Skill Discovery, Simple Question
 
-Beyond the 26 primary categories, `SKILL.md` has an **Extended Skill Clusters** table that
+Beyond the 27 primary categories, `SKILL.md` has an **Extended Skill Clusters** table that
 maps the ~86 installed-but-non-primary skills (Python depth, event-sourcing/DDD, managed
 databases, security technique, docs/design, claude-mem, skill authoring, caveman-cloud, PR
 utilities) to the category they surface within. Update that table when new skills are wired.

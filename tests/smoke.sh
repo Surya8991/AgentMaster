@@ -22,9 +22,6 @@ for d in "$REPO"/skills/*/; do
 done
 
 # 2. convert.sh --all is deterministic (no drift vs committed files).
-#    (.antigravity used to embed today's date; it no longer does — renderers in
-#    scripts/lib/skill-render.sh are timestamp-free — but it stays out of the path list
-#    below to keep this check independent of commit timing after a local regen.)
 echo "convert.sh determinism:"
 if bash "$REPO/scripts/convert.sh" --all >/dev/null 2>&1; then
   if command -v git >/dev/null && git -C "$REPO" rev-parse >/dev/null 2>&1; then
@@ -35,7 +32,7 @@ if bash "$REPO/scripts/convert.sh" --all >/dev/null 2>&1; then
       echo "  SKIP  drift check (skills/ has uncommitted changes)"
     else
       drift="$(git -C "$REPO" status --porcelain -- \
-        .cursor .windsurf .clinerules .codex .gemini .opencode .augment \
+        .cursor .windsurf .clinerules .codex .gemini .opencode .augment .antigravity \
         CONVENTIONS.md .github/copilot-instructions.md 2>/dev/null)"
       if [ -n "$drift" ]; then
         bad "committed platform files are stale — run convert.sh --all and commit:"; echo "$drift" | sed 's/^/        /'
