@@ -17,6 +17,11 @@ claude-mem|https://github.com/thedotmack/claude-mem.git|plugin/skills
 impeccable|https://github.com/pbakaus/impeccable.git|plugin/skills
 anthropic-official|https://github.com/anthropics/skills.git|skills
 
+# Design direction and UI review. Keep Vercel limited to the requested guidelines.
+# Recheck exclusions when upstream adds skill directories.
+taste-skill|https://github.com/Leonxlnx/taste-skill.git|skills
+vercel-design|https://github.com/vercel-labs/agent-skills.git|skills|composition-patterns deploy-to-vercel react-best-practices react-native-skills react-view-transitions vercel-cli-with-tokens vercel-optimize writing-guidelines
+
 # Curated subsets — one upstream repo, multiple skill_source lines under the
 # same name so the installer/updater clone it once and copy each subset dir.
 # Reject: davila7's document-processing category (skills named docx/pdf/pptx/xlsx

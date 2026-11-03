@@ -94,7 +94,7 @@ bash scripts/install-platform.sh --platform codex    # or cursor, windsurf, etc.
 bash scripts/install-platform.sh --platform all
 ```
 
-The full profile uses 12 dependency repositories declared in `repos.manifest`. Install profiles select subsets; optional repositories stay disabled unless explicitly enabled. Platform installers generate the supported configuration formats.
+The full profile uses 14 dependency repositories declared in `repos.manifest`. Install profiles select subsets; optional repositories stay disabled unless explicitly enabled. Platform installers generate the supported configuration formats.
 
 **Restart your IDE/agent after installation.**
 
@@ -300,6 +300,10 @@ When words match multiple categories, AgentMaster resolves automatically:
 | [agent-browser](https://github.com/vercel-labs/agent-browser) | Browser automation | `core`; separate CLI required |
 | [AgentMaster](https://github.com/Surya8991/AgentMaster) *(self-update)* | Keeps orchestrator current | auto-synced via `~/.claude/.agentmaster-cache/agent-master` |
 | **Total** | | Depends on profile and upstream revisions; use `/agent-master list` for the installed inventory. |
+
+### Website design workflow
+
+Use Taste (`design-taste-frontend`, directory `taste-skill`) for new art direction or reference-led mockups, or Impeccable to refine an existing interface. Add Responsive Design for mobile layouts, Web Design Guidelines for UI/accessibility review and Webapp Testing for browser verification. The dev profile includes all five through the existing Impeccable, Anthropic and wshobson dependencies plus Taste and the curated Vercel guidelines dependency. Preserve the user's brand and references; choose one design lead per stage.
 
 ### Whole-Codebase Snapshots (Repomix)
 
