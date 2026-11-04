@@ -3,7 +3,7 @@
 > Single source of truth for this project. Lists what's built, what's planned,
 > and how the system fits together. Update this file with every meaningful change.
 
-**Last updated:** 2026-11-02. Reliability maintenance: updater copy-failure
+**Last updated:** 2026-11-03. Reliability maintenance: updater copy-failure
 reporting and process-owned locks, shared PowerShell rendering, staged installs,
 reviewed dependency locks, collision/provenance controls, safe cleanup, routing
 diagnostics, Windows PowerShell regression coverage, verified browser/Python-debugger
@@ -16,6 +16,13 @@ readiness, and reconciled project context.
 ---
 
 # STATUS
+
+## Design skills, 2026-11-03
+- Added Taste and the curated Vercel Web Design Guidelines dependency; added both and Webapp Testing to the dev profile. Existing Impeccable and Responsive Design sources remain unchanged.
+- Added explicit design-stage routing and availability checks for the five-skill workflow. Regenerated all platform instructions.
+- Installed the four requested companion skills in Codex, Claude, Gemini, Copilot, Antigravity and shared agents locations; preserved pre-existing installations. Taste was already installed in all six.
+- Verification: documentation counts pass (27 categories, 14 repositories), routing passes 43 cases and all smoke tests pass. No push requested for this update.
+
 
 ## S1. Current plan
 - Core reliability and runtime-readiness work is complete and pushed through `75339e5`; [CI passed](https://github.com/Surya8991/AgentMaster/actions/runs/41399428342). No required fixes remain from this maintenance scope.

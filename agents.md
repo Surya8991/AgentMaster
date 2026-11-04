@@ -3,6 +3,10 @@
 ## Overview
 Meta-orchestrator for AI coding agents. One skill (`/agent-master`) routes all tasks to the right combination of installed skills across caveman (output compression), superpowers (dev workflow), claude-skills (domain expertise), and curated tactical libraries (impeccable, anthropic-official, wshobson, davila7). Supports 11 platforms via auto-generated platform files.
 
+## Design skill integration (2026-11-03)
+- Taste and Vercel Web Design Guidelines are wired in `repos.manifest`; the dev profile also explicitly includes Anthropic Webapp Testing. Impeccable and wshobson Responsive Design remain existing dependencies.
+- Website design routing separates art direction, refinement, responsive layouts, UI/accessibility review and browser verification. Choose one design lead and preserve user references.
+
 ## Verified project state (2026-11-02)
 - Core reliability and runtime-readiness fixes are committed and pushed through `75339e5`. [CI passed](https://github.com/Surya8991/AgentMaster/actions/runs/41399428342), including ShellCheck, PSScriptAnalyzer, Linux integration tests, and Windows PowerShell 5.1 regressions.
 - On this Windows development machine, DAP v0.4.2 with debugpy 1.8.22 passed a Python breakpoint/value/continue probe. agent-browser 0.41.1 with managed Chrome 156.0.8078.80 passed an isolated browser probe. Other machines and debugger backends require their own checks.

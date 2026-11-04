@@ -1,6 +1,6 @@
 # AgentMaster — Onboarding Guide
 
-AgentMaster is a skill installer and meta-orchestrator for Claude Code. Its full profile installs skills from 12 dependency repositories into `~/.claude/skills/`, keeps them synced, and routes tasks to the right skill combination via `/agent-master`.
+AgentMaster is a skill installer and meta-orchestrator for Claude Code. Its full profile installs skills from 14 dependency repositories into `~/.claude/skills/`, keeps them synced, and routes tasks to the right skill combination via `/agent-master`.
 
 ## Install
 
