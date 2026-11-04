@@ -17,7 +17,7 @@
     "Database Design": ["sql-pro", "database-optimizer", "postgresql-optimization", "database-migration"],
     "Security": ["security-audit"],
     "Reverse Engineering / Binary Analysis": ["reverse-engineer-anything", "idapython"],
-    "UI/UX Design": ["impeccable", "anthropic-skills:ui-ux-pro-max"],
+    "UI/UX Design": ["impeccable", "anthropic-skills:ui-ux-pro-max", "taste-skill", "web-design-guidelines", "responsive-design", "webapp-testing"],
     "Documentation": ["anthropic-skills:docx", "anthropic-skills:pdf", "anthropic-skills:pptx", "anthropic-skills:xlsx"],
     "Research": ["anthropic-skills:deep-research"],
     "Memory/History": ["mem-search", "timeline-report", "knowledge-agent"],
