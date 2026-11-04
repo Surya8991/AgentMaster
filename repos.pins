@@ -6,8 +6,9 @@
 # it to an exact, reviewed commit instead.
 #
 # Format: one line per repo, <name>=<full 40-char commit sha>
-# Valid names: caveman, superpowers, claude-skills, claude-mem, impeccable,
-# anthropic-official, wshobson, davila7
+# Valid names: any name in repos.manifest (agent-browser, anthropic-official, caveman,
+# claude-mem, claude-skills, davila7, debug-skill, ida-pro-mcp, impeccable, rea,
+# superpowers, taste-skill, vercel-design, wshobson)
 # Note: wshobson and davila7 each appear as multiple lines in repos.manifest
 # (one upstream clone, several curated subset paths) — a single pin line
 # here covers all of a name's subset lines, since they share one clone.
@@ -15,3 +16,20 @@
 #
 # To pin: look up the commit on GitHub, review the diff, then add e.g.
 # caveman=0123456789abcdef0123456789abcdef01234567
+
+# Pinned 2026-11-04 to the commits installed and checked on Surya8991's machine.
+# To update: python scripts/dependencies.py preview --profile full, review, then change the SHA.
+agent-browser=6682da310c75bed8af340b39cc10b7f71bded155
+anthropic-official=ca45fc496a3436251f191354091d557da31c15b5
+caveman=2e068f735253cce28256744804785f01887d9646
+claude-mem=d8bf121ae98063e5e3158befff33a9d635c0246b
+claude-skills=c85b17e1fb621ba760478baaacc4fcb9be225e74
+davila7=cc3f5356409d09bd7596496eb9b265b2225e195f
+debug-skill=26ef325fe2188209d053f42a6ca0000942a94932
+ida-pro-mcp=c133c3853faa111a9b00ee615c013b720d0c4acd
+impeccable=f864521bbb1c9350e8f6cf7742c139a04a1020af
+rea=47cedcc93aa639fb8445ab344308a6837d2b9d5a
+superpowers=22f0b463e7a5e579904dd6211a520321035526f7
+taste-skill=12af471f627f866411b4bd785b19646d3672784c
+vercel-design=1a2c79d4e6c4a2283dc2c614b6538cbe1ed5ca62
+wshobson=7e2fb559cf4b824b27f1fec49fe88f7511066d26
