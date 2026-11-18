@@ -1,0 +1,24 @@
+#!/bin/sh
+# AgentMaster pre-push gate. Guards (main-branch, identity, secrets) come from
+# lib/guards.sh; the checks below are specific to this project (bash + PowerShell + Python + Node test scripts).
+# Enable once per clone: git config core.hooksPath .githooks   (see README.md)
+HOOK_DIR=$(cd "$(dirname "$0")" && pwd)
+. "$HOOK_DIR/lib/guards.sh"
+pp_init "$@"
+pp_run_guards || exit 1
+pp_should_check || exit 0
+
+# core.hooksPath bypasses .git/hooks, so keep Git LFS's pre-push step alive.
+if command -v git-lfs >/dev/null 2>&1; then
+  git lfs pre-push "$@" < "$PP_TMP/refs" || { pp_fail "git lfs pre-push failed"; exit 1; }
+fi
+
+pp_find_python
+pp_step "smoke tests"            bash tests/smoke.sh
+pp_step "documentation counts"   "$PP_PY" tests/docs.py
+pp_step "routing behaviour"      node tests/routing.js
+pp_full_step "locked install"    "$PP_PY" tests/locked-deps.py
+pp_full_step "dependency locks"  "$PP_PY" tests/dependencies.py
+pp_full_step "updater safety"    bash tests/update-safety.sh
+pp_full_step "skill lifecycle"   bash tests/update-lifecycle.sh
+pp_done
